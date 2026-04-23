@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Icon from "@/components/ui/icon";
+import Logo from "@/components/Logo";
 
 export type Role = "manager" | "estimator" | "production" | "accountant" | "owner";
 
@@ -78,11 +79,8 @@ export default function RoleSelect({ onSelect }: { onSelect: (role: Role) => voi
     <div className="min-h-screen bg-[#fafafa] flex flex-col items-center justify-center px-6 py-12 font-golos">
 
       {/* Logo */}
-      <div className="flex items-center gap-2.5 mb-10">
-        <div className="w-8 h-8 rounded-[8px] bg-[#1a1a1a] flex items-center justify-center">
-          <span className="text-white text-[14px] font-bold leading-none">М</span>
-        </div>
-        <span className="text-[18px] font-semibold text-[#1a1a1a] tracking-tight">МемориалCRM</span>
+      <div className="mb-10">
+        <Logo size="lg" />
       </div>
 
       {/* Heading */}

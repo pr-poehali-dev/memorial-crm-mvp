@@ -92,7 +92,7 @@ export default function OverviewPage() {
       <div className="flex items-end justify-between">
         <div>
           <h1 className="text-[21px] font-semibold text-[#1a1a1a] tracking-tight">Обзор</h1>
-          <p className="text-[13px] text-[#9b9b9b] mt-0.5">Апрель 2026 · МемориалCRM</p>
+          <p className="text-[13px] text-[#9b9b9b] mt-0.5">Апрель 2026 · СИСТЕМА ПАМЯТЬ</p>
         </div>
         <div className="flex gap-2">
           {quickActions.map((a) => (

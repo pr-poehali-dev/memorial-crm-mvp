@@ -13,6 +13,7 @@ import AiAssistant from "@/components/AiAssistant";
 import RoleSelect, { Role, ROLES } from "@/components/RoleSelect";
 import NewOrderPage from "@/components/pages/NewOrderPage";
 import EstimatePage from "@/components/pages/EstimatePage";
+import Logo, { LogoCompact } from "@/components/Logo";
 
 type Section = "overview" | "orders" | "production" | "warehouse" | "clients" | "analytics" | "estimate" | "settings";
 
@@ -96,14 +97,9 @@ export default function Index() {
         {/* Logo */}
         <button
           onClick={() => setRole(null)}
-          className={`flex items-center h-[56px] border-b border-[#ebebeb] hover:bg-[#fafafa] transition-colors w-full ${collapsed ? "justify-center" : "px-4 gap-2"}`}
+          className={`flex items-center h-[56px] border-b border-[#ebebeb] hover:bg-[#fafafa] transition-colors w-full ${collapsed ? "justify-center px-0" : "px-4"}`}
         >
-          <div className="w-6 h-6 rounded-[6px] bg-[#1a1a1a] flex items-center justify-center shrink-0">
-            <span className="text-white text-[11px] font-bold leading-none">М</span>
-          </div>
-          {!collapsed && (
-            <span className="font-semibold text-[14px] text-[#1a1a1a] tracking-tight whitespace-nowrap">МемориалCRM</span>
-          )}
+          {collapsed ? <Logo size="sm" iconOnly /> : <LogoCompact />}
         </button>
 
         {/* Role badge */}
