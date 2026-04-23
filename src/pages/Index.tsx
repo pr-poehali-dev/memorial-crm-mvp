@@ -11,6 +11,7 @@ import AnalyticsPage from "@/components/pages/AnalyticsPage";
 import SettingsPage from "@/components/pages/SettingsPage";
 import AiAssistant from "@/components/AiAssistant";
 import RoleSelect, { Role, ROLES } from "@/components/RoleSelect";
+import NewOrderPage from "@/components/pages/NewOrderPage";
 
 type Section = "overview" | "orders" | "production" | "warehouse" | "clients" | "analytics" | "settings";
 
@@ -47,6 +48,7 @@ export default function Index() {
   const [openOrder, setOpenOrder] = useState<string | null>(null);
   const [openClient, setOpenClient] = useState<string | null>(null);
   const [showRolePicker, setShowRolePicker] = useState(false);
+  const [creatingOrder, setCreatingOrder] = useState(false);
 
   const handleRoleSelect = (r: Role) => {
     setRole(r);
@@ -59,6 +61,7 @@ export default function Index() {
     setActive(id);
     setOpenOrder(null);
     setOpenClient(null);
+    setCreatingOrder(false);
   };
 
   if (!role) return <RoleSelect onSelect={handleRoleSelect} />;
@@ -67,11 +70,12 @@ export default function Index() {
   const visibleNav = ALL_NAV.filter((n) => ROLE_NAV[role].includes(n.id));
 
   const renderMain = () => {
+    if (creatingOrder) return <NewOrderPage onBack={() => setCreatingOrder(false)} />;
     if (active === "orders" && openOrder)   return <OrderDetailPage onBack={() => setOpenOrder(null)} />;
     if (active === "clients" && openClient) return <ClientDetailPage clientId={openClient} onBack={() => setOpenClient(null)} />;
     switch (active) {
       case "overview":   return <OverviewPage />;
-      case "orders":     return <OrdersPage onOpenOrder={(id) => setOpenOrder(id)} />;
+      case "orders":     return <OrdersPage onOpenOrder={(id) => setOpenOrder(id)} onNewOrder={() => setCreatingOrder(true)} />;
       case "production": return <ProductionPage />;
       case "warehouse":  return <WarehousePage />;
       case "clients":    return <ClientsPage onOpenClient={(id) => setOpenClient(id)} />;

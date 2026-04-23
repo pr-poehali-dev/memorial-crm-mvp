@@ -127,7 +127,7 @@ const miniStats = [
   { label: "Долг клиентов",  value: orders.filter(o => o.payStatus !== "paid").reduce((s,o) => s + (o.amount - o.paid), 0).toLocaleString("ru") + " ₽", icon: "CreditCard", color: "#6366f1" },
 ];
 
-export default function OrdersPage({ onOpenOrder }: { onOpenOrder?: (id: string) => void }) {
+export default function OrdersPage({ onOpenOrder, onNewOrder }: { onOpenOrder?: (id: string) => void; onNewOrder?: () => void }) {
   const [filter, setFilter] = useState<FilterKey>("all");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Order | null>(null);
@@ -160,7 +160,7 @@ export default function OrdersPage({ onOpenOrder }: { onOpenOrder?: (id: string)
               <h1 className="text-[21px] font-semibold text-[#1a1a1a] tracking-tight">Заказы</h1>
               <p className="text-[13px] text-[#9b9b9b] mt-0.5">{filtered.length} из {orders.length}</p>
             </div>
-            <button className="flex items-center gap-2 bg-[#1a1a1a] text-white text-[13px] px-4 py-2 rounded-[8px] hover:bg-[#333] transition-colors">
+            <button onClick={onNewOrder} className="flex items-center gap-2 bg-[#1a1a1a] text-white text-[13px] px-4 py-2 rounded-[8px] hover:bg-[#333] transition-colors">
               <Icon name="Plus" size={14} />
               Новый заказ
             </button>
