@@ -86,7 +86,7 @@ const quickActions = [
 
 export default function OverviewPage() {
   return (
-    <div className="p-7 max-w-[1200px] space-y-6">
+    <div className="p-7 max-w-[1200px] mx-auto w-full space-y-6">
 
       {/* Header */}
       <div className="flex items-end justify-between">
