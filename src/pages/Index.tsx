@@ -87,14 +87,17 @@ export default function Index() {
       <aside className={`flex flex-col border-r border-[#ebebeb] bg-white transition-all duration-300 shrink-0 ${collapsed ? "w-[56px]" : "w-[220px]"}`}>
 
         {/* Logo */}
-        <div className={`flex items-center h-[56px] border-b border-[#ebebeb] ${collapsed ? "justify-center" : "px-4 gap-2"}`}>
+        <button
+          onClick={() => setRole(null)}
+          className={`flex items-center h-[56px] border-b border-[#ebebeb] hover:bg-[#fafafa] transition-colors w-full ${collapsed ? "justify-center" : "px-4 gap-2"}`}
+        >
           <div className="w-6 h-6 rounded-[6px] bg-[#1a1a1a] flex items-center justify-center shrink-0">
             <span className="text-white text-[11px] font-bold leading-none">М</span>
           </div>
           {!collapsed && (
             <span className="font-semibold text-[14px] text-[#1a1a1a] tracking-tight whitespace-nowrap">МемориалCRM</span>
           )}
-        </div>
+        </button>
 
         {/* Role badge */}
         {!collapsed && (
