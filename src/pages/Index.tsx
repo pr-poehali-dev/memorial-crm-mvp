@@ -12,8 +12,9 @@ import SettingsPage from "@/components/pages/SettingsPage";
 import AiAssistant from "@/components/AiAssistant";
 import RoleSelect, { Role, ROLES } from "@/components/RoleSelect";
 import NewOrderPage from "@/components/pages/NewOrderPage";
+import EstimatePage from "@/components/pages/EstimatePage";
 
-type Section = "overview" | "orders" | "production" | "warehouse" | "clients" | "analytics" | "settings";
+type Section = "overview" | "orders" | "production" | "warehouse" | "clients" | "analytics" | "estimate" | "settings";
 
 const ALL_NAV: { id: Section; label: string; icon: string }[] = [
   { id: "overview",    label: "Обзор",         icon: "LayoutDashboard" },
@@ -22,20 +23,21 @@ const ALL_NAV: { id: Section; label: string; icon: string }[] = [
   { id: "warehouse",   label: "Склад",          icon: "Package" },
   { id: "clients",     label: "Клиенты",        icon: "Users" },
   { id: "analytics",   label: "Аналитика",      icon: "BarChart2" },
+  { id: "estimate",    label: "Калькулятор",     icon: "Calculator" },
   { id: "settings",    label: "Настройки",      icon: "Settings" },
 ];
 
 const ROLE_NAV: Record<Role, Section[]> = {
   manager:    ["overview", "orders", "clients"],
-  estimator:  ["orders", "warehouse", "analytics"],
+  estimator:  ["orders", "estimate", "warehouse", "analytics"],
   production: ["production", "warehouse"],
   accountant: ["overview", "orders", "clients", "analytics"],
-  owner:      ["overview", "orders", "production", "warehouse", "clients", "analytics", "settings"],
+  owner:      ["overview", "orders", "production", "warehouse", "clients", "analytics", "estimate", "settings"],
 };
 
 const ROLE_DEFAULT: Record<Role, Section> = {
   manager:    "orders",
-  estimator:  "orders",
+  estimator:  "estimate",
   production: "production",
   accountant: "overview",
   owner:      "overview",
@@ -80,6 +82,7 @@ export default function Index() {
       case "warehouse":  return <WarehousePage />;
       case "clients":    return <ClientsPage onOpenClient={(id) => setOpenClient(id)} />;
       case "analytics":  return <AnalyticsPage />;
+      case "estimate":   return <EstimatePage />;
       case "settings":   return <SettingsPage />;
     }
   };
