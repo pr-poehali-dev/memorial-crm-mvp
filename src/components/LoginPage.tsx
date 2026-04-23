@@ -40,7 +40,7 @@ export default function LoginPage({ onLogin, onBack }: Props) {
           </svg>
           Назад
         </button>
-        <span className="text-[14px] font-bold text-[#1a1a1a] tracking-[0.06em]">ПАМЯТЬ</span>
+        <button onClick={onBack} className="text-[14px] font-bold text-[#1a1a1a] tracking-[0.06em] hover:text-[#4b4b4b] transition-colors">ПАМЯТЬ</button>
         <div className="w-16" />
       </header>
 
