@@ -107,7 +107,7 @@ export default function Index() {
 
         {/* Logo */}
         <button
-          onClick={() => setScreen("landing")}
+          onClick={() => { setScreen("landing"); setRole(null); }}
           className={`flex items-center h-[56px] border-b border-[#ebebeb] hover:bg-[#fafafa] transition-colors w-full ${collapsed ? "justify-center px-0" : "px-4"}`}
         >
           {collapsed ? <Logo size="sm" iconOnly /> : <LogoCompact />}
