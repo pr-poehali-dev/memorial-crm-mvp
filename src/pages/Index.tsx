@@ -6,6 +6,7 @@ import OrderDetailPage from "@/components/pages/OrderDetailPage";
 import ProductionPage from "@/components/pages/ProductionPage";
 import WarehousePage from "@/components/pages/WarehousePage";
 import ClientsPage from "@/components/pages/ClientsPage";
+import ClientDetailPage from "@/components/pages/ClientDetailPage";
 import AnalyticsPage from "@/components/pages/AnalyticsPage";
 import SettingsPage from "@/components/pages/SettingsPage";
 
@@ -25,22 +26,27 @@ export default function Index() {
   const [active, setActive] = useState<Section>("overview");
   const [collapsed, setCollapsed] = useState(false);
   const [openOrder, setOpenOrder] = useState<string | null>(null);
+  const [openClient, setOpenClient] = useState<string | null>(null);
 
   const handleNavClick = (id: Section) => {
     setActive(id);
     setOpenOrder(null);
+    setOpenClient(null);
   };
 
   const renderMain = () => {
     if (active === "orders" && openOrder) {
       return <OrderDetailPage onBack={() => setOpenOrder(null)} />;
     }
+    if (active === "clients" && openClient) {
+      return <ClientDetailPage clientId={openClient} onBack={() => setOpenClient(null)} />;
+    }
     switch (active) {
       case "overview":    return <OverviewPage />;
       case "orders":      return <OrdersPage onOpenOrder={(id) => setOpenOrder(id)} />;
       case "production":  return <ProductionPage />;
       case "warehouse":   return <WarehousePage />;
-      case "clients":     return <ClientsPage />;
+      case "clients":     return <ClientsPage onOpenClient={(id) => setOpenClient(id)} />;
       case "analytics":   return <AnalyticsPage />;
       case "settings":    return <SettingsPage />;
     }
