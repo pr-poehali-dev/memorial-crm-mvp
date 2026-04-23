@@ -117,20 +117,8 @@ export default function LoginPage({ onLogin, onBack }: Props) {
               </button>
             </form>
 
-            {/* Demo hint */}
-            <div className="mt-6 pt-5 border-t border-[#f5f5f5]">
-              <p className="text-[11px] text-[#b5b5b5] text-center mb-2.5">Демо-доступ</p>
-              <div className="flex flex-wrap gap-1.5 justify-center">
-                {DEMO_USERS.map(u => (
-                  <button
-                    key={u.login}
-                    onClick={() => { setLogin(u.login); setPassword(u.password); setError(""); }}
-                    className="text-[11px] bg-[#f5f5f5] hover:bg-[#ebebeb] text-[#6b6b6b] px-2.5 py-1 rounded-md transition-colors font-medium"
-                  >
-                    {u.login}
-                  </button>
-                ))}
-              </div>
+            <div className="mt-6 pt-5 border-t border-[#f5f5f5] text-center">
+              <p className="text-[11px] text-[#b5b5b5]">Логин: <span className="font-semibold text-[#9b9b9b]">123</span> · Пароль: <span className="font-semibold text-[#9b9b9b]">123</span></p>
             </div>
           </div>
 
