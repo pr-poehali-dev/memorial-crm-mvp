@@ -1,9 +1,10 @@
 import { useState, useCallback } from "react";
 import Icon from "@/components/ui/icon";
+import { CATALOG as CATALOG_DATA, CATEGORY_META } from "@/data/catalog";
 
 /* ─────────── Types ─────────── */
 type ItemStatus = "by_manager" | "needs_calc" | "calculated" | "approved";
-type Category   = "stone" | "engraving" | "delivery" | "extra";
+type Category   = string;
 
 type LineItem = {
   id: string;
@@ -12,10 +13,10 @@ type LineItem = {
   qty: number;
   unit: string;
   price: number;
-  cost: number;        // себестоимость
+  cost: number;
   status: ItemStatus;
   author: string;
-  locked: boolean;     // утверждённые — нельзя редактировать
+  locked: boolean;
   note: string;
 };
 
@@ -27,25 +28,7 @@ const STATUS_META: Record<ItemStatus, { label: string; color: string; bg: string
   approved:    { label: "Утверждено",    color: "#16a34a", bg: "#f0fdf4", border: "#bbf7d0", icon: "BadgeCheck"   },
 };
 
-const CAT_META: Record<Category, { label: string; color: string }> = {
-  stone:     { label: "Камень",      color: "#6b6b6b" },
-  engraving: { label: "Гравировка",  color: "#9333ea" },
-  delivery:  { label: "Доставка",    color: "#0891b2" },
-  extra:     { label: "Доп. работы", color: "#ea580c" },
-};
-
-const CATALOG: { name: string; category: Category; price: number; cost: number; unit: string }[] = [
-  { name: "Изготовление памятника (базовый)",  category: "stone",     price: 22000, cost: 12000, unit: "шт." },
-  { name: "Изготовление памятника (премиум)",  category: "stone",     price: 35000, cost: 19000, unit: "шт." },
-  { name: "Гравировка надписи",                category: "engraving", price: 6500,  cost: 2800,  unit: "шт." },
-  { name: "Портретное фото (ч/б)",             category: "engraving", price: 4500,  cost: 1500,  unit: "шт." },
-  { name: "Портретное фото (цветное)",         category: "engraving", price: 7000,  cost: 2500,  unit: "шт." },
-  { name: "Цветная гравировка",                category: "engraving", price: 8000,  cost: 3500,  unit: "шт." },
-  { name: "Доставка до кладбища",              category: "delivery",  price: 3500,  cost: 1800,  unit: "поезд." },
-  { name: "Установка памятника",               category: "delivery",  price: 5000,  cost: 2500,  unit: "шт." },
-  { name: "Бронзовые буквы",                   category: "extra",     price: 3200,  cost: 1600,  unit: "компл." },
-  { name: "Орнамент / декор",                  category: "extra",     price: 4000,  cost: 1800,  unit: "шт." },
-];
+const CAT_META = (cat: string) => CATEGORY_META[cat as keyof typeof CATEGORY_META] ?? { label: cat, color: "#9b9b9b" };
 
 const INIT_ITEMS: LineItem[] = [
   { id: "1", name: "Изготовление памятника (базовый)", category: "stone",     qty: 1, unit: "шт.",     price: 22000, cost: 12000, status: "approved",    author: "Олег К.",    locked: true,  note: "" },
@@ -69,11 +52,12 @@ export default function EstimatePage({ onBack }: { onBack?: () => void }) {
   const update = useCallback(<K extends keyof LineItem>(id: string, field: K, val: LineItem[K]) =>
     setItems(its => its.map(x => x.id === id ? { ...x, [field]: val } : x)), []);
 
-  const addFromCatalog = (cat: typeof CATALOG[number]) => {
+  const addFromCatalog = (cat: typeof CATALOG_DATA[number]) => {
     setItems(its => [...its, {
       id: uid(), name: cat.name, category: cat.category,
       qty: 1, unit: cat.unit, price: cat.price, cost: cat.cost,
-      status: "calculated", author: "Дмитрий С.", locked: false, note: "",
+      status: cat.calcType === "fixed" ? "calculated" : "needs_calc",
+      author: "Дмитрий С.", locked: false, note: cat.comment,
     }]);
     setShowAdd(false);
   };
@@ -223,14 +207,16 @@ export default function EstimatePage({ onBack }: { onBack?: () => void }) {
                   </button>
                 </div>
                 <div className="grid grid-cols-2 gap-1.5 mb-3">
-                  {CATALOG.map(c => (
-                    <button key={c.name} onClick={() => addFromCatalog(c)}
+                  {CATALOG_DATA.filter(c => c.active).map(c => (
+                    <button key={c.id} onClick={() => addFromCatalog(c)}
                       className="flex items-center justify-between text-left px-3 py-2.5 rounded-lg border border-[#f0f0f0] hover:border-[#c5c5c5] hover:bg-[#fafafa] transition-all group">
-                      <div>
-                        <p className="text-[12px] font-medium text-[#1a1a1a]">{c.name}</p>
-                        <p className="text-[10px]" style={{ color: CAT_META[c.category].color }}>{CAT_META[c.category].label}</p>
+                      <div className="min-w-0">
+                        <p className="text-[12px] font-medium text-[#1a1a1a] truncate">{c.name}</p>
+                        <p className="text-[10px]" style={{ color: CAT_META(c.category).color }}>{CAT_META(c.category).label}</p>
                       </div>
-                      <span className="text-[12px] font-semibold text-[#6b6b6b] shrink-0 ml-3">{c.price.toLocaleString("ru")} ₽</span>
+                      <span className="text-[12px] font-semibold text-[#6b6b6b] shrink-0 ml-3">
+                        {c.price > 0 ? `${c.price.toLocaleString("ru")} ₽` : "расчёт"}
+                      </span>
                     </button>
                   ))}
                 </div>
@@ -280,7 +266,7 @@ export default function EstimatePage({ onBack }: { onBack?: () => void }) {
                         <td className="px-4 py-3">
                           <div className="flex items-start gap-2.5">
                             <div className="w-1 h-full min-h-[36px] rounded-full shrink-0 mt-0.5"
-                              style={{ backgroundColor: CAT_META[item.category].color + "60" }} />
+                              style={{ backgroundColor: CAT_META(item.category).color + "60" }} />
                             <div className="min-w-0">
                               {isEditing ? (
                                 <input autoFocus value={item.name} onChange={e => update(item.id, "name", e.target.value)}
@@ -289,8 +275,8 @@ export default function EstimatePage({ onBack }: { onBack?: () => void }) {
                                 <p className="text-[13px] font-medium text-[#1a1a1a] leading-snug">{item.name || <span className="text-[#c5c5c5]">без названия</span>}</p>
                               )}
                               <div className="flex items-center gap-2 mt-0.5">
-                                <span className="text-[10px] font-medium" style={{ color: CAT_META[item.category].color }}>
-                                  {CAT_META[item.category].label}
+                                <span className="text-[10px] font-medium" style={{ color: CAT_META(item.category).color }}>
+                                  {CAT_META(item.category).label}
                                 </span>
                                 <span className="text-[10px] text-[#c5c5c5]">· {item.author}</span>
                                 {item.note && (
@@ -462,7 +448,7 @@ export default function EstimatePage({ onBack }: { onBack?: () => void }) {
             <div className="bg-white border border-[#ebebeb] rounded-xl p-5">
               <p className="text-[11px] font-semibold text-[#b5b5b5] uppercase tracking-wide mb-3">По категориям</p>
               <div className="space-y-2.5">
-                {(Object.keys(CAT_META) as Category[]).map(cat => {
+                {(Object.keys(CATEGORY_META) as Category[]).map(cat => {
                   const catItems = items.filter(i => i.category === cat);
                   if (catItems.length === 0) return null;
                   const catSum = catItems.reduce((s, i) => s + i.price * i.qty, 0);
@@ -470,14 +456,14 @@ export default function EstimatePage({ onBack }: { onBack?: () => void }) {
                   return (
                     <div key={cat}>
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-[12px] font-medium" style={{ color: CAT_META[cat].color }}>
-                          {CAT_META[cat].label}
+                        <span className="text-[12px] font-medium" style={{ color: CAT_META(cat).color }}>
+                          {CAT_META(cat).label}
                         </span>
                         <span className="text-[12px] font-semibold text-[#1a1a1a]">{catSum.toLocaleString("ru")} ₽</span>
                       </div>
                       <div className="h-1.5 bg-[#f5f5f5] rounded-full overflow-hidden">
                         <div className="h-full rounded-full transition-all"
-                          style={{ width: `${catPct}%`, backgroundColor: CAT_META[cat].color + "80" }} />
+                          style={{ width: `${catPct}%`, backgroundColor: CAT_META(cat).color + "80" }} />
                       </div>
                     </div>
                   );

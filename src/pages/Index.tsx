@@ -13,27 +13,29 @@ import AiAssistant from "@/components/AiAssistant";
 import RoleSelect, { Role, ROLES } from "@/components/RoleSelect";
 import NewOrderPage from "@/components/pages/NewOrderPage";
 import EstimatePage from "@/components/pages/EstimatePage";
+import CatalogPage from "@/components/pages/CatalogPage";
 import Logo, { LogoCompact } from "@/components/Logo";
 
-type Section = "overview" | "orders" | "production" | "warehouse" | "clients" | "analytics" | "estimate" | "settings";
+type Section = "overview" | "orders" | "production" | "warehouse" | "clients" | "analytics" | "estimate" | "catalog" | "settings";
 
 const ALL_NAV: { id: Section; label: string; icon: string }[] = [
   { id: "overview",    label: "Обзор",         icon: "LayoutDashboard" },
   { id: "orders",      label: "Заказы",         icon: "FileText" },
   { id: "production",  label: "Производство",   icon: "Hammer" },
+  { id: "catalog",     label: "Каталог",        icon: "BookOpen" },
   { id: "warehouse",   label: "Склад",          icon: "Package" },
   { id: "clients",     label: "Клиенты",        icon: "Users" },
   { id: "analytics",   label: "Аналитика",      icon: "BarChart2" },
-  { id: "estimate",    label: "Калькулятор",     icon: "Calculator" },
+  { id: "estimate",    label: "Калькулятор",    icon: "Calculator" },
   { id: "settings",    label: "Настройки",      icon: "Settings" },
 ];
 
 const ROLE_NAV: Record<Role, Section[]> = {
-  manager:    ["overview", "orders", "clients"],
-  estimator:  ["orders", "estimate", "warehouse", "analytics"],
+  manager:    ["overview", "orders", "catalog", "clients"],
+  estimator:  ["orders", "catalog", "estimate", "warehouse", "analytics"],
   production: ["production", "warehouse"],
   accountant: ["overview", "orders", "clients", "analytics"],
-  owner:      ["overview", "orders", "production", "warehouse", "clients", "analytics", "estimate", "settings"],
+  owner:      ["overview", "orders", "production", "catalog", "warehouse", "clients", "analytics", "estimate", "settings"],
 };
 
 const ROLE_DEFAULT: Record<Role, Section> = {
@@ -84,6 +86,7 @@ export default function Index() {
       case "clients":    return <ClientsPage onOpenClient={(id) => setOpenClient(id)} />;
       case "analytics":  return <AnalyticsPage />;
       case "estimate":   return <EstimatePage />;
+      case "catalog":    return <CatalogPage canEdit={role === "estimator" || role === "owner"} />;
       case "settings":   return <SettingsPage />;
     }
   };
