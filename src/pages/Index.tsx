@@ -11,6 +11,8 @@ import AnalyticsPage from "@/components/pages/AnalyticsPage";
 import SettingsPage from "@/components/pages/SettingsPage";
 import AiAssistant from "@/components/AiAssistant";
 import RoleSelect, { Role, ROLES } from "@/components/RoleSelect";
+import LandingPage from "@/components/LandingPage";
+import LoginPage from "@/components/LoginPage";
 import NewOrderPage from "@/components/pages/NewOrderPage";
 import EstimatePage from "@/components/pages/EstimatePage";
 import CatalogPage from "@/components/pages/CatalogPage";
@@ -46,20 +48,24 @@ const ROLE_DEFAULT: Record<Role, Section> = {
   owner:      "overview",
 };
 
+type AppScreen = "landing" | "login" | "role-select" | "app";
+
 export default function Index() {
-  const [role, setRole] = useState<Role | null>(null);
-  const [active, setActive] = useState<Section>("overview");
-  const [collapsed, setCollapsed] = useState(false);
-  const [openOrder, setOpenOrder] = useState<string | null>(null);
+  const [screen, setScreen]     = useState<AppScreen>("landing");
+  const [role, setRole]         = useState<Role | null>(null);
+  const [active, setActive]     = useState<Section>("overview");
+  const [collapsed, setCollapsed]   = useState(false);
+  const [openOrder, setOpenOrder]   = useState<string | null>(null);
   const [openClient, setOpenClient] = useState<string | null>(null);
   const [showRolePicker, setShowRolePicker] = useState(false);
-  const [creatingOrder, setCreatingOrder] = useState(false);
+  const [creatingOrder, setCreatingOrder]   = useState(false);
 
   const handleRoleSelect = (r: Role) => {
     setRole(r);
     setActive(ROLE_DEFAULT[r]);
     setOpenOrder(null);
     setOpenClient(null);
+    setScreen("app");
   };
 
   const handleNavClick = (id: Section) => {
@@ -69,7 +75,9 @@ export default function Index() {
     setCreatingOrder(false);
   };
 
-  if (!role) return <RoleSelect onSelect={handleRoleSelect} />;
+  if (screen === "landing") return <LandingPage onStart={() => setScreen("login")} />;
+  if (screen === "login")   return <LoginPage onLogin={() => setScreen("role-select")} onBack={() => setScreen("landing")} />;
+  if (screen === "role-select") return <RoleSelect onSelect={handleRoleSelect} />;
 
   const currentRole = ROLES.find((r) => r.id === role)!;
   const visibleNav = ALL_NAV.filter((n) => ROLE_NAV[role].includes(n.id));
@@ -99,7 +107,7 @@ export default function Index() {
 
         {/* Logo */}
         <button
-          onClick={() => setRole(null)}
+          onClick={() => setScreen("landing")}
           className={`flex items-center h-[56px] border-b border-[#ebebeb] hover:bg-[#fafafa] transition-colors w-full ${collapsed ? "justify-center px-0" : "px-4"}`}
         >
           {collapsed ? <Logo size="sm" iconOnly /> : <LogoCompact />}
@@ -155,7 +163,13 @@ export default function Index() {
         </nav>
 
         {/* Bottom */}
-        <div className="px-2 pb-3 border-t border-[#ebebeb] pt-2">
+        <div className="border-t border-[#ebebeb] pt-2 pb-3 px-2 space-y-1">
+          {!collapsed && (
+            <div className="px-2.5 py-2 rounded-[6px]">
+              <p className="text-[11px] font-semibold text-[#1a1a1a] leading-snug truncate">ООО «Память Урал»</p>
+              <p className="text-[10px] text-[#b5b5b5]">Производство памятников</p>
+            </div>
+          )}
           <button
             onClick={() => setCollapsed(!collapsed)}
             className={`flex items-center gap-2.5 rounded-[6px] h-8 text-[#9b9b9b] hover:text-[#1a1a1a] hover:bg-[#f5f5f5] transition-all w-full ${collapsed ? "justify-center px-0" : "px-2.5"}`}
