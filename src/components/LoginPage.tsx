@@ -2,13 +2,6 @@ import { useState } from "react";
 
 type Props = { onLogin: () => void; onBack: () => void };
 
-const DEMO_USERS = [
-  { login: "manager",    password: "1234" },
-  { login: "owner",      password: "1234" },
-  { login: "estimator",  password: "1234" },
-  { login: "admin",      password: "admin" },
-];
-
 export default function LoginPage({ onLogin, onBack }: Props) {
   const [login, setLogin]       = useState("");
   const [password, setPassword] = useState("");
@@ -21,9 +14,12 @@ export default function LoginPage({ onLogin, onBack }: Props) {
       setError("Введите логин и пароль");
       return;
     }
+    if (login !== "123" || password !== "123") {
+      setError("Неверный логин или пароль");
+      return;
+    }
     setError("");
     setLoading(true);
-    // Имитация запроса
     setTimeout(() => {
       setLoading(false);
       onLogin();
