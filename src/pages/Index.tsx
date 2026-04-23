@@ -9,6 +9,7 @@ import ClientsPage from "@/components/pages/ClientsPage";
 import ClientDetailPage from "@/components/pages/ClientDetailPage";
 import AnalyticsPage from "@/components/pages/AnalyticsPage";
 import SettingsPage from "@/components/pages/SettingsPage";
+import AiAssistant from "@/components/AiAssistant";
 
 type Section = "overview" | "orders" | "production" | "warehouse" | "clients" | "analytics" | "settings";
 
@@ -100,6 +101,8 @@ export default function Index() {
       <main className="flex-1 overflow-y-auto min-w-0">
         {renderMain()}
       </main>
+
+      <AiAssistant />
     </div>
   );
 }
