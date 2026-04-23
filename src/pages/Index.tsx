@@ -2,6 +2,7 @@ import { useState } from "react";
 import Icon from "@/components/ui/icon";
 import OverviewPage from "@/components/pages/OverviewPage";
 import OrdersPage from "@/components/pages/OrdersPage";
+import OrderDetailPage from "@/components/pages/OrderDetailPage";
 import ProductionPage from "@/components/pages/ProductionPage";
 import WarehousePage from "@/components/pages/WarehousePage";
 import ClientsPage from "@/components/pages/ClientsPage";
@@ -23,15 +24,26 @@ const nav: { id: Section; label: string; icon: string }[] = [
 export default function Index() {
   const [active, setActive] = useState<Section>("overview");
   const [collapsed, setCollapsed] = useState(false);
+  const [openOrder, setOpenOrder] = useState<string | null>(null);
 
-  const pages: Record<Section, JSX.Element> = {
-    overview: <OverviewPage />,
-    orders: <OrdersPage />,
-    production: <ProductionPage />,
-    warehouse: <WarehousePage />,
-    clients: <ClientsPage />,
-    analytics: <AnalyticsPage />,
-    settings: <SettingsPage />,
+  const handleNavClick = (id: Section) => {
+    setActive(id);
+    setOpenOrder(null);
+  };
+
+  const renderMain = () => {
+    if (active === "orders" && openOrder) {
+      return <OrderDetailPage onBack={() => setOpenOrder(null)} />;
+    }
+    switch (active) {
+      case "overview":    return <OverviewPage />;
+      case "orders":      return <OrdersPage onOpenOrder={(id) => setOpenOrder(id)} />;
+      case "production":  return <ProductionPage />;
+      case "warehouse":   return <WarehousePage />;
+      case "clients":     return <ClientsPage />;
+      case "analytics":   return <AnalyticsPage />;
+      case "settings":    return <SettingsPage />;
+    }
   };
 
   return (
@@ -52,7 +64,7 @@ export default function Index() {
           {nav.map((item) => (
             <button
               key={item.id}
-              onClick={() => setActive(item.id)}
+              onClick={() => handleNavClick(item.id)}
               title={collapsed ? item.label : undefined}
               className={`flex items-center gap-2.5 rounded-[6px] h-8 transition-all duration-150 w-full text-left
                 ${collapsed ? "justify-center px-0" : "px-2.5"}
@@ -62,7 +74,7 @@ export default function Index() {
                 }
               `}
             >
-              <Icon name={item.icon as any} size={15} className="shrink-0" />
+              <Icon name={item.icon as never} size={15} className="shrink-0" />
               {!collapsed && <span className="text-[13px]">{item.label}</span>}
             </button>
           ))}
@@ -80,7 +92,7 @@ export default function Index() {
       </aside>
 
       <main className="flex-1 overflow-y-auto min-w-0">
-        {pages[active]}
+        {renderMain()}
       </main>
     </div>
   );

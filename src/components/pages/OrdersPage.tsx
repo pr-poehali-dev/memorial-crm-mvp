@@ -127,7 +127,7 @@ const miniStats = [
   { label: "Долг клиентов",  value: orders.filter(o => o.payStatus !== "paid").reduce((s,o) => s + (o.amount - o.paid), 0).toLocaleString("ru") + " ₽", icon: "CreditCard", color: "#6366f1" },
 ];
 
-export default function OrdersPage() {
+export default function OrdersPage({ onOpenOrder }: { onOpenOrder?: (id: string) => void }) {
   const [filter, setFilter] = useState<FilterKey>("all");
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Order | null>(null);
@@ -237,7 +237,7 @@ export default function OrdersPage() {
                   return (
                     <tr
                       key={o.id}
-                      onClick={() => setSelected(selected?.id === o.id ? null : o)}
+                      onClick={() => { setSelected(selected?.id === o.id ? null : o); }}
                       onMouseEnter={() => setActionRow(o.id)}
                       onMouseLeave={() => setActionRow(null)}
                       className={`cursor-pointer transition-colors relative
@@ -322,7 +322,7 @@ export default function OrdersPage() {
                       {/* Быстрые действия */}
                       <td className="px-3 py-3">
                         <div className={`flex items-center gap-1 transition-opacity ${actionRow === o.id ? "opacity-100" : "opacity-0"}`}>
-                          <ActionBtn icon="Eye" title="Открыть" />
+                          <ActionBtn icon="Eye" title="Открыть" onClick={() => onOpenOrder?.(o.id)} />
                           <ActionBtn icon="Pencil" title="Редактировать" />
                           <ActionBtn icon="Banknote" title="Добавить оплату" />
                           <ActionBtn icon="RefreshCw" title="Изменить статус" />
@@ -438,11 +438,11 @@ export default function OrdersPage() {
   );
 }
 
-function ActionBtn({ icon, title }: { icon: string; title: string }) {
+function ActionBtn({ icon, title, onClick }: { icon: string; title: string; onClick?: () => void }) {
   return (
     <button
       title={title}
-      onClick={(e) => e.stopPropagation()}
+      onClick={(e) => { e.stopPropagation(); onClick?.(); }}
       className="w-7 h-7 flex items-center justify-center rounded-[6px] bg-white border border-[#e5e5e5] text-[#6b6b6b] hover:text-[#1a1a1a] hover:border-[#c5c5c5] transition-all"
     >
       <Icon name={icon as never} size={12} />
