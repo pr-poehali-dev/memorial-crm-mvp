@@ -258,45 +258,41 @@ export default function AiAssistant() {
           {tab === "overview" && (
             <p className="text-[11px] text-[#c5c5c5] text-center mb-2.5">или задайте свой вопрос</p>
           )}
-          <div className="flex gap-2">
+          <div className="relative flex items-center">
             <input
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => e.key === "Enter" && sendMessage(input)}
-              placeholder="Спросите что угодно..."
-              className="flex-1 bg-[#f5f5f5] border border-transparent focus:border-[#d0d0d0] focus:bg-white rounded-[10px] px-3.5 py-2.5 text-[13px] placeholder:text-[#c5c5c5] outline-none transition-all"
+              placeholder="Спросите про заказы, долги или склад..."
+              className="w-full bg-[#f5f5f5] border border-transparent focus:border-[#d0d0d0] focus:bg-white rounded-[12px] pl-4 pr-11 py-3 text-[13px] placeholder:text-[#c5c5c5] outline-none transition-all"
             />
             <button onClick={() => sendMessage(input)}
               disabled={!input.trim()}
-              className="w-10 h-10 rounded-[10px] flex items-center justify-center transition-all disabled:opacity-30 shrink-0"
+              className="absolute right-1.5 w-8 h-8 rounded-[8px] flex items-center justify-center transition-all disabled:opacity-25 hover:scale-105 active:scale-95"
               style={{ background: "linear-gradient(135deg, #1a1a1a, #3a3a5c)" }}>
-              <Icon name="ArrowUp" size={15} className="text-white" />
+              <Icon name="ArrowUp" size={13} className="text-white" />
             </button>
           </div>
         </div>
       </div>
 
-      {/* FAB */}
-      <button
-        onClick={() => setOpen(!open)}
-        className={`fixed bottom-6 right-6 z-50 rounded-full shadow-lg transition-all duration-300 flex items-center justify-center
-          ${open ? "bg-[#f0f0f0] scale-95" : "hover:scale-110"}`}
-        style={{
-          width: 52, height: 52,
-          background: open ? undefined : "linear-gradient(135deg, #1a1a1a 0%, #3a3a5c 60%, #1a1a1a 100%)",
-          boxShadow: open ? undefined : "0 0 20px 4px rgba(99,102,241,0.3), 0 4px 14px rgba(0,0,0,0.25)",
-        }}
-      >
-        {open
-          ? <Icon name="X" size={18} className="text-[#6b6b6b]" />
-          : <span className="text-[20px] leading-none select-none">✦</span>
-        }
-        {!open && (
+      {/* FAB — только когда панель закрыта */}
+      {!open && (
+        <button
+          onClick={() => setOpen(true)}
+          className="fixed bottom-6 right-6 z-50 rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-200 relative"
+          style={{
+            width: 52, height: 52,
+            background: "linear-gradient(135deg, #1a1a1a 0%, #3a3a5c 60%, #1a1a1a 100%)",
+            boxShadow: "0 0 20px 4px rgba(99,102,241,0.3), 0 4px 14px rgba(0,0,0,0.25)",
+          }}
+        >
+          <span className="text-[20px] leading-none select-none">✦</span>
           <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center shadow-sm">
             <span className="text-[9px] font-bold text-white">3</span>
           </span>
-        )}
-      </button>
+        </button>
+      )}
     </>
   );
 }
