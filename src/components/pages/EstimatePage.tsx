@@ -4,6 +4,7 @@ import { LineItem, ItemStatus, INIT_ITEMS, uid } from "./estimate.types";
 import EstimateHeader from "./EstimateHeader";
 import EstimateTable from "./EstimateTable";
 import EstimateSidebar from "./EstimateSidebar";
+import StoneCalculator from "./StoneCalculator";
 
 export default function EstimatePage({ onBack }: { onBack?: () => void }) {
   const [items, setItems]       = useState<LineItem[]>(INIT_ITEMS);
@@ -12,6 +13,7 @@ export default function EstimatePage({ onBack }: { onBack?: () => void }) {
   const [filterStatus, setFilterStatus] = useState<ItemStatus | "all">("all");
   const [saved, setSaved]       = useState(false);
   const [approved, setApproved] = useState(false);
+  const [showCalc, setShowCalc] = useState(false);
 
   const update = useCallback(<K extends keyof LineItem>(id: string, field: K, val: LineItem[K]) =>
     setItems(its => its.map(x => x.id === id ? { ...x, [field]: val } : x)), []);
@@ -53,8 +55,13 @@ export default function EstimatePage({ onBack }: { onBack?: () => void }) {
   const needsCalc    = items.filter(i => i.status === "needs_calc").length;
   const calcDone     = items.filter(i => ["calculated", "approved"].includes(i.status)).length;
 
+  const addFromCalc = (item: LineItem) => {
+    setItems(its => [...its, item]);
+  };
+
   return (
     <div className="h-full overflow-y-auto bg-[#fafafa]">
+      {showCalc && <StoneCalculator onClose={() => setShowCalc(false)} onAdd={addFromCalc} />}
       <div className="max-w-[1100px] mx-auto px-7 py-6">
 
         <EstimateHeader
@@ -74,10 +81,11 @@ export default function EstimatePage({ onBack }: { onBack?: () => void }) {
             editId={editId}
             showAdd={showAdd}
             onFilterChange={setFilterStatus}
-            onToggleAdd={() => setShowAdd(s => !s)}
+            onToggleAdd={() => { setShowAdd(s => !s); setShowCalc(false); }}
             onCloseAdd={() => setShowAdd(false)}
             onAddFromCatalog={addFromCatalog}
             onAddBlank={addBlank}
+            onOpenCalc={() => { setShowCalc(true); setShowAdd(false); }}
             onUpdate={update}
             onSetEditId={setEditId}
             onMarkCalculated={markCalculated}

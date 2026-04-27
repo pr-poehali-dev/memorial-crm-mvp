@@ -18,12 +18,13 @@ type Props = {
   onMarkCalculated: (id: string) => void;
   onApproveItem: (id: string) => void;
   onRemoveItem: (id: string) => void;
+  onOpenCalc: () => void;
 };
 
 export default function EstimateTable({
   visible, filterStatus, items, editId, showAdd,
   onFilterChange, onToggleAdd, onCloseAdd,
-  onAddFromCatalog, onAddBlank,
+  onAddFromCatalog, onAddBlank, onOpenCalc,
   onUpdate, onSetEditId, onMarkCalculated, onApproveItem, onRemoveItem,
 }: Props) {
   return (
@@ -52,10 +53,14 @@ export default function EstimateTable({
             );
           })}
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           <button onClick={onToggleAdd}
-            className="flex items-center gap-1.5 text-[12px] bg-[#1a1a1a] text-white px-3 py-2 rounded-[7px] hover:bg-[#333] transition-colors">
-            <Icon name="Plus" size={13} />Добавить позицию
+            className="flex items-center gap-1.5 text-[12px] bg-[#1a1a1a] text-white px-3.5 py-2 rounded-[7px] hover:bg-[#333] transition-all hover:scale-[1.01] active:scale-[0.98]">
+            <Icon name="BookOpen" size={13} />Добавить из каталога
+          </button>
+          <button onClick={onOpenCalc}
+            className="flex items-center gap-1.5 text-[12px] border border-[#e0e0e0] text-[#4a4a4a] bg-white px-3.5 py-2 rounded-[7px] hover:border-[#b0b0b0] hover:text-[#1a1a1a] transition-all hover:scale-[1.01] active:scale-[0.98]">
+            <Icon name="Calculator" size={13} />Новый расчёт
           </button>
         </div>
       </div>
@@ -137,15 +142,23 @@ export default function EstimateTable({
                         ) : (
                           <p className="text-[13px] font-medium text-[#1a1a1a] leading-snug">{item.name || <span className="text-[#c5c5c5]">без названия</span>}</p>
                         )}
-                        <div className="flex items-center gap-2 mt-0.5">
+                        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                           <span className="text-[10px] font-medium" style={{ color: CAT_META(item.category).color }}>
                             {CAT_META(item.category).label}
                           </span>
                           <span className="text-[10px] text-[#c5c5c5]">· {item.author}</span>
-                          {item.note && (
+                          {item.name === "Стела (индивидуальный расчёт)" && (
+                            <span className="text-[10px] font-semibold bg-violet-50 text-violet-600 border border-violet-200 px-1.5 py-px rounded-md">
+                              Индивидуальный расчёт
+                            </span>
+                          )}
+                          {item.note && item.name !== "Стела (индивидуальный расчёт)" && (
                             <span className="text-[10px] text-[#9b9b9b] bg-[#f5f5f5] px-1.5 py-px rounded" title={item.note}>
                               <Icon name="MessageSquare" size={9} className="inline mr-0.5" />{item.note.slice(0, 22)}{item.note.length > 22 ? "…" : ""}
                             </span>
+                          )}
+                          {item.name === "Стела (индивидуальный расчёт)" && item.note && (
+                            <span className="text-[10px] text-[#9b9b9b]">{item.note}</span>
                           )}
                         </div>
                       </div>
