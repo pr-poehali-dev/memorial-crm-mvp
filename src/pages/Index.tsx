@@ -59,6 +59,7 @@ export default function Index() {
   const [openClient, setOpenClient] = useState<string | null>(null);
   const [showRolePicker, setShowRolePicker] = useState(false);
   const [creatingOrder, setCreatingOrder]   = useState(false);
+  const [aiOpen, setAiOpen]               = useState(false);
 
   const handleRoleSelect = (r: Role) => {
     setRole(r);
@@ -181,11 +182,29 @@ export default function Index() {
       </aside>
 
       {/* Main */}
-      <main className="flex-1 overflow-y-auto min-w-0">
+      <main className="flex-1 overflow-y-auto min-w-0 relative">
         {renderMain()}
+
+        {/* AI FAB — внутри контент-зоны */}
+        {!aiOpen && (
+          <button
+            onClick={() => setAiOpen(true)}
+            className="absolute bottom-6 right-6 rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-200"
+            style={{
+              width: 52, height: 52,
+              background: "linear-gradient(135deg, #1a1a1a 0%, #3a3a5c 60%, #1a1a1a 100%)",
+              boxShadow: "0 0 20px 4px rgba(99,102,241,0.3), 0 4px 14px rgba(0,0,0,0.25)",
+            }}
+          >
+            <span className="text-[20px] leading-none select-none">✦</span>
+            <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center shadow-sm">
+              <span className="text-[9px] font-bold text-white">3</span>
+            </span>
+          </button>
+        )}
       </main>
 
-      <AiAssistant />
+      <AiAssistant open={aiOpen} onClose={() => setAiOpen(false)} />
 
       {/* Role picker modal */}
       {showRolePicker && (

@@ -75,8 +75,7 @@ function AiIcon({ size = 32, glow = false }: { size?: number; glow?: boolean }) 
   );
 }
 
-export default function AiAssistant() {
-  const [open, setOpen]     = useState(false);
+export default function AiAssistant({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [tab, setTab]       = useState<"overview" | "chat">("overview");
   const [input, setInput]   = useState("");
   const [messages, setMessages] = useState<Message[]>([
@@ -103,7 +102,7 @@ export default function AiAssistant() {
 
   return (
     <>
-      {open && <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />}
+      {open && <div className="fixed inset-0 z-40" onClick={onClose} />}
 
       {/* Panel */}
       <div className={`fixed right-0 top-0 h-full w-[360px] bg-white border-l border-[#ebebeb] z-50 flex flex-col shadow-2xl transition-transform duration-300 ease-out
@@ -121,7 +120,7 @@ export default function AiAssistant() {
                 <p className="text-[11px] text-[#9b9b9b]">следит за CRM в реальном времени</p>
               </div>
             </div>
-            <button onClick={() => setOpen(false)}
+            <button onClick={onClose}
               className="w-7 h-7 flex items-center justify-center rounded-lg text-[#b5b5b5] hover:text-[#1a1a1a] hover:bg-white/60 transition-all">
               <Icon name="X" size={14} />
             </button>
@@ -276,23 +275,6 @@ export default function AiAssistant() {
         </div>
       </div>
 
-      {/* FAB — только когда панель закрыта */}
-      {!open && (
-        <button
-          onClick={() => setOpen(true)}
-          className="fixed bottom-6 right-6 z-50 rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-200 relative"
-          style={{
-            width: 52, height: 52,
-            background: "linear-gradient(135deg, #1a1a1a 0%, #3a3a5c 60%, #1a1a1a 100%)",
-            boxShadow: "0 0 20px 4px rgba(99,102,241,0.3), 0 4px 14px rgba(0,0,0,0.25)",
-          }}
-        >
-          <span className="text-[20px] leading-none select-none">✦</span>
-          <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center shadow-sm">
-            <span className="text-[9px] font-bold text-white">3</span>
-          </span>
-        </button>
-      )}
     </>
   );
 }
