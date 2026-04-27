@@ -185,8 +185,9 @@ export default function ProductionPage() {
       </div>
 
       {/* Kanban board */}
-      <div className="flex-1 overflow-x-auto overflow-y-auto px-7 pb-7">
-        <div className="flex gap-3 min-w-max items-start">
+      <div className="flex-1 overflow-x-auto overflow-y-auto pb-7">
+        <div className="flex justify-center min-h-full px-7">
+        <div className="flex gap-3 items-start">
           {COLUMNS.map((col) => {
             const visibleCards = col.cards.filter(applyFilter);
             const colOverdue = col.cards.filter(c => c.deadlineState === "overdue").length;
@@ -294,6 +295,7 @@ export default function ProductionPage() {
               </div>
             );
           })}
+        </div>
         </div>
       </div>
     </div>
