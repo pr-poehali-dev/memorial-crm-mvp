@@ -88,8 +88,8 @@ const ROLE_DEFAULT: Record<Role, Section> = {
 type AppScreen = "landing" | "login" | "role-select" | "app";
 
 export default function Index() {
-  const [screen, setScreen]     = useState<AppScreen>("landing");
-  const [role, setRole]         = useState<Role | null>(null);
+  const [screen, setScreen]     = useState<AppScreen>("app");
+  const [role, setRole]         = useState<Role | null>("owner");
   const [active, setActive]     = useState<Section>("overview");
   const [collapsed, setCollapsed]   = useState(false);
   const [openOrder, setOpenOrder]   = useState<string | null>(null);
