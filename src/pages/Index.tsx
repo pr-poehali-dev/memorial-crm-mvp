@@ -39,24 +39,15 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    group: "Производство",
+    group: "Цех",
     color: "#f59e0b",
     hoverBg: "#fffbeb",
     activeBg: "#fef3c7",
     items: [
-      { id: "production", label: "Производство", icon: "Hammer",   sub: "Эскиз, гравировка, полировка" },
       { id: "cutting",         label: "Заготовки",       icon: "Scissors",  sub: "Распил и учёт смен" },
-      { id: "blank-analytics", label: "Анализ заготовок", icon: "BarChart2", sub: "Расход и отклонения" },
-      { id: "warehouse",       label: "Склад",            icon: "Package",   sub: "Сырьё и заготовки" },
-    ],
-  },
-  {
-    group: "Аналитика",
-    color: "#6366f1",
-    hoverBg: "#eef2ff",
-    activeBg: "#e0e7ff",
-    items: [
-      { id: "analytics", label: "Аналитика", icon: "BarChart2", sub: "Отчёты и статистика" },
+      { id: "production",      label: "Производство",    icon: "Hammer",    sub: "Эскиз, гравировка, полировка" },
+      { id: "warehouse",       label: "Склад",           icon: "Package",   sub: "Сырьё и заготовки" },
+      { id: "analytics",       label: "Аналитика",       icon: "BarChart2", sub: "Отчёты и статистика" },
     ],
   },
   {
@@ -75,9 +66,9 @@ const ALL_NAV: NavItem[] = NAV_GROUPS.flatMap(g => g.items);
 const ROLE_NAV: Record<Role, Section[]> = {
   manager:    ["orders", "catalog", "clients"],
   estimator:  ["orders", "catalog", "estimate", "warehouse", "analytics"],
-  production: ["production", "cutting", "blank-analytics", "warehouse"],
+  production: ["cutting", "production", "warehouse", "analytics"],
   accountant: ["orders", "clients", "analytics"],
-  owner:      ["orders", "production", "cutting", "blank-analytics", "catalog", "warehouse", "clients", "analytics", "estimate", "settings"],
+  owner:      ["orders", "cutting", "production", "catalog", "warehouse", "clients", "analytics", "estimate", "settings"],
 };
 
 const ROLE_DEFAULT: Record<Role, Section> = {
