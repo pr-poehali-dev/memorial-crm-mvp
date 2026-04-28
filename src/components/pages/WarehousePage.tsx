@@ -6,7 +6,7 @@ import {
   getLevelRaw, getLevelBlank, LEVEL_STYLE,
 } from "./warehouse/warehouse.types";
 import { RawTable, BlanksTable, MovementHistory } from "./warehouse/WarehouseTables";
-import { MiniStat, TabBtn, ModalIn, ModalCut, ModalUse } from "./warehouse/WarehouseModals";
+import { MiniStat, TabBtn, ModalIn, ModalCut, ModalUse, ModalInMode } from "./warehouse/WarehouseModals";
 
 export default function WarehousePage() {
   const [tab, setTab]             = useState<"raw" | "blanks">("raw");
@@ -17,8 +17,13 @@ export default function WarehousePage() {
   const [search, setSearch]       = useState("");
 
   /* форма прихода */
+  const [inMode, setInMode]   = useState<ModalInMode>("existing");
   const [inRawId, setInRawId] = useState(rawMat[0].id);
   const [inQty, setInQty]     = useState("");
+  const [inName, setInName]   = useState("");
+  const [inUnit, setInUnit]   = useState("м²");
+  const [inMin, setInMin]     = useState("");
+  const [inPrice, setInPrice] = useState("");
 
   /* форма нарезки */
   const [cutRawId, setCutRawId]     = useState(rawMat[0].id);
@@ -35,8 +40,26 @@ export default function WarehousePage() {
   const handleIn = () => {
     const q = parseFloat(inQty);
     if (!q || q <= 0) return;
-    setRawMat(prev => prev.map(r => r.id === inRawId ? { ...r, qty: +(r.qty + q).toFixed(2) } : r));
-    setMovements(prev => [{ id: Date.now().toString(), date: "Сейчас", type: "in", qty: q, note: "Приход от поставщика" }, ...prev]);
+
+    if (inMode === "new") {
+      if (!inName.trim()) return;
+      const newId = "r" + Date.now();
+      const newMat: RawMaterial = {
+        id: newId,
+        name: inName.trim(),
+        unit: inUnit,
+        qty: q,
+        min: parseFloat(inMin) || 0,
+        price: parseFloat(inPrice) || 0,
+      };
+      setRawMat(prev => [...prev, newMat]);
+      setMovements(prev => [{ id: Date.now().toString(), date: "Сейчас", type: "in", qty: q, note: `Новый материал: ${newMat.name}` }, ...prev]);
+      setInName(""); setInMin(""); setInPrice(""); setInUnit("м²");
+    } else {
+      setRawMat(prev => prev.map(r => r.id === inRawId ? { ...r, qty: +(r.qty + q).toFixed(2) } : r));
+      setMovements(prev => [{ id: Date.now().toString(), date: "Сейчас", type: "in", qty: q, note: "Приход от поставщика" }, ...prev]);
+    }
+
     setInQty("");
     setModal(null);
   };
@@ -173,8 +196,13 @@ export default function WarehousePage() {
       {modal === "in" && (
         <ModalIn
           rawMat={rawMat}
+          mode={inMode}     setMode={setInMode}
           inRawId={inRawId} setInRawId={setInRawId}
           inQty={inQty}     setInQty={setInQty}
+          inName={inName}   setInName={setInName}
+          inUnit={inUnit}   setInUnit={setInUnit}
+          inMin={inMin}     setInMin={setInMin}
+          inPrice={inPrice} setInPrice={setInPrice}
           onConfirm={handleIn}
           onClose={() => setModal(null)}
         />
