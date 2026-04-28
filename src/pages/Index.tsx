@@ -97,7 +97,7 @@ export default function Index() {
   const [showRolePicker, setShowRolePicker] = useState(false);
   const [creatingOrder, setCreatingOrder]   = useState(false);
   const [aiOpen, setAiOpen]               = useState(false);
-  const [openGroups, setOpenGroups]       = useState<Set<string>>(new Set(NAV_GROUPS.map(g => g.group)));
+  const [openGroups, setOpenGroups]       = useState<Set<string>>(new Set());
 
   const toggleGroup = (group: string) => {
     setOpenGroups(prev => {
