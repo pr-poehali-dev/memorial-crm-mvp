@@ -21,11 +21,14 @@ import Logo, { LogoCompact } from "@/components/Logo";
 type Section = "overview" | "orders" | "production" | "warehouse" | "clients" | "analytics" | "estimate" | "catalog" | "settings";
 
 type NavItem = { id: Section; label: string; icon: string; sub?: string };
-type NavGroup = { group: string; items: NavItem[] };
+type NavGroup = { group: string; color: string; hoverBg: string; activeBg: string; items: NavItem[] };
 
 const NAV_GROUPS: NavGroup[] = [
   {
     group: "Продажи",
+    color: "#3b82f6",
+    hoverBg: "#eff6ff",
+    activeBg: "#dbeafe",
     items: [
       { id: "orders",   label: "Заказы",      icon: "FileText",   sub: "Учёт и статусы" },
       { id: "clients",  label: "Клиенты",     icon: "Users",      sub: "База покупателей" },
@@ -34,6 +37,9 @@ const NAV_GROUPS: NavGroup[] = [
   },
   {
     group: "Производство",
+    color: "#f59e0b",
+    hoverBg: "#fffbeb",
+    activeBg: "#fef3c7",
     items: [
       { id: "production", label: "Производство", icon: "Hammer",   sub: "Задачи и этапы" },
       { id: "warehouse",  label: "Склад",         icon: "Package",  sub: "Сырьё и заготовки" },
@@ -42,6 +48,9 @@ const NAV_GROUPS: NavGroup[] = [
   },
   {
     group: "Контроль",
+    color: "#6366f1",
+    hoverBg: "#eef2ff",
+    activeBg: "#e0e7ff",
     items: [
       { id: "overview",  label: "Обзор",     icon: "LayoutDashboard", sub: "Дашборд" },
       { id: "analytics", label: "Аналитика", icon: "BarChart2",       sub: "Отчёты" },
@@ -49,6 +58,9 @@ const NAV_GROUPS: NavGroup[] = [
   },
   {
     group: "Система",
+    color: "#9b9b9b",
+    hoverBg: "#f5f5f5",
+    activeBg: "#ebebeb",
     items: [
       { id: "settings", label: "Настройки", icon: "Settings", sub: "Конфигурация" },
     ],
@@ -85,6 +97,16 @@ export default function Index() {
   const [showRolePicker, setShowRolePicker] = useState(false);
   const [creatingOrder, setCreatingOrder]   = useState(false);
   const [aiOpen, setAiOpen]               = useState(false);
+  const [openGroups, setOpenGroups]       = useState<Set<string>>(new Set(NAV_GROUPS.map(g => g.group)));
+
+  const toggleGroup = (group: string) => {
+    setOpenGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(group)) next.delete(group);
+      else next.add(group);
+      return next;
+    });
+  };
 
   const handleRoleSelect = (r: Role) => {
     setRole(r);
@@ -99,6 +121,9 @@ export default function Index() {
     setOpenOrder(null);
     setOpenClient(null);
     setCreatingOrder(false);
+    // auto-expand group containing this item
+    const parentGroup = NAV_GROUPS.find(g => g.items.some(i => i.id === id));
+    if (parentGroup) setOpenGroups(prev => new Set([...prev, parentGroup.group]));
   };
 
   if (screen === "landing") return <LandingPage onStart={() => setScreen("login")} />;
@@ -172,41 +197,85 @@ export default function Index() {
           {NAV_GROUPS.map((group, gi) => {
             const groupItems = group.items.filter(n => ROLE_NAV[role].includes(n.id));
             if (groupItems.length === 0) return null;
+            const isOpen = openGroups.has(group.group);
+            const hasActive = groupItems.some(i => i.id === active);
+
             return (
-              <div key={group.group} className={gi > 0 ? "mt-3" : ""}>
+              <div key={group.group} className={gi > 0 ? "mt-1" : ""}>
+
                 {/* Заголовок группы */}
-                {!collapsed && (
-                  <p className="px-2.5 mb-1 text-[10px] font-semibold uppercase tracking-widest text-[#c0c0c0] select-none">
-                    {group.group}
-                  </p>
-                )}
-                {collapsed && gi > 0 && (
-                  <div className="mx-auto w-4 h-px bg-[#ebebeb] mb-2 mt-1" />
-                )}
-                <div className="flex flex-col gap-0.5">
-                  {groupItems.map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => handleNavClick(item.id)}
-                      title={collapsed ? item.label : undefined}
-                      className={`flex items-center gap-2.5 rounded-[6px] transition-all duration-150 w-full text-left
-                        ${collapsed ? "justify-center h-8 px-0" : "px-2.5 py-1.5"}
-                        ${active === item.id
-                          ? "bg-[#f0f0f0] text-[#1a1a1a]"
-                          : "text-[#737373] hover:bg-[#f5f5f5] hover:text-[#1a1a1a]"
-                        }`}
+                {!collapsed ? (
+                  <button
+                    onClick={() => toggleGroup(group.group)}
+                    className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-[6px] hover:bg-[#f5f5f5] transition-colors group/hdr"
+                  >
+                    <span
+                      className="text-[10px] font-bold uppercase tracking-widest flex-1 text-left transition-colors"
+                      style={{ color: hasActive ? group.color : "#c0c0c0" }}
                     >
-                      <Icon name={item.icon as never} size={15} className="shrink-0" />
-                      {!collapsed && (
-                        <div className="flex-1 min-w-0">
-                          <p className={`text-[13px] leading-tight ${active === item.id ? "font-medium" : ""}`}>{item.label}</p>
-                          {item.sub && (
-                            <p className="text-[10px] text-[#c0c0c0] leading-tight mt-0.5">{item.sub}</p>
-                          )}
-                        </div>
-                      )}
-                    </button>
-                  ))}
+                      {group.group}
+                    </span>
+                    <Icon
+                      name={isOpen ? "ChevronDown" : "ChevronRight"}
+                      size={11}
+                      className="transition-all duration-200 text-[#d0d0d0] group-hover/hdr:text-[#9b9b9b]"
+                    />
+                  </button>
+                ) : (
+                  gi > 0 && <div className="mx-auto w-4 h-px bg-[#ebebeb] my-1.5" />
+                )}
+
+                {/* Пункты группы */}
+                <div
+                  className="flex flex-col gap-0.5 overflow-hidden transition-all duration-200"
+                  style={{ maxHeight: (collapsed || isOpen) ? "400px" : "0px", opacity: (collapsed || isOpen) ? 1 : 0 }}
+                >
+                  {groupItems.map((item) => {
+                    const isActive = active === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => handleNavClick(item.id)}
+                        title={collapsed ? item.label : undefined}
+                        className={`relative flex items-center gap-2.5 rounded-[6px] transition-all duration-150 w-full text-left group/item
+                          ${collapsed ? "justify-center h-8 px-0" : "px-2.5 py-1.5"}`}
+                        style={{
+                          backgroundColor: isActive ? group.activeBg : undefined,
+                        }}
+                        onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.backgroundColor = group.hoverBg; }}
+                        onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.backgroundColor = ""; }}
+                      >
+                        {/* Активная полоска слева */}
+                        {!collapsed && isActive && (
+                          <span
+                            className="absolute left-0 top-1 bottom-1 w-[3px] rounded-full"
+                            style={{ backgroundColor: group.color }}
+                          />
+                        )}
+
+                        <Icon
+                          name={item.icon as never}
+                          size={15}
+                          className="shrink-0 transition-colors duration-150"
+                          style={{ color: isActive ? group.color : undefined }}
+                        />
+
+                        {!collapsed && (
+                          <div className="flex-1 min-w-0">
+                            <p
+                              className="text-[13px] leading-tight transition-colors duration-150"
+                              style={{ color: isActive ? group.color : undefined, fontWeight: isActive ? 500 : undefined }}
+                            >
+                              {item.label}
+                            </p>
+                            {item.sub && (
+                              <p className="text-[10px] text-[#c5c5c5] leading-tight mt-0.5">{item.sub}</p>
+                            )}
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             );
