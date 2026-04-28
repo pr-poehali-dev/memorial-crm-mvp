@@ -34,6 +34,7 @@ const NAV_GROUPS: NavGroup[] = [
       { id: "orders",   label: "Заказы",      icon: "FileText",   sub: "Учёт и статусы" },
       { id: "clients",  label: "Клиенты",     icon: "Users",      sub: "База покупателей" },
       { id: "estimate", label: "Калькулятор", icon: "Calculator", sub: "Расчёт стоимости" },
+      { id: "catalog",  label: "Каталог",     icon: "BookOpen",   sub: "Изделия и цены" },
     ],
   },
   {
@@ -44,8 +45,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { id: "production", label: "Производство", icon: "Hammer",   sub: "Эскиз, гравировка, полировка" },
       { id: "cutting",    label: "Заготовки",    icon: "Scissors", sub: "Распил и учёт смен" },
-      { id: "warehouse",  label: "Склад",         icon: "Package",  sub: "Сырьё и заготовки" },
-      { id: "catalog",    label: "Каталог",       icon: "BookOpen", sub: "Изделия и цены" },
+      { id: "warehouse",  label: "Склад",        icon: "Package",  sub: "Сырьё и заготовки" },
     ],
   },
   {
