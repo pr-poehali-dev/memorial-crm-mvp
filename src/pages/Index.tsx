@@ -20,17 +20,42 @@ import Logo, { LogoCompact } from "@/components/Logo";
 
 type Section = "overview" | "orders" | "production" | "warehouse" | "clients" | "analytics" | "estimate" | "catalog" | "settings";
 
-const ALL_NAV: { id: Section; label: string; icon: string }[] = [
-  { id: "overview",    label: "Обзор",         icon: "LayoutDashboard" },
-  { id: "orders",      label: "Заказы",         icon: "FileText" },
-  { id: "production",  label: "Производство",   icon: "Hammer" },
-  { id: "catalog",     label: "Каталог",        icon: "BookOpen" },
-  { id: "warehouse",   label: "Склад",          icon: "Package" },
-  { id: "clients",     label: "Клиенты",        icon: "Users" },
-  { id: "analytics",   label: "Аналитика",      icon: "BarChart2" },
-  { id: "estimate",    label: "Калькулятор",    icon: "Calculator" },
-  { id: "settings",    label: "Настройки",      icon: "Settings" },
+type NavItem = { id: Section; label: string; icon: string; sub?: string };
+type NavGroup = { group: string; items: NavItem[] };
+
+const NAV_GROUPS: NavGroup[] = [
+  {
+    group: "Продажи",
+    items: [
+      { id: "orders",   label: "Заказы",      icon: "FileText",   sub: "Учёт и статусы" },
+      { id: "clients",  label: "Клиенты",     icon: "Users",      sub: "База покупателей" },
+      { id: "estimate", label: "Калькулятор", icon: "Calculator", sub: "Расчёт стоимости" },
+    ],
+  },
+  {
+    group: "Производство",
+    items: [
+      { id: "production", label: "Производство", icon: "Hammer",   sub: "Задачи и этапы" },
+      { id: "warehouse",  label: "Склад",         icon: "Package",  sub: "Сырьё и заготовки" },
+      { id: "catalog",    label: "Каталог",       icon: "BookOpen", sub: "Изделия и цены" },
+    ],
+  },
+  {
+    group: "Контроль",
+    items: [
+      { id: "overview",  label: "Обзор",     icon: "LayoutDashboard", sub: "Дашборд" },
+      { id: "analytics", label: "Аналитика", icon: "BarChart2",       sub: "Отчёты" },
+    ],
+  },
+  {
+    group: "Система",
+    items: [
+      { id: "settings", label: "Настройки", icon: "Settings", sub: "Конфигурация" },
+    ],
+  },
 ];
+
+const ALL_NAV: NavItem[] = NAV_GROUPS.flatMap(g => g.items);
 
 const ROLE_NAV: Record<Role, Section[]> = {
   manager:    ["overview", "orders", "catalog", "clients"],
@@ -81,7 +106,6 @@ export default function Index() {
   if (screen === "role-select") return <RoleSelect onSelect={handleRoleSelect} />;
 
   const currentRole = ROLES.find((r) => r.id === role)!;
-  const visibleNav = ALL_NAV.filter((n) => ROLE_NAV[role].includes(n.id));
 
   const renderMain = () => {
     if (creatingOrder) return <NewOrderPage onBack={() => setCreatingOrder(false)} />;
@@ -144,23 +168,49 @@ export default function Index() {
         )}
 
         {/* Nav */}
-        <nav className="flex-1 py-2 px-2 flex flex-col gap-0.5 overflow-hidden">
-          {visibleNav.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => handleNavClick(item.id)}
-              title={collapsed ? item.label : undefined}
-              className={`flex items-center gap-2.5 rounded-[6px] h-8 transition-all duration-150 w-full text-left
-                ${collapsed ? "justify-center px-0" : "px-2.5"}
-                ${active === item.id
-                  ? "bg-[#f0f0f0] text-[#1a1a1a] font-medium"
-                  : "text-[#737373] hover:bg-[#f5f5f5] hover:text-[#1a1a1a]"
-                }`}
-            >
-              <Icon name={item.icon as never} size={15} className="shrink-0" />
-              {!collapsed && <span className="text-[13px]">{item.label}</span>}
-            </button>
-          ))}
+        <nav className="flex-1 py-2 px-2 flex flex-col overflow-y-auto overflow-x-hidden">
+          {NAV_GROUPS.map((group, gi) => {
+            const groupItems = group.items.filter(n => ROLE_NAV[role].includes(n.id));
+            if (groupItems.length === 0) return null;
+            return (
+              <div key={group.group} className={gi > 0 ? "mt-3" : ""}>
+                {/* Заголовок группы */}
+                {!collapsed && (
+                  <p className="px-2.5 mb-1 text-[10px] font-semibold uppercase tracking-widest text-[#c0c0c0] select-none">
+                    {group.group}
+                  </p>
+                )}
+                {collapsed && gi > 0 && (
+                  <div className="mx-auto w-4 h-px bg-[#ebebeb] mb-2 mt-1" />
+                )}
+                <div className="flex flex-col gap-0.5">
+                  {groupItems.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => handleNavClick(item.id)}
+                      title={collapsed ? item.label : undefined}
+                      className={`flex items-center gap-2.5 rounded-[6px] transition-all duration-150 w-full text-left
+                        ${collapsed ? "justify-center h-8 px-0" : "px-2.5 py-1.5"}
+                        ${active === item.id
+                          ? "bg-[#f0f0f0] text-[#1a1a1a]"
+                          : "text-[#737373] hover:bg-[#f5f5f5] hover:text-[#1a1a1a]"
+                        }`}
+                    >
+                      <Icon name={item.icon as never} size={15} className="shrink-0" />
+                      {!collapsed && (
+                        <div className="flex-1 min-w-0">
+                          <p className={`text-[13px] leading-tight ${active === item.id ? "font-medium" : ""}`}>{item.label}</p>
+                          {item.sub && (
+                            <p className="text-[10px] text-[#c0c0c0] leading-tight mt-0.5">{item.sub}</p>
+                          )}
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </nav>
 
         {/* Bottom */}
