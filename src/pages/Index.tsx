@@ -202,11 +202,13 @@ export default function Index() {
             const isOpen = openGroups.has(group.group);
             const hasActive = groupItems.some(i => i.id === active);
 
+            const noCollapse = group.group === "Аналитика" || group.group === "Система";
+
             return (
               <div key={group.group} className={gi > 0 ? "mt-1" : ""}>
 
                 {/* Заголовок группы */}
-                {!collapsed ? (
+                {!collapsed && !noCollapse ? (
                   <button
                     onClick={() => toggleGroup(group.group)}
                     className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-[6px] hover:bg-[#f5f5f5] transition-colors group/hdr"
@@ -223,6 +225,8 @@ export default function Index() {
                       className="transition-all duration-200 text-[#d0d0d0] group-hover/hdr:text-[#9b9b9b]"
                     />
                   </button>
+                ) : !collapsed && noCollapse ? (
+                  <div className="mx-2 my-1.5 h-px bg-[#f0f0f0]" />
                 ) : (
                   gi > 0 && <div className="mx-auto w-4 h-px bg-[#ebebeb] my-1.5" />
                 )}
@@ -230,7 +234,7 @@ export default function Index() {
                 {/* Пункты группы */}
                 <div
                   className="flex flex-col gap-0.5 overflow-hidden transition-all duration-200"
-                  style={{ maxHeight: (collapsed || isOpen) ? "400px" : "0px", opacity: (collapsed || isOpen) ? 1 : 0 }}
+                  style={{ maxHeight: (collapsed || isOpen || noCollapse) ? "400px" : "0px", opacity: (collapsed || isOpen || noCollapse) ? 1 : 0 }}
                 >
                   {groupItems.map((item) => {
                     const isActive = active === item.id;
