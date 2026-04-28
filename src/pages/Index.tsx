@@ -17,8 +17,9 @@ import NewOrderPage from "@/components/pages/NewOrderPage";
 import EstimatePage from "@/components/pages/EstimatePage";
 import CatalogPage from "@/components/pages/CatalogPage";
 import Logo, { LogoCompact } from "@/components/Logo";
+import CuttingPage from "@/components/pages/CuttingPage";
 
-type Section = "overview" | "orders" | "production" | "warehouse" | "clients" | "analytics" | "estimate" | "catalog" | "settings";
+type Section = "overview" | "orders" | "production" | "cutting" | "warehouse" | "clients" | "analytics" | "estimate" | "catalog" | "settings";
 
 type NavItem = { id: Section; label: string; icon: string; sub?: string };
 type NavGroup = { group: string; color: string; hoverBg: string; activeBg: string; items: NavItem[] };
@@ -41,7 +42,8 @@ const NAV_GROUPS: NavGroup[] = [
     hoverBg: "#fffbeb",
     activeBg: "#fef3c7",
     items: [
-      { id: "production", label: "Производство", icon: "Hammer",   sub: "Задачи и этапы" },
+      { id: "production", label: "Производство", icon: "Hammer",   sub: "Эскиз, гравировка, полировка" },
+      { id: "cutting",    label: "Заготовки",    icon: "Scissors", sub: "Распил и учёт смен" },
       { id: "warehouse",  label: "Склад",         icon: "Package",  sub: "Сырьё и заготовки" },
       { id: "catalog",    label: "Каталог",       icon: "BookOpen", sub: "Изделия и цены" },
     ],
@@ -72,9 +74,9 @@ const ALL_NAV: NavItem[] = NAV_GROUPS.flatMap(g => g.items);
 const ROLE_NAV: Record<Role, Section[]> = {
   manager:    ["overview", "orders", "catalog", "clients"],
   estimator:  ["orders", "catalog", "estimate", "warehouse", "analytics"],
-  production: ["production", "warehouse"],
+  production: ["production", "cutting", "warehouse"],
   accountant: ["overview", "orders", "clients", "analytics"],
-  owner:      ["overview", "orders", "production", "catalog", "warehouse", "clients", "analytics", "estimate", "settings"],
+  owner:      ["overview", "orders", "production", "cutting", "catalog", "warehouse", "clients", "analytics", "estimate", "settings"],
 };
 
 const ROLE_DEFAULT: Record<Role, Section> = {
@@ -140,6 +142,7 @@ export default function Index() {
       case "overview":   return <OverviewPage />;
       case "orders":     return <OrdersPage onOpenOrder={(id) => setOpenOrder(id)} onNewOrder={() => setCreatingOrder(true)} />;
       case "production": return <ProductionPage />;
+      case "cutting":    return <CuttingPage />;
       case "warehouse":  return <WarehousePage />;
       case "clients":    return <ClientsPage onOpenClient={(id) => setOpenClient(id)} />;
       case "analytics":  return <AnalyticsPage />;

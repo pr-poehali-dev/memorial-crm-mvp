@@ -65,7 +65,6 @@ export type Column = {
 /* ══════════════ ДАННЫЕ ══════════════ */
 
 export const ZONES: Zone[] = [
-  { id: "z1", name: "Распил",           type: "production", color: "#f59e0b", icon: "Scissors" },
   { id: "z2", name: "Гравировка",       type: "production", color: "#ec4899", icon: "PenTool" },
   { id: "z3", name: "Полировка",        type: "production", color: "#14b8a6", icon: "Sparkles" },
   { id: "z4", name: "Склад сырья",      type: "storage",    color: "#6b7280", icon: "Package" },
@@ -73,8 +72,6 @@ export const ZONES: Zone[] = [
 ];
 
 export const MACHINES: Machine[] = [
-  { id: "m1", name: "Пилорама №1",       zoneId: "z1", type: "Ленточная пила" },
-  { id: "m2", name: "Пилорама №2",       zoneId: "z1", type: "Дисковая пила" },
   { id: "m3", name: "Гравёр ЧПУ №1",    zoneId: "z2", type: "ЧПУ-гравировка" },
   { id: "m4", name: "Гравёр ЧПУ №2",    zoneId: "z2", type: "ЧПУ-гравировка" },
   { id: "m5", name: "Лазер",            zoneId: "z2", type: "Лазерная гравировка" },
@@ -91,7 +88,6 @@ export const EMPLOYEES: Employee[] = [
 ];
 
 export const initShifts: Shift[] = [
-  { id: "s1", zoneId: "z1", machineId: "m1", employeeId: "e2", date: "28.04.2026" },
   { id: "s2", zoneId: "z2", machineId: "m3", employeeId: "e1", date: "28.04.2026" },
   { id: "s3", zoneId: "z3", machineId: "m6", employeeId: "e4", date: "28.04.2026" },
 ];
@@ -100,21 +96,16 @@ export const COLUMNS: Column[] = [
   {
     id: "sketch", label: "Эскиз", color: "#6366f1", zoneId: "",
     cards: [
-      { id: "МП-0040", client: "Козлов И.Д.",   stone: "Мрамор белый",  size: "80×40×6",   daysInStage: 2, deadline: "20.04", deadlineState: "overdue", manager: "Анна М.",  phone: "+7 903 211-44-55" },
-      { id: "МП-0042", client: "Белова Е.С.",   stone: "Гранит чёрный", size: "90×45×7",   daysInStage: 1, deadline: "02.05", deadlineState: "ok",      manager: "Олег К.",  phone: "+7 916 200-10-30" },
-    ],
-  },
-  {
-    id: "cutting", label: "Распил", color: "#f59e0b", zoneId: "z1",
-    cards: [
-      { id: "МП-0041", client: "Смирнова А.В.", stone: "Гранит чёрный", size: "100×50×8",  daysInStage: 5, deadline: "28.04", deadlineState: "soon",    manager: "Олег К.",  urgent: true, phone: "+7 912 345-67-89", zoneId: "z1", machineId: "m1" },
-      { id: "МП-0036", client: "Морозова Т.И.", stone: "Гранит габбро",  size: "110×55×8",  daysInStage: 3, deadline: "30.04", deadlineState: "ok",      manager: "Игорь В.", phone: "+7 921 456-78-90", zoneId: "z1", machineId: "m2" },
+      { id: "МП-0040", client: "Козлов И.Д.",   stone: "Мрамор белый",  size: "80×40×6",  daysInStage: 2, deadline: "20.04", deadlineState: "overdue", manager: "Анна М.",  phone: "+7 903 211-44-55" },
+      { id: "МП-0042", client: "Белова Е.С.",   stone: "Гранит чёрный", size: "90×45×7",  daysInStage: 1, deadline: "02.05", deadlineState: "ok",      manager: "Олег К.",  phone: "+7 916 200-10-30" },
+      { id: "МП-0041", client: "Смирнова А.В.", stone: "Гранит чёрный", size: "100×50×8", daysInStage: 2, deadline: "28.04", deadlineState: "soon",    manager: "Олег К.",  urgent: true, phone: "+7 912 345-67-89" },
+      { id: "МП-0036", client: "Морозова Т.И.", stone: "Гранит габбро",  size: "110×55×8", daysInStage: 1, deadline: "30.04", deadlineState: "ok",      manager: "Игорь В.", phone: "+7 921 456-78-90" },
     ],
   },
   {
     id: "engraving", label: "Гравировка", color: "#ec4899", zoneId: "z2",
     cards: [
-      { id: "МП-0035", client: "Лебедев К.А.",  stone: "Гранит серый",  size: "100×50×8",  daysInStage: 7, deadline: "10.04", deadlineState: "overdue", manager: "Игорь В.", urgent: true, phone: "+7 916 700-22-11", zoneId: "z2", machineId: "m3" },
+      { id: "МП-0035", client: "Лебедев К.А.",  stone: "Гранит серый",  size: "100×50×8", daysInStage: 7, deadline: "10.04", deadlineState: "overdue", manager: "Игорь В.", urgent: true, phone: "+7 916 700-22-11", zoneId: "z2", machineId: "m3" },
     ],
   },
   {
@@ -127,8 +118,8 @@ export const COLUMNS: Column[] = [
   {
     id: "ready", label: "Готов", color: "#22c55e", zoneId: "",
     cards: [
-      { id: "МП-0039", client: "Петрова О.Н.",  stone: "Гранит серый",  size: "120×60×10", daysInStage: 14, deadline: "25.04", deadlineState: "ok",     manager: "Олег К.",  phone: "+7 965 888-11-22" },
-      { id: "МП-0037", client: "Иванов П.К.",   stone: "Гранит чёрный", size: "100×50×8",  daysInStage: 12, deadline: "15.04", deadlineState: "ok",     manager: "Анна М.",  phone: "+7 900 123-00-00" },
+      { id: "МП-0039", client: "Петрова О.Н.",  stone: "Гранит серый",  size: "120×60×10", daysInStage: 14, deadline: "25.04", deadlineState: "ok", manager: "Олег К.",  phone: "+7 965 888-11-22" },
+      { id: "МП-0037", client: "Иванов П.К.",   stone: "Гранит чёрный", size: "100×50×8",  daysInStage: 12, deadline: "15.04", deadlineState: "ok", manager: "Анна М.",  phone: "+7 900 123-00-00" },
     ],
   },
 ];
