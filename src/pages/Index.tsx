@@ -49,13 +49,12 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    group: "Контроль",
+    group: "Аналитика",
     color: "#6366f1",
     hoverBg: "#eef2ff",
     activeBg: "#e0e7ff",
     items: [
-      { id: "overview",  label: "Обзор",     icon: "LayoutDashboard", sub: "Дашборд" },
-      { id: "analytics", label: "Аналитика", icon: "BarChart2",       sub: "Отчёты" },
+      { id: "analytics", label: "Аналитика", icon: "BarChart2", sub: "Отчёты и статистика" },
     ],
   },
   {
@@ -72,19 +71,19 @@ const NAV_GROUPS: NavGroup[] = [
 const ALL_NAV: NavItem[] = NAV_GROUPS.flatMap(g => g.items);
 
 const ROLE_NAV: Record<Role, Section[]> = {
-  manager:    ["overview", "orders", "catalog", "clients"],
+  manager:    ["orders", "catalog", "clients"],
   estimator:  ["orders", "catalog", "estimate", "warehouse", "analytics"],
   production: ["production", "cutting", "warehouse"],
-  accountant: ["overview", "orders", "clients", "analytics"],
-  owner:      ["overview", "orders", "production", "cutting", "catalog", "warehouse", "clients", "analytics", "estimate", "settings"],
+  accountant: ["orders", "clients", "analytics"],
+  owner:      ["orders", "production", "cutting", "catalog", "warehouse", "clients", "analytics", "estimate", "settings"],
 };
 
 const ROLE_DEFAULT: Record<Role, Section> = {
   manager:    "orders",
   estimator:  "estimate",
   production: "production",
-  accountant: "overview",
-  owner:      "overview",
+  accountant: "orders",
+  owner:      "orders",
 };
 
 type AppScreen = "landing" | "login" | "role-select" | "app";
