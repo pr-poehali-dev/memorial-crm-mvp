@@ -39,15 +39,31 @@ const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    group: "Цех",
+    group: "Производство",
     color: "#f59e0b",
     hoverBg: "#fffbeb",
     activeBg: "#fef3c7",
     items: [
-      { id: "cutting",         label: "Заготовки",       icon: "Scissors",  sub: "Распил и учёт смен" },
-      { id: "production",      label: "Производство",    icon: "Hammer",    sub: "Эскиз, гравировка, полировка" },
-      { id: "warehouse",       label: "Склад",           icon: "Package",   sub: "Сырьё и заготовки" },
-      { id: "analytics",       label: "Аналитика",       icon: "BarChart2", sub: "Отчёты и статистика" },
+      { id: "cutting",    label: "Заготовки",    icon: "Scissors", sub: "Распил и учёт смен" },
+      { id: "production", label: "Производство", icon: "Hammer",   sub: "Эскиз, гравировка, полировка" },
+    ],
+  },
+  {
+    group: "Склад",
+    color: "#6b7280",
+    hoverBg: "#f5f5f5",
+    activeBg: "#ebebeb",
+    items: [
+      { id: "warehouse", label: "Склад", icon: "Package", sub: "Сырьё и заготовки" },
+    ],
+  },
+  {
+    group: "Аналитика",
+    color: "#6366f1",
+    hoverBg: "#eef2ff",
+    activeBg: "#e0e7ff",
+    items: [
+      { id: "analytics", label: "Аналитика", icon: "BarChart2", sub: "Отчёты и статистика" },
     ],
   },
   {
@@ -196,7 +212,7 @@ export default function Index() {
             const isOpen = openGroups.has(group.group);
             const hasActive = groupItems.some(i => i.id === active);
 
-            const noCollapse = group.group === "Аналитика" || group.group === "Система";
+            const noCollapse = group.group === "Склад" || group.group === "Аналитика" || group.group === "Система";
 
             return (
               <div key={group.group} className={gi > 0 ? "mt-1" : ""}>
