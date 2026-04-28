@@ -18,8 +18,9 @@ import EstimatePage from "@/components/pages/EstimatePage";
 import CatalogPage from "@/components/pages/CatalogPage";
 import Logo, { LogoCompact } from "@/components/Logo";
 import CuttingPage from "@/components/pages/CuttingPage";
+import BlankAnalyticsPage from "@/components/pages/BlankAnalyticsPage";
 
-type Section = "overview" | "orders" | "production" | "cutting" | "warehouse" | "clients" | "analytics" | "estimate" | "catalog" | "settings";
+type Section = "overview" | "orders" | "production" | "cutting" | "warehouse" | "clients" | "analytics" | "estimate" | "catalog" | "settings" | "blank-analytics";
 
 type NavItem = { id: Section; label: string; icon: string; sub?: string };
 type NavGroup = { group: string; color: string; hoverBg: string; activeBg: string; items: NavItem[] };
@@ -44,8 +45,9 @@ const NAV_GROUPS: NavGroup[] = [
     activeBg: "#fef3c7",
     items: [
       { id: "production", label: "Производство", icon: "Hammer",   sub: "Эскиз, гравировка, полировка" },
-      { id: "cutting",    label: "Заготовки",    icon: "Scissors", sub: "Распил и учёт смен" },
-      { id: "warehouse",  label: "Склад",        icon: "Package",  sub: "Сырьё и заготовки" },
+      { id: "cutting",         label: "Заготовки",       icon: "Scissors",  sub: "Распил и учёт смен" },
+      { id: "blank-analytics", label: "Анализ заготовок", icon: "BarChart2", sub: "Расход и отклонения" },
+      { id: "warehouse",       label: "Склад",            icon: "Package",   sub: "Сырьё и заготовки" },
     ],
   },
   {
@@ -73,9 +75,9 @@ const ALL_NAV: NavItem[] = NAV_GROUPS.flatMap(g => g.items);
 const ROLE_NAV: Record<Role, Section[]> = {
   manager:    ["orders", "catalog", "clients"],
   estimator:  ["orders", "catalog", "estimate", "warehouse", "analytics"],
-  production: ["production", "cutting", "warehouse"],
+  production: ["production", "cutting", "blank-analytics", "warehouse"],
   accountant: ["orders", "clients", "analytics"],
-  owner:      ["orders", "production", "cutting", "catalog", "warehouse", "clients", "analytics", "estimate", "settings"],
+  owner:      ["orders", "production", "cutting", "blank-analytics", "catalog", "warehouse", "clients", "analytics", "estimate", "settings"],
 };
 
 const ROLE_DEFAULT: Record<Role, Section> = {
@@ -146,8 +148,9 @@ export default function Index() {
       case "clients":    return <ClientsPage onOpenClient={(id) => setOpenClient(id)} />;
       case "analytics":  return <AnalyticsPage />;
       case "estimate":   return <EstimatePage />;
-      case "catalog":    return <CatalogPage canEdit={role === "estimator" || role === "owner"} />;
-      case "settings":   return <SettingsPage />;
+      case "catalog":          return <CatalogPage canEdit={role === "estimator" || role === "owner"} />;
+      case "blank-analytics":  return <BlankAnalyticsPage />;
+      case "settings":         return <SettingsPage />;
     }
   };
 
