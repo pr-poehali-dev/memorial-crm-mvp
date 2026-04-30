@@ -165,31 +165,35 @@ export default function CuttingPage() {
 
         {/* ════ Вчера ════ */}
         {tab === "yesterday" && (
-          <div className="space-y-5">
+          <div className="space-y-4">
             {/* Краткая статистика */}
             <div className="grid grid-cols-3 gap-3">
               {[
-                { label: "Смен",     value: String(yesterdayDone.length) },
-                { label: "Изделий",  value: `${ydP} шт.` },
-                { label: "Сырья",    value: `${ydR.toFixed(1)} м²` },
+                { label: "Смен",          value: String(yesterdayDone.length), sub: null },
+                { label: "Изделий",       value: `${ydP}`,                     sub: "шт." },
+                { label: "Расход сырья",  value: `${ydR.toFixed(1)}`,          sub: "м²"  },
               ].map(s => (
                 <div key={s.label} className="bg-[#f4f4f4] rounded-xl px-4 py-3 flex flex-col gap-0.5">
-                  <span className="text-[22px] font-semibold text-[#1a1a1a] leading-none">{s.value}</span>
-                  <span className="text-[12px] text-[#9b9b9b]">{s.label}</span>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-[24px] font-semibold text-[#1a1a1a] leading-none">{s.value}</span>
+                    {s.sub && <span className="text-[13px] text-[#9b9b9b]">{s.sub}</span>}
+                  </div>
+                  <span className="text-[11px] text-[#9b9b9b]">{s.label}</span>
                 </div>
               ))}
             </div>
 
-            {/* Завершённые смены вчера */}
+            {/* Смены — всегда раскрыты, без аккордеона */}
             {yesterdayDone.length === 0 ? (
               <EmptyState text="Нет смен за вчера" />
             ) : (
               <div className="space-y-2">
-                <p className="text-[11px] font-bold uppercase tracking-widest text-[#c0c0c0]">Смены за {yesterday}</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-[#c0c0c0]">Смены за {yesterday}</p>
                 <CuttingShiftCards
                   activeShifts={[]}
                   todayDone={yesterdayDone}
                   onFinishClick={() => {}}
+                  alwaysExpanded
                 />
               </div>
             )}
