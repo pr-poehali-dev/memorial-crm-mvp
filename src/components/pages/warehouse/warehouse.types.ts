@@ -17,13 +17,21 @@ export type Blank = {
   min: number;
 };
 
+export type MovementType = "in" | "cut" | "use" | "adjust";
+
 export type Movement = {
   id: string;
   date: string;
-  type: "in" | "cut" | "use";
+  type: MovementType;
+  materialId?: string;
+  blankId?: string;
   qty: number;
+  pricePerUnit?: number;
+  totalSum?: number;
   note: string;
+  receiptId?: string;
   order?: string;
+  remainAfter?: number;
 };
 
 export type ModalType = "in" | "cut" | "use" | null;
@@ -48,11 +56,12 @@ export const initBlanks: Blank[] = [
 
 /* ─── История движений ─── */
 export const initMovements: Movement[] = [
-  { id: "m1", date: "20 апр.", type: "use", qty: 1,   note: "Списание",             order: "МП-0041" },
-  { id: "m2", date: "18 апр.", type: "cut", qty: 2,   note: "Нарезка заготовок" },
-  { id: "m3", date: "15 апр.", type: "in",  qty: 5.0, note: "Приход от поставщика" },
-  { id: "m4", date: "10 апр.", type: "use", qty: 1,   note: "Списание",             order: "МП-0038" },
-  { id: "m5", date: "05 апр.", type: "cut", qty: 3,   note: "Нарезка заготовок" },
+  { id: "m1", date: "20 апр.", type: "use",  materialId: "r1", blankId: "b1", qty: 1,   note: "Списание на заказ",       order: "МП-0041",  remainAfter: 14.5 },
+  { id: "m2", date: "18 апр.", type: "cut",  materialId: "r2", blankId: "b2", qty: 2,   note: "Нарезка: Плита большая",  remainAfter: 7.2  },
+  { id: "m3", date: "15 апр.", type: "in",   materialId: "r1", qty: 5.0, pricePerUnit: 4200, totalSum: 21000, note: "Приход от поставщика", receiptId: "КР-0041", remainAfter: 19.5 },
+  { id: "m4", date: "10 апр.", type: "use",  materialId: "r4", blankId: "b3", qty: 1,   note: "Списание на заказ",       order: "МП-0038",  remainAfter: 2.4  },
+  { id: "m5", date: "05 апр.", type: "cut",  materialId: "r1", blankId: "b1", qty: 3,   note: "Нарезка: Плита стандарт", remainAfter: 14.5 },
+  { id: "m6", date: "01 апр.", type: "in",   materialId: "r3", qty: 3.1, pricePerUnit: 5100, totalSum: 15810, note: "Приход от поставщика", receiptId: "КР-0039", remainAfter: 3.1  },
 ];
 
 /* ─── Вспомогалки ─── */
@@ -68,6 +77,14 @@ export function getLevelBlank(b: Blank): "critical" | "low" | "ok" {
   return "ok";
 }
 
+/* ─── Авторасчёт расхода по размеру ─── */
+export function calcRawPerUnit(size: string): number | null {
+  const parts = size.split("×").map(s => parseFloat(s.trim()));
+  if (parts.length < 2 || parts.some(isNaN)) return null;
+  const [w, h] = parts;
+  return +(w / 100 * h / 100).toFixed(2);
+}
+
 /* ─── Стили уровней ─── */
 export const LEVEL_STYLE = {
   critical: { dot: "bg-red-400",   badge: "bg-red-100 text-red-600",    row: "bg-red-50",      bar: "#ef4444" },
@@ -76,10 +93,11 @@ export const LEVEL_STYLE = {
 };
 
 /* ─── Типы движений ─── */
-export const MOVE_TYPE: Record<Movement["type"], { label: string; color: string; icon: string }> = {
-  in:  { label: "Приход",   color: "#16a34a", icon: "ArrowDownToLine" },
-  cut: { label: "Нарезка",  color: "#6366f1", icon: "Scissors" },
-  use: { label: "Списание", color: "#ef4444", icon: "ArrowUpFromLine" },
+export const MOVE_TYPE: Record<MovementType, { label: string; color: string; icon: string; rowBg: string }> = {
+  in:     { label: "Приход",       color: "#16a34a", icon: "ArrowDownToLine", rowBg: "#f0fdf4" },
+  cut:    { label: "Нарезка",      color: "#6366f1", icon: "Scissors",        rowBg: "#f5f3ff" },
+  use:    { label: "Списание",     color: "#ef4444", icon: "ArrowUpFromLine", rowBg: "#fef2f2" },
+  adjust: { label: "Корректировка",color: "#f59e0b", icon: "SlidersHorizontal",rowBg: "#fffbeb" },
 };
 
 /* ─── Общие CSS-классы ─── */
