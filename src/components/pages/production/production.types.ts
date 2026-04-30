@@ -43,12 +43,15 @@ export type Card = {
   client: string;
   stone: string;
   size: string;
+  product: string;
   daysInStage: number;
   deadline: string;
   deadlineState: DeadlineState;
   manager: string;
   urgent?: boolean;
   phone: string;
+  payment?: string;
+  problem?: string;
   zoneId?: string;
   machineId?: string;
 };
@@ -96,30 +99,30 @@ export const COLUMNS: Column[] = [
   {
     id: "sketch", label: "Эскиз", color: "#6366f1", zoneId: "",
     cards: [
-      { id: "МП-0040", client: "Козлов И.Д.",   stone: "Мрамор белый",  size: "80×40×6",  daysInStage: 2, deadline: "20.04", deadlineState: "overdue", manager: "Анна М.",  phone: "+7 903 211-44-55" },
-      { id: "МП-0042", client: "Белова Е.С.",   stone: "Гранит чёрный", size: "90×45×7",  daysInStage: 1, deadline: "02.05", deadlineState: "ok",      manager: "Олег К.",  phone: "+7 916 200-10-30" },
-      { id: "МП-0041", client: "Смирнова А.В.", stone: "Гранит чёрный", size: "100×50×8", daysInStage: 2, deadline: "28.04", deadlineState: "soon",    manager: "Олег К.",  urgent: true, phone: "+7 912 345-67-89" },
-      { id: "МП-0036", client: "Морозова Т.И.", stone: "Гранит габбро",  size: "110×55×8", daysInStage: 1, deadline: "30.04", deadlineState: "ok",      manager: "Игорь В.", phone: "+7 921 456-78-90" },
+      { id: "МП-0040", client: "Козлов И.Д.",   stone: "Мрамор белый",  size: "80×40×6",   product: "Надгробная плита",  daysInStage: 2, deadline: "20.04", deadlineState: "overdue", manager: "Анна М.",  phone: "+7 903 211-44-55", payment: "Оплачено",    problem: "Клиент не согласовал эскиз" },
+      { id: "МП-0042", client: "Белова Е.С.",   stone: "Гранит чёрный", size: "90×45×7",   product: "Стела",             daysInStage: 1, deadline: "02.05", deadlineState: "ok",      manager: "Олег К.",  phone: "+7 916 200-10-30", payment: "Предоплата 50%" },
+      { id: "МП-0041", client: "Смирнова А.В.", stone: "Гранит чёрный", size: "100×50×8",  product: "Памятник двойной",  daysInStage: 2, deadline: "28.04", deadlineState: "soon",    manager: "Олег К.",  urgent: true, phone: "+7 912 345-67-89", payment: "Оплачено",    problem: "Ждём фото для гравировки" },
+      { id: "МП-0036", client: "Морозова Т.И.", stone: "Гранит габбро",  size: "110×55×8",  product: "Плита горизонт.",   daysInStage: 1, deadline: "30.04", deadlineState: "ok",      manager: "Игорь В.", phone: "+7 921 456-78-90", payment: "Не оплачено" },
     ],
   },
   {
     id: "engraving", label: "Гравировка", color: "#ec4899", zoneId: "z2",
     cards: [
-      { id: "МП-0035", client: "Лебедев К.А.",  stone: "Гранит серый",  size: "100×50×8", daysInStage: 7, deadline: "10.04", deadlineState: "overdue", manager: "Игорь В.", urgent: true, phone: "+7 916 700-22-11", zoneId: "z2", machineId: "m3" },
+      { id: "МП-0035", client: "Лебедев К.А.",  stone: "Гранит серый",  size: "100×50×8",  product: "Надгробие с портр.", daysInStage: 7, deadline: "10.04", deadlineState: "overdue", manager: "Игорь В.", urgent: true, phone: "+7 916 700-22-11", zoneId: "z2", machineId: "m3", payment: "Оплачено", problem: "Сломалась фреза, простой 2 дня" },
     ],
   },
   {
     id: "polishing", label: "Полировка", color: "#14b8a6", zoneId: "z3",
     cards: [
-      { id: "МП-0034", client: "Новикова П.В.", stone: "Мрамор серый",   size: "80×40×6",   daysInStage: 9, deadline: "26.04", deadlineState: "soon",    manager: "Анна М.",  phone: "+7 977 300-55-66", zoneId: "z3", machineId: "m6" },
-      { id: "МП-0033", client: "Семёнов Д.О.",  stone: "Гранит красный", size: "90×45×7",   daysInStage: 8, deadline: "24.04", deadlineState: "overdue", manager: "Олег К.",  phone: "+7 925 100-77-88", zoneId: "z3", machineId: "m7" },
+      { id: "МП-0034", client: "Новикова П.В.", stone: "Мрамор серый",   size: "80×40×6",   product: "Плита стандарт",    daysInStage: 9, deadline: "26.04", deadlineState: "soon",    manager: "Анна М.",  phone: "+7 977 300-55-66", zoneId: "z3", machineId: "m6", payment: "Предоплата 50%" },
+      { id: "МП-0033", client: "Семёнов Д.О.",  stone: "Гранит красный", size: "90×45×7",   product: "Стела вертикальн.", daysInStage: 8, deadline: "24.04", deadlineState: "overdue", manager: "Олег К.",  phone: "+7 925 100-77-88", zoneId: "z3", machineId: "m7", payment: "Оплачено" },
     ],
   },
   {
     id: "ready", label: "Готов", color: "#22c55e", zoneId: "",
     cards: [
-      { id: "МП-0039", client: "Петрова О.Н.",  stone: "Гранит серый",  size: "120×60×10", daysInStage: 14, deadline: "25.04", deadlineState: "ok", manager: "Олег К.",  phone: "+7 965 888-11-22" },
-      { id: "МП-0037", client: "Иванов П.К.",   stone: "Гранит чёрный", size: "100×50×8",  daysInStage: 12, deadline: "15.04", deadlineState: "ok", manager: "Анна М.",  phone: "+7 900 123-00-00" },
+      { id: "МП-0039", client: "Петрова О.Н.",  stone: "Гранит серый",  size: "120×60×10", product: "Памятник семейный",  daysInStage: 14, deadline: "25.04", deadlineState: "ok", manager: "Олег К.",  phone: "+7 965 888-11-22", payment: "Оплачено" },
+      { id: "МП-0037", client: "Иванов П.К.",   stone: "Гранит чёрный", size: "100×50×8",  product: "Плита надгробная",  daysInStage: 12, deadline: "15.04", deadlineState: "ok", manager: "Анна М.",  phone: "+7 900 123-00-00", payment: "Оплачено" },
     ],
   },
 ];
