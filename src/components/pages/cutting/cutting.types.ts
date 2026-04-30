@@ -70,6 +70,11 @@ export const WORK_LABELS: Record<WorkType, string> = {
 
 export const today = new Date().toLocaleDateString("ru-RU").replace(/\//g, ".");
 
+/* вычисляем вчера */
+const _d   = new Date();
+_d.setDate(_d.getDate() - 1);
+export const yesterday = _d.toLocaleDateString("ru-RU").replace(/\//g, ".");
+
 export const initShifts: Shift[] = [
   {
     id: "s1", placeId: "p1", employeeId: "e1", workType: "cutting",
@@ -78,24 +83,41 @@ export const initShifts: Shift[] = [
   },
   {
     id: "s2", placeId: "p2", employeeId: "e2", workType: "cutting",
-    date: today, status: "done", startedAt: "08:00", finishedAt: "17:00",
+    date: today, status: "done", startedAt: "08:00", finishedAt: "14:30",
     results: [
       { blankTypeId: "bt1", produced: 4, rawAuto: true, rawUsed: 2.0,  orderId: "МП-0040" },
       { blankTypeId: "bt5", produced: 2, rawAuto: true, rawUsed: 2.88, orderId: "На склад" },
     ],
   },
+  /* вчера */
   {
     id: "s3", placeId: "p1", employeeId: "e1", workType: "cutting",
-    date: "27.04.2026", status: "done", startedAt: "08:00", finishedAt: "16:30",
+    date: yesterday, status: "done", startedAt: "08:00", finishedAt: "16:30",
     results: [
       { blankTypeId: "bt2", produced: 3, rawAuto: true, rawUsed: 2.16, orderId: "МП-0038" },
+      { blankTypeId: "bt3", produced: 5, rawAuto: true, rawUsed: 1.60, orderId: "МП-0042" },
     ],
   },
   {
     id: "s4", placeId: "p2", employeeId: "e2", workType: "cutting",
-    date: "26.04.2026", status: "done", startedAt: "08:00", finishedAt: "17:00",
+    date: yesterday, status: "done", startedAt: "08:00", finishedAt: "17:00",
     results: [
       { blankTypeId: "bt4", produced: 2, rawAuto: true, rawUsed: 0.82, orderId: "На склад" },
+    ],
+  },
+  {
+    id: "s5", placeId: "p1", employeeId: "e3", workType: "cutting",
+    date: yesterday, status: "done", startedAt: "09:00", finishedAt: "15:00",
+    results: [
+      { blankTypeId: "bt1", produced: 6, rawAuto: true, rawUsed: 3.0, orderId: "МП-0045" },
+    ],
+  },
+  /* позавчера */
+  {
+    id: "s6", placeId: "p2", employeeId: "e1", workType: "cutting",
+    date: "28.04.2026", status: "done", startedAt: "08:00", finishedAt: "17:00",
+    results: [
+      { blankTypeId: "bt2", produced: 4, rawAuto: true, rawUsed: 2.88, orderId: "МП-0038" },
     ],
   },
 ];
