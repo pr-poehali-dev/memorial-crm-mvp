@@ -188,8 +188,21 @@ export function FinishModal({
   onUpdateResult, onAddResult, onRemoveResult,
   onFinish, onClose,
 }: FinishProps) {
+  const { tasks } = useTasks();
+
   const place    = PLACES.find(p => p.id === shift.placeId)!;
   const employee = EMPLOYEES.find(e => e.id === shift.employeeId)!;
+
+  /* Задача, привязанная к смене */
+  const task    = shift.taskId ? tasks.find(t => t.id === shift.taskId) ?? null : null;
+  const taskBt  = task ? BLANK_TYPES.find(b => b.id === task.blankTypeId) ?? null : null;
+  const plan    = shift.taskQtyAssigned ?? task?.totalQty ?? 0;
+
+  /* Факт: суммируем все строки результата */
+  const totalProduced = fResults.reduce((a, r) => a + r.produced, 0);
+  const totalRaw      = +fResults.reduce((a, r) => a + r.rawUsed, 0).toFixed(2);
+  const underPlan     = plan > 0 && totalProduced < plan;
+  const pct           = plan > 0 ? Math.min(100, Math.round((totalProduced / plan) * 100)) : 0;
 
   return (
     <div
@@ -197,13 +210,13 @@ export function FinishModal({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl border border-[#ebebeb] shadow-2xl w-full max-w-[540px] max-h-[90vh] flex flex-col"
+        className="bg-white rounded-2xl border border-[#ebebeb] shadow-2xl w-full max-w-[520px] max-h-[90vh] flex flex-col"
         onClick={e => e.stopPropagation()}
       >
-        {/* Шапка */}
-        <div className="flex items-center justify-between p-6 pb-4 border-b border-[#f0f0f0]">
+        {/* ── Шапка ── */}
+        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-[#f0f0f0]">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#f59e0b18] flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-[#f59e0b18] flex items-center justify-center shrink-0">
               <Icon name="CheckSquare" size={18} style={{ color: "#f59e0b" }} />
             </div>
             <div>
@@ -216,43 +229,114 @@ export function FinishModal({
           </button>
         </div>
 
-        {/* Тело */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
-          <p className="text-[13px] font-semibold text-[#4b4b4b]">Что сделали за смену</p>
+        {/* ── Тело ── */}
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+
+          {/* Блок задачи смены */}
+          {task && taskBt && (
+            <div className="bg-[#f5f3ff] border border-[#d8d8ff] rounded-xl p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-5 h-5 rounded-md bg-[#6366f1] flex items-center justify-center shrink-0">
+                  <Icon name="ClipboardList" size={10} className="text-white" />
+                </div>
+                <p className="text-[11px] font-bold uppercase tracking-widest text-[#6366f1]">Задача смены</p>
+              </div>
+
+              <div className="flex items-start justify-between gap-4 mb-3">
+                <div>
+                  <p className="text-[14px] font-semibold text-[#1a1a1a]">{taskBt.name}</p>
+                  <p className="text-[12px] text-[#6b6b6b]">{task.materialName} · {taskBt.size}</p>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="text-[11px] text-[#9b9b9b] mb-0.5">план</p>
+                  <p className="text-[24px] font-bold text-[#6366f1] leading-none">{plan} шт.</p>
+                </div>
+              </div>
+
+              {/* Прогресс план/факт */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-[12px]">
+                  <span className="text-[#6b6b6b]">Выполнено</span>
+                  <span className="font-bold text-[#1a1a1a]">{totalProduced} / {plan} шт.</span>
+                </div>
+                <div className="h-2 bg-[#e8e4ff] rounded-full overflow-hidden">
+                  <div
+                    className="h-full rounded-full transition-all"
+                    style={{
+                      width: `${pct}%`,
+                      backgroundColor: underPlan ? "#f59e0b" : "#6366f1",
+                    }}
+                  />
+                </div>
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="text-[#9b9b9b]">{pct}%</span>
+                  {plan > 0 && (
+                    <span className="text-[#9b9b9b]">
+                      Остаток по задаче: <b className="text-[#1a1a1a]">{Math.max(0, (task.totalQty - task.doneQty) - totalProduced)} шт.</b>
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Предупреждение */}
+              {underPlan && totalProduced > 0 && (
+                <div className="mt-3 flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                  <Icon name="AlertTriangle" size={13} className="text-amber-500 shrink-0" />
+                  <p className="text-[12px] text-amber-700">
+                    Выполнено меньше плана — {plan - totalProduced} шт. не доделано
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Результаты по строкам */}
+          <p className="text-[13px] font-semibold text-[#4b4b4b]">
+            {task ? "Уточните результат" : "Что сделали за смену"}
+          </p>
 
           {fResults.map((r, idx) => {
-            const bt      = BLANK_TYPES.find(b => b.id === r.blankTypeId)!;
+            const bt      = task && taskBt ? taskBt : (BLANK_TYPES.find(b => b.id === r.blankTypeId) ?? BLANK_TYPES[0]);
             const autoRaw = +(bt.rawPerUnit * r.produced).toFixed(2);
             return (
               <div key={idx} className="bg-[#fafafa] border border-[#f0f0f0] rounded-xl p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-[12px] font-semibold text-[#6b6b6b]">Результат #{idx + 1}</span>
-                  {fResults.length > 1 && (
-                    <button
-                      onClick={() => onRemoveResult(idx)}
-                      className="text-[#c0c0c0] hover:text-[#dc2626] transition-colors"
-                    >
-                      <Icon name="Trash2" size={14} />
-                    </button>
-                  )}
-                </div>
+                {/* Заголовок строки — только если нет задачи (иначе не нужен) */}
+                {(!task || fResults.length > 1) && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-[12px] font-semibold text-[#6b6b6b]">
+                      {task ? taskBt?.name : `Результат #${idx + 1}`}
+                    </span>
+                    {fResults.length > 1 && (
+                      <button onClick={() => onRemoveResult(idx)} className="text-[#c0c0c0] hover:text-[#dc2626] transition-colors">
+                        <Icon name="Trash2" size={14} />
+                      </button>
+                    )}
+                  </div>
+                )}
 
-                <div>
-                  <label className={labelCls}>Тип заготовки</label>
-                  <select
-                    value={r.blankTypeId}
-                    onChange={e => onUpdateResult(idx, { blankTypeId: e.target.value })}
-                    className={selectCls}
-                  >
-                    {BLANK_TYPES.map(b => (
-                      <option key={b.id} value={b.id}>{b.name} ({b.size})</option>
-                    ))}
-                  </select>
-                </div>
+                {/* Тип заготовки — только если нет привязки к задаче */}
+                {!task && (
+                  <div>
+                    <label className={labelCls}>Тип заготовки</label>
+                    <select
+                      value={r.blankTypeId}
+                      onChange={e => onUpdateResult(idx, { blankTypeId: e.target.value })}
+                      className={selectCls}
+                    >
+                      {BLANK_TYPES.map(b => (
+                        <option key={b.id} value={b.id}>{b.name} ({b.size})</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
                 <div className="flex gap-3">
+                  {/* Количество */}
                   <div className="flex-1">
-                    <label className={labelCls}>Количество (шт.)</label>
+                    <label className={labelCls}>
+                      Количество (шт.)
+                      {task && plan > 0 && <span className="ml-1 text-[#9b9b9b] font-normal">план: {plan}</span>}
+                    </label>
                     <input
                       type="number" min="1" step="1"
                       value={r.produced}
@@ -260,9 +344,11 @@ export function FinishModal({
                       className={inputCls}
                     />
                   </div>
+
+                  {/* Расход сырья */}
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1.5">
-                      <label className="text-[13px] font-medium text-[#4b4b4b]">Расход сырья (м²)</label>
+                      <label className="text-[13px] font-medium text-[#4b4b4b]">Расход (м²)</label>
                       <button
                         onClick={() => onUpdateResult(idx, { rawAuto: !r.rawAuto, rawUsed: r.rawAuto ? r.rawUsed : autoRaw })}
                         className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border transition-all
@@ -284,9 +370,9 @@ export function FinishModal({
                 </div>
 
                 {r.rawAuto && (
-                  <div className="text-[11px] text-[#9b9b9b]">
+                  <p className="text-[11px] text-[#9b9b9b]">
                     {bt.rawPerUnit} м²/шт. × {r.produced} шт. = <b className="text-[#f59e0b]">{autoRaw} м²</b>
-                  </div>
+                  </p>
                 )}
 
                 <div>
@@ -310,20 +396,26 @@ export function FinishModal({
             + Добавить ещё результат
           </button>
 
+          {/* Итоговая строка */}
           {fResults.length > 0 && (
             <div className="bg-amber-50 border border-amber-100 rounded-xl px-4 py-3 flex gap-6 text-[13px]">
               <span className="text-[#4b4b4b]">
-                Итого заготовок: <b className="text-[#1a1a1a]">{fResults.reduce((a, r) => a + r.produced, 0)} шт.</b>
+                Итого: <b className="text-[#1a1a1a]">{totalProduced} шт.</b>
               </span>
               <span className="text-[#4b4b4b]">
-                Сырьё: <b className="text-[#f59e0b]">{fResults.reduce((a, r) => a + r.rawUsed, 0).toFixed(2)} м²</b>
+                Сырьё: <b className="text-[#f59e0b]">{totalRaw} м²</b>
               </span>
+              {task && underPlan && (
+                <span className="ml-auto text-amber-600 font-semibold">
+                  −{plan - totalProduced} шт. от плана
+                </span>
+              )}
             </div>
           )}
         </div>
 
-        {/* Кнопка */}
-        <div className="p-6 pt-4 border-t border-[#f0f0f0]">
+        {/* ── Кнопка ── */}
+        <div className="px-6 pb-5 pt-4 border-t border-[#f0f0f0]">
           <button
             onClick={onFinish}
             disabled={fResults.some(r => r.produced <= 0)}
