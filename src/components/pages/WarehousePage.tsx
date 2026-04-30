@@ -12,6 +12,8 @@ import {
   ModalIn, ModalCut, ModalUse,
   ModalHistory, ModalMaterial,
 } from "./warehouse/WarehouseModals";
+import { useTasks } from "@/store/tasksStore";
+import { BLANK_TYPES as CUTTING_BLANK_TYPES } from "./cutting/cutting.types";
 
 const nowDate = () => new Date().toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
 
@@ -22,6 +24,7 @@ export default function WarehousePage() {
   const [movements, setMovements] = useState<Movement[]>(initMovements);
   const [modal, setModal]         = useState<ModalType>(null);
   const [search, setSearch]       = useState("");
+  const { addTask } = useTasks();
 
   /* история / детали материала */
   const [showHistory,   setShowHistory]   = useState(false);
@@ -106,6 +109,20 @@ export default function WarehousePage() {
       note: `Нарезка: ${blk.name} (${q} шт.)${cutDeadline ? ` · до ${cutDeadline}` : ""}`,
       remainAfter: newRawQty,
     }, ...prev]);
+
+    /* ── Создаём задачу на нарезку ── */
+    const matchedBt = CUTTING_BLANK_TYPES.find(bt => bt.name === blk.name) ?? CUTTING_BLANK_TYPES[0];
+    addTask({
+      id: "task-" + Date.now(),
+      blankTypeId: matchedBt.id,
+      materialName: raw.name,
+      totalQty: q,
+      doneQty: 0,
+      inProgressQty: 0,
+      status: "pending",
+      createdAt: nowDate(),
+      deadline: cutDeadline || undefined,
+    });
 
     setCutQty(""); setCutRawPer(""); setCutDeadline("");
     setModal(null);

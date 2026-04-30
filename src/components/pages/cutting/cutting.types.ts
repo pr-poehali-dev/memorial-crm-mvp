@@ -1,6 +1,21 @@
 /* ─── Типы ─── */
 export type WorkType = "cutting" | "engraving" | "polishing";
 
+/* ─── Задача на нарезку (создаётся со Склада) ─── */
+export type CuttingTaskStatus = "pending" | "active" | "done";
+
+export type CuttingTask = {
+  id: string;
+  blankTypeId: string;
+  materialName: string;
+  totalQty: number;
+  doneQty: number;
+  inProgressQty: number;
+  status: CuttingTaskStatus;
+  createdAt: string;
+  deadline?: string;
+};
+
 export type Place = {
   id: string;
   name: string;
@@ -36,6 +51,8 @@ export type Shift = {
   results: ShiftResult[];
   startedAt: string;
   finishedAt?: string;
+  taskId?: string;
+  taskQtyAssigned?: number;
 };
 
 /* ─── Данные ─── */

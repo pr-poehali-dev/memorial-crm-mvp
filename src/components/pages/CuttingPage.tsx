@@ -8,13 +8,16 @@ import {
 } from "./cutting/cutting.types";
 import CuttingShiftCards from "./cutting/CuttingShiftCards";
 import CuttingJournal from "./cutting/CuttingJournal";
+import CuttingTaskBlock from "./cutting/CuttingTaskBlock";
 import { AssignModal, FinishModal } from "./cutting/CuttingModals";
+import { useTasks } from "@/store/tasksStore";
 
 type Tab = "today" | "yesterday" | "journal";
 
 export default function CuttingPage() {
   const [tab,    setTab]    = useState<Tab>("today");
   const [shifts, setShifts] = useState<Shift[]>(initShifts);
+  const { updateTask } = useTasks();
 
   /* Модалки */
   const [assignModal,   setAssignModal]   = useState(false);
@@ -25,12 +28,15 @@ export default function CuttingPage() {
   const [fEmployee, setFEmployee] = useState(EMPLOYEES[0].id);
   const [fWorkType, setFWorkType] = useState<WorkType>("cutting");
   const [fDate,     setFDate]     = useState(today);
+  const [fTaskId,   setFTaskId]   = useState("");
+  const [fTaskQty,  setFTaskQty]  = useState("");
 
   /* Форма завершения */
   const [fResults, setFResults] = useState<ShiftResult[]>([emptyResult()]);
 
   /* ── Назначить смену ── */
   const handleAssign = () => {
+    const taskQtyNum = parseInt(fTaskQty) || 0;
     const newShift: Shift = {
       id: "s" + Date.now(),
       placeId: fPlace,
@@ -40,24 +46,56 @@ export default function CuttingPage() {
       status: "active",
       startedAt: new Date().toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" }),
       results: [],
+      taskId: fTaskId || undefined,
+      taskQtyAssigned: fTaskId && taskQtyNum > 0 ? taskQtyNum : undefined,
     };
     setShifts(prev => [newShift, ...prev]);
+
+    /* Обновляем задачу: увеличиваем inProgressQty */
+    if (fTaskId && taskQtyNum > 0) {
+      updateTask(fTaskId, prev => ({
+        inProgressQty: prev.inProgressQty + taskQtyNum,
+        status: "active" as const,
+      }));
+    }
+
     setAssignModal(false);
     setFPlace(PLACES[0].id);
     setFEmployee(EMPLOYEES[0].id);
     setFWorkType("cutting");
     setFDate(today);
+    setFTaskId("");
+    setFTaskQty("");
   };
 
   /* ── Завершить смену ── */
   const handleFinish = () => {
     if (!finishShiftId) return;
+    const shift = shifts.find(s => s.id === finishShiftId);
+
     setShifts(prev => prev.map(s => s.id === finishShiftId ? {
       ...s,
       status: "done",
       finishedAt: new Date().toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" }),
       results: fResults,
     } : s));
+
+    /* Обновляем прогресс задачи */
+    if (shift?.taskId) {
+      const produced = fResults.reduce((a, r) => a + r.produced, 0);
+      const assigned = shift.taskQtyAssigned ?? 0;
+      updateTask(shift.taskId, prev => {
+        const newDone       = prev.doneQty + produced;
+        const newInProgress = Math.max(0, prev.inProgressQty - assigned);
+        const isDone        = newDone >= prev.totalQty;
+        return {
+          doneQty:       newDone,
+          inProgressQty: newInProgress,
+          status:        isDone ? "done" as const : "active" as const,
+        };
+      });
+    }
+
     setFinishShiftId(null);
     setFResults([emptyResult()]);
   };
@@ -156,11 +194,14 @@ export default function CuttingPage() {
 
         {/* ════ Сегодня ════ */}
         {tab === "today" && (
-          <CuttingShiftCards
-            activeShifts={activeShifts}
-            todayDone={todayDone}
-            onFinishClick={(id) => { setFinishShiftId(id); setFResults([emptyResult()]); }}
-          />
+          <>
+            <CuttingTaskBlock />
+            <CuttingShiftCards
+              activeShifts={activeShifts}
+              todayDone={todayDone}
+              onFinishClick={(id) => { setFinishShiftId(id); setFResults([emptyResult()]); }}
+            />
+          </>
         )}
 
         {/* ════ Вчера ════ */}
@@ -214,10 +255,14 @@ export default function CuttingPage() {
           fWorkType={fWorkType}
           fDate={fDate}
           today={today}
+          fTaskId={fTaskId}
+          fTaskQty={fTaskQty}
           onChangePlace={setFPlace}
           onChangeEmployee={setFEmployee}
           onChangeWorkType={setFWorkType}
           onChangeDate={setFDate}
+          onChangeTaskId={setFTaskId}
+          onChangeTaskQty={setFTaskQty}
           onAssign={handleAssign}
           onClose={() => setAssignModal(false)}
         />

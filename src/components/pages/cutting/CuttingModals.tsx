@@ -4,6 +4,7 @@ import {
   PLACES, EMPLOYEES, BLANK_TYPES, ORDERS, WORK_LABELS,
   selectCls, inputCls, labelCls,
 } from "./cutting.types";
+import { useTasks } from "@/store/tasksStore";
 
 /* ════════════════════════════════
    Модалка: Назначить смену
@@ -14,19 +15,34 @@ type AssignProps = {
   fWorkType: WorkType;
   fDate: string;
   today: string;
+  fTaskId: string;
+  fTaskQty: string;
   onChangePlace: (v: string) => void;
   onChangeEmployee: (v: string) => void;
   onChangeWorkType: (v: WorkType) => void;
   onChangeDate: (v: string) => void;
+  onChangeTaskId: (v: string) => void;
+  onChangeTaskQty: (v: string) => void;
   onAssign: () => void;
   onClose: () => void;
 };
 
 export function AssignModal({
   fPlace, fEmployee, fWorkType, fDate, today,
+  fTaskId, fTaskQty,
   onChangePlace, onChangeEmployee, onChangeWorkType, onChangeDate,
+  onChangeTaskId, onChangeTaskQty,
   onAssign, onClose,
 }: AssignProps) {
+  const { tasks } = useTasks();
+  const openTasks = tasks.filter(t => t.status !== "done");
+  const selectedTask = openTasks.find(t => t.id === fTaskId);
+  const remaining = selectedTask
+    ? selectedTask.totalQty - selectedTask.doneQty - selectedTask.inProgressQty
+    : 0;
+  const taskQtyNum = parseInt(fTaskQty) || 0;
+  const taskOverLimit = selectedTask && taskQtyNum > remaining;
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/20 backdrop-blur-sm"
@@ -81,6 +97,55 @@ export function AssignModal({
             </div>
           </div>
 
+          {/* ── Привязка к задаче ── */}
+          {openTasks.length > 0 && (
+            <div className="bg-[#f5f3ff] border border-[#d8d8ff] rounded-[10px] p-3 space-y-3">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-[#6366f1]">Задача на нарезку</p>
+              <div>
+                <label className={labelCls}>Выбрать задачу</label>
+                <select
+                  value={fTaskId}
+                  onChange={e => { onChangeTaskId(e.target.value); onChangeTaskQty(""); }}
+                  className={selectCls}
+                >
+                  <option value="">— без задачи —</option>
+                  {openTasks.map(t => {
+                    const bt = BLANK_TYPES.find(b => b.id === t.blankTypeId);
+                    const rem = t.totalQty - t.doneQty - t.inProgressQty;
+                    return (
+                      <option key={t.id} value={t.id}>
+                        {bt?.name ?? "Заготовка"} · осталось {rem} шт.
+                      </option>
+                    );
+                  })}
+                </select>
+              </div>
+
+              {fTaskId && selectedTask && (
+                <div>
+                  <label className={labelCls}>Количество в работу (шт.)</label>
+                  <input
+                    type="number" min="1" max={remaining} step="1"
+                    value={fTaskQty}
+                    onChange={e => onChangeTaskQty(e.target.value)}
+                    placeholder={`макс. ${remaining}`}
+                    className={inputCls}
+                  />
+                  {taskOverLimit && (
+                    <p className="mt-1 text-[11px] text-red-500">
+                      Нельзя назначить больше {remaining} шт. (столько осталось в задаче)
+                    </p>
+                  )}
+                  {!taskOverLimit && taskQtyNum > 0 && (
+                    <p className="mt-1 text-[11px] text-[#6366f1]">
+                      После назначения останется: {remaining - taskQtyNum} шт.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           <div>
             <label className={labelCls}>Дата</label>
             <input
@@ -95,7 +160,8 @@ export function AssignModal({
 
         <button
           onClick={onAssign}
-          className="mt-5 w-full bg-[#22c55e] text-white text-[14px] font-semibold py-3 rounded-[10px] hover:bg-[#16a34a] active:scale-[0.98] transition-all"
+          disabled={!!(fTaskId && taskOverLimit)}
+          className="mt-5 w-full bg-[#22c55e] text-white text-[14px] font-semibold py-3 rounded-[10px] hover:bg-[#16a34a] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Открыть смену
         </button>
