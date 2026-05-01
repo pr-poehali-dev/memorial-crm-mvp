@@ -107,13 +107,19 @@ export default function Index() {
   const [showRolePicker, setShowRolePicker] = useState(false);
   const [creatingOrder, setCreatingOrder]   = useState(false);
   const [aiOpen, setAiOpen]               = useState(false);
-  const [openGroups, setOpenGroups]       = useState<Set<string>>(new Set());
+  const [openGroups, setOpenGroups] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem("nav_open_groups");
+      if (saved) return new Set(JSON.parse(saved) as string[]);
+    } catch (_e) { /* ignore */ }
+    return new Set(NAV_GROUPS.map(g => g.group));
+  });
 
   const toggleGroup = (group: string) => {
     setOpenGroups(prev => {
       const next = new Set(prev);
-      if (next.has(group)) next.delete(group);
-      else next.add(group);
+      if (next.has(group)) next.delete(group); else next.add(group);
+      try { localStorage.setItem("nav_open_groups", JSON.stringify([...next])); } catch (_e) { /* ignore */ }
       return next;
     });
   };
@@ -243,9 +249,13 @@ export default function Index() {
 
                 {/* Пункты группы */}
                 <div
-                  className="flex flex-col gap-0.5 overflow-hidden transition-all duration-200"
-                  style={{ maxHeight: (collapsed || isOpen || noCollapse) ? "400px" : "0px", opacity: (collapsed || isOpen || noCollapse) ? 1 : 0 }}
+                  className="grid transition-all duration-200"
+                  style={{
+                    gridTemplateRows: (collapsed || isOpen || noCollapse) ? "1fr" : "0fr",
+                    opacity: (collapsed || isOpen || noCollapse) ? 1 : 0,
+                  }}
                 >
+                <div className="flex flex-col gap-0.5 overflow-hidden">
                   {groupItems.map((item) => {
                     const isActive = active === item.id;
                     return (
@@ -292,6 +302,7 @@ export default function Index() {
                       </button>
                     );
                   })}
+                </div>
                 </div>
               </div>
             );
