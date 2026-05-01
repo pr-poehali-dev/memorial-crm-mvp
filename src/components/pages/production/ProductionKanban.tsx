@@ -8,9 +8,10 @@ type Props = {
   columns: Column[];
   visibleKeys: Set<string>;
   onItemClick: (item: FlatItem) => void;
+  onSwitchToList: (colId: string) => void;
 };
 
-export default function ProductionKanban({ columns, visibleKeys, onItemClick }: Props) {
+export default function ProductionKanban({ columns, visibleKeys, onItemClick, onSwitchToList }: Props) {
   return (
     <div className="flex-1 overflow-x-auto overflow-y-auto">
       <div className="flex gap-4 px-7 py-5 items-start min-h-full min-w-max">
@@ -36,6 +37,13 @@ export default function ProductionKanban({ columns, visibleKeys, onItemClick }: 
                     {overdueCnt}⚠
                   </span>
                 )}
+                <button
+                  onClick={() => onSwitchToList(col.id)}
+                  title="Открыть список по этапу"
+                  className="w-6 h-6 flex items-center justify-center rounded-md hover:bg-black/10 transition-colors shrink-0"
+                >
+                  <Icon name="List" size={13} style={{ color: col.color }} />
+                </button>
               </div>
               {items.length === 0 ? (
                 <div className="border-2 border-dashed border-[#e4e4e4] rounded-[14px] py-10 text-center text-[13px] text-[#c8c8c8]">

@@ -6,13 +6,18 @@ import {
 } from "./production/production.types";
 import ProductionHeader       from "./production/ProductionHeader";
 import ProductionKanban       from "./production/ProductionKanban";
+import ProductionList         from "./production/ProductionList";
 import ProductionDetailDrawer from "./production/ProductionDetailDrawer";
 
+type ViewMode = "kanban" | "list";
+
 export default function ProductionPage() {
-  const [columns, setColumns] = useState<Column[]>(COLUMNS);
-  const [filter,  setFilter]  = useState<FilterKey>("all");
-  const [search,  setSearch]  = useState("");
-  const [detail,  setDetail]  = useState<FlatItem | null>(null);
+  const [columns,      setColumns]      = useState<Column[]>(COLUMNS);
+  const [filter,       setFilter]       = useState<FilterKey>("all");
+  const [search,       setSearch]       = useState("");
+  const [detail,       setDetail]       = useState<FlatItem | null>(null);
+  const [view,         setView]         = useState<ViewMode>("kanban");
+  const [listStage,    setListStage]    = useState<string | undefined>(undefined);
 
   const allItems = useMemo(() => flattenItems(columns), [columns]);
 
@@ -53,6 +58,18 @@ export default function ProductionPage() {
     setDetail(null);
   };
 
+  /* Переход из канбана в список с фильтром по этапу */
+  const handleSwitchToList = (colId: string) => {
+    setListStage(colId);
+    setView("list");
+  };
+
+  /* При смене вида вручную — сбрасываем prefilter по этапу */
+  const handleSetView = (v: ViewMode) => {
+    if (v === "kanban") setListStage(undefined);
+    setView(v);
+  };
+
   return (
     <div className="flex flex-col h-full overflow-hidden bg-[#f7f7f8]">
       <ProductionHeader
@@ -63,13 +80,24 @@ export default function ProductionPage() {
         setFilter={setFilter}
         search={search}
         setSearch={setSearch}
+        view={view}
+        setView={handleSetView}
       />
 
-      <ProductionKanban
-        columns={columns}
-        visibleKeys={visibleKeys}
-        onItemClick={setDetail}
-      />
+      {view === "kanban" ? (
+        <ProductionKanban
+          columns={columns}
+          visibleKeys={visibleKeys}
+          onItemClick={setDetail}
+          onSwitchToList={handleSwitchToList}
+        />
+      ) : (
+        <ProductionList
+          allItems={allItems}
+          initialStage={listStage}
+          onItemClick={setDetail}
+        />
+      )}
 
       {detail && (
         <ProductionDetailDrawer
