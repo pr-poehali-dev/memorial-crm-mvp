@@ -159,7 +159,6 @@ export default function WarehousePage() {
   const reserves    = useMemo(() => calcReserves(allOrders), []);
   const getReserved = (id: string) => reserves.find(r => r.materialId === id)?.totalReserved ?? 0;
 
-  const toBuy       = rawMat.filter(r => getAvailable(r, getReserved(r.id)) < 0);
   const totalRawVal = rawMat.reduce((s, r) => s + r.qty * r.price, 0);
   const criticalRaw = rawMat.filter(r => getLevelRaw(r, getReserved(r.id)) === "critical").length;
   const critBlanks  = blanks.filter(b => getLevelBlank(b) === "critical").length;
@@ -198,90 +197,81 @@ export default function WarehousePage() {
       </div>
 
       {/* ── Статы ── */}
-      <div className="grid grid-cols-4 gap-3">
-        <MiniStat icon="Layers"        color="#6b6b6b" label="Видов сырья"       value={String(rawMat.length)} />
-        <MiniStat icon="Package"       color="#6366f1" label="Видов заготовок"   value={String(blanks.length)} />
-        <MiniStat icon="Banknote"      color="#16a34a" label="Стоимость сырья"   value={`${(totalRawVal / 1000).toFixed(0)} тыс. ₽`} />
-        <MiniStat icon="AlertTriangle" color="#ef4444" label="Критичных позиций" value={String(criticalRaw + critBlanks)} alert={criticalRaw + critBlanks > 0} />
+      <div className="grid grid-cols-3 gap-3">
+        <MiniStat icon="Layers"   color="#6b6b6b" label="Видов сырья"     value={String(rawMat.length)} />
+        <MiniStat icon="Package"  color="#6366f1" label="Видов заготовок" value={String(blanks.length)} />
+        <MiniStat icon="Banknote" color="#16a34a" label="Стоимость сырья" value={`${(totalRawVal / 1000).toFixed(0)} тыс. ₽`} />
       </div>
 
-      {/* ── Акцент: доступно к использованию ── */}
-      <div className="grid grid-cols-3 gap-3">
-        {rawMat.filter(r => getReserved(r.id) > 0).map(r => {
+      {/* ── Проблемные материалы ── */}
+      {(() => {
+        const problemMats = rawMat.filter(r => {
           const reserved  = getReserved(r.id);
           const available = getAvailable(r, reserved);
-          const isDeficit = available < 0;
+          return available < 0 || available < r.min;
+        });
+        if (problemMats.length === 0) {
           return (
-            <div
-              key={r.id}
-              className={`rounded-xl border px-4 py-3 flex items-center justify-between ${
-                isDeficit ? "bg-red-50 border-red-200" : "bg-white border-[#ebebeb]"
-              }`}
-            >
-              <div>
-                <p className="text-[11px] text-[#9b9b9b] mb-0.5">{r.name}</p>
-                <div className="flex items-baseline gap-1">
-                  <span className={`text-[22px] font-black font-mono ${isDeficit ? "text-red-500" : "text-[#1a1a1a]"}`}>
-                    {available}
-                  </span>
-                  <span className="text-[12px] text-[#9b9b9b]">{r.unit}</span>
-                  {isDeficit && <span className="text-[11px] text-red-500 font-semibold ml-1">дефицит</span>}
-                </div>
-                <p className="text-[10px] text-[#b5b5b5] mt-0.5">
-                  Остаток {r.qty} · Резерв {reserved}
-                </p>
+            <div className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+              <div className="w-7 h-7 rounded-lg bg-green-100 flex items-center justify-center shrink-0">
+                <Icon name="CheckCircle" size={14} className="text-green-600" />
               </div>
-              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDeficit ? "bg-red-100" : "bg-[#f0fdf4]"}`}>
-                <Icon name={isDeficit ? "TrendingDown" : "TrendingUp"} size={18} className={isDeficit ? "text-red-500" : "text-green-600"} />
-              </div>
+              <span className="text-[13px] font-medium text-green-800">Все материалы в норме</span>
             </div>
           );
-        })}
-      </div>
-
-      {/* ── Что закупить (дефицит: Доступно < 0) ── */}
-      {toBuy.length > 0 && (
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Icon name="ShoppingCart" size={14} className="text-red-600" />
-            <span className="text-[13px] font-semibold text-red-800">Срочно закупить</span>
-            <span className="text-[11px] bg-red-200 text-red-700 px-2 py-0.5 rounded-full font-bold">{toBuy.length}</span>
-            <span className="text-[11px] text-red-500 ml-1">— доступно меньше нуля</span>
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            {toBuy.map(r => {
-              const reserved  = getReserved(r.id);
-              const available = getAvailable(r, reserved);
-              const shortage  = Math.abs(available);
-              return (
-                <div key={r.id} className="bg-white rounded-lg border border-red-100 px-3 py-3">
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <span className="w-2 h-2 rounded-full bg-red-400 shrink-0" />
-                    <p className="text-[12px] font-semibold text-[#1a1a1a] truncate">{r.name}</p>
+        }
+        return (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Icon name="AlertTriangle" size={14} className="text-amber-600" />
+              <span className="text-[13px] font-semibold text-amber-800">Проблемные материалы</span>
+              <span className="text-[11px] bg-amber-200 text-amber-700 px-2 py-0.5 rounded-full font-bold">{problemMats.length}</span>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              {problemMats.map(r => {
+                const reserved  = getReserved(r.id);
+                const available = getAvailable(r, reserved);
+                const isDeficit = available < 0;
+                const shortage  = isDeficit ? Math.abs(available) : 0;
+                return (
+                  <div
+                    key={r.id}
+                    className={`rounded-lg border px-3 py-3 bg-white ${isDeficit ? "border-red-200" : "border-amber-200"}`}
+                  >
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <span className={`w-2 h-2 rounded-full shrink-0 ${isDeficit ? "bg-red-400" : "bg-amber-400"}`} />
+                      <p className="text-[12px] font-semibold text-[#1a1a1a] truncate">{r.name}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-[11px]">
+                        <span className="text-[#6b6b6b]">Остаток:</span>
+                        <span className="font-mono font-semibold text-[#1a1a1a]">{r.qty} {r.unit}</span>
+                      </div>
+                      {reserved > 0 && (
+                        <div className="flex justify-between text-[11px]">
+                          <span className="text-[#6b6b6b]">Зарезервировано:</span>
+                          <span className="font-mono font-semibold text-[#1a1a1a]">{reserved} {r.unit}</span>
+                        </div>
+                      )}
+                      {isDeficit ? (
+                        <div className="flex justify-between text-[11px] border-t border-red-100 pt-1 mt-1">
+                          <span className="text-red-700 font-semibold">Не хватает:</span>
+                          <span className="font-mono font-bold text-red-600">{shortage.toFixed(2)} {r.unit}</span>
+                        </div>
+                      ) : (
+                        <div className="flex justify-between text-[11px] border-t border-amber-100 pt-1 mt-1">
+                          <span className="text-amber-700 font-semibold">Доступно:</span>
+                          <span className="font-mono font-bold text-amber-600">{available} {r.unit}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-[11px]">
-                      <span className="text-[#9b9b9b]">Есть на складе:</span>
-                      <span className="font-mono font-semibold text-[#1a1a1a]">{r.qty} {r.unit}</span>
-                    </div>
-                    <div className="flex justify-between text-[11px]">
-                      <span className="text-[#9b9b9b]">Зарезервировано:</span>
-                      <span className="font-mono font-semibold text-amber-600">{reserved} {r.unit}</span>
-                    </div>
-                    <div className="flex justify-between text-[11px] border-t border-red-100 pt-1 mt-1">
-                      <span className="text-red-700 font-semibold">Нужно докупить:</span>
-                      <span className="font-mono font-bold text-red-600">{shortage.toFixed(2)} {r.unit}</span>
-                    </div>
-                    <div className="text-right text-[10px] text-[#9b9b9b]">
-                      ≈ {(shortage * r.price).toLocaleString("ru")} ₽
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ── Вкладки + поиск ── */}
       <div className="flex items-center gap-3">

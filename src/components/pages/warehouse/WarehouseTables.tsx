@@ -91,25 +91,20 @@ export function RawTable({
                   </td>
 
                   {/* Ед. */}
-                  <td className="px-4 py-3 text-[12px] text-[#6b6b6b]">{r.unit}</td>
+                  <td className="px-4 py-3 text-[12px] text-[#1a1a1a]">{r.unit}</td>
 
                   {/* Остаток */}
-                  <td className="px-4 py-3">
-                    <span className="font-mono text-[15px] font-bold text-[#1a1a1a]">{r.qty}</span>
-                    <span className="text-[11px] text-[#9b9b9b] ml-1">{r.unit}</span>
-                    {reserved > 0 && (
-                      <div className="text-[10px] text-[#9b9b9b] mt-0.5">
-                        резерв: {reserved} {r.unit}
-                      </div>
-                    )}
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <span className="font-mono text-[14px] font-bold text-[#1a1a1a]">{r.qty}</span>
+                    <span className="text-[11px] text-[#6b6b6b] ml-1">{r.unit}</span>
                   </td>
 
                   {/* Зарезервировано */}
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 whitespace-nowrap">
                     {reserved > 0 ? (
                       <div className="flex items-center gap-1.5">
-                        <span className="font-mono text-[13px] font-semibold text-[#d97706]">{reserved}</span>
-                        <span className="text-[11px] text-[#9b9b9b]">{r.unit}</span>
+                        <span className="font-mono text-[13px] font-semibold text-[#1a1a1a]">{reserved}</span>
+                        <span className="text-[11px] text-[#6b6b6b]">{r.unit}</span>
                         <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium">
                           {reserve?.orders.length} зак.
                         </span>
@@ -120,44 +115,39 @@ export function RawTable({
                   </td>
 
                   {/* Доступно */}
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 whitespace-nowrap">
                     <div className="flex items-center gap-1.5">
                       <span
-                        className="font-mono text-[17px] font-black"
+                        className="font-mono text-[14px] font-bold"
                         style={{ color: availColor }}
                       >
-                        {available < 0 ? available : available}
+                        {available}
                       </span>
-                      <span className="text-[11px] text-[#9b9b9b]">{r.unit}</span>
-                      {available < 0 && (
-                        <span className="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded font-bold">
-                          дефицит
-                        </span>
-                      )}
+                      <span className="text-[11px] text-[#6b6b6b]">{r.unit}</span>
                     </div>
                   </td>
 
                   {/* Мин. */}
-                  <td className="px-4 py-3 text-[12px] text-[#9b9b9b] font-mono">{r.min} {r.unit}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-[12px] text-[#1a1a1a] font-mono">{r.min} {r.unit}</td>
 
                   {/* Цена */}
-                  <td className="px-4 py-3 text-[12px] text-[#4b4b4b] font-mono">{r.price.toLocaleString("ru")} ₽</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-[12px] text-[#1a1a1a] font-mono">{r.price.toLocaleString("ru")} ₽</td>
 
                   {/* Стоимость */}
-                  <td className="px-4 py-3 text-[12px] font-semibold text-[#1a1a1a] font-mono">
+                  <td className="px-4 py-3 whitespace-nowrap text-[12px] font-semibold text-[#1a1a1a] font-mono">
                     {(r.qty * r.price).toLocaleString("ru")} ₽
                   </td>
 
                   {/* Статус */}
                   <td className="px-4 py-3">
-                    <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-md ${
+                    <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-md whitespace-nowrap ${
                       available < 0
                         ? "bg-red-100 text-red-600"
                         : available <= r.min
                         ? "bg-amber-100 text-amber-600"
                         : "bg-green-100 text-green-700"
                     }`}>
-                      {available < 0 ? "Дефицит" : available <= r.min ? "Мало" : "В норме"}
+                      {available < 0 ? "Не хватает" : available <= r.min ? "Мало" : "В норме"}
                     </span>
                   </td>
 
