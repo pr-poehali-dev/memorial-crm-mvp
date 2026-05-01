@@ -141,7 +141,7 @@ export default function CuttingPage() {
 
         {/* Строка 1: заголовок + кнопка */}
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-[20px] font-semibold text-[#1a1a1a] tracking-tight">Заготовки / Распил</h1>
+          <h1 className="text-[20px] font-semibold text-[#1a1a1a] tracking-tight">Заготовки</h1>
           <button
             onClick={() => setAssignModal(true)}
             className="flex items-center gap-2 bg-[#1a1a1a] text-white text-[13px] font-semibold px-4 py-2.5 rounded-[10px] hover:bg-[#333] transition-all shrink-0"
