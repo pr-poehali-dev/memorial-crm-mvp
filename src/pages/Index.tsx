@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { NavContext } from "@/store/navStore";
 import Icon from "@/components/ui/icon";
 import OverviewPage from "@/components/pages/OverviewPage";
 import OrdersPage from "@/components/pages/OrdersPage";
@@ -142,6 +143,15 @@ export default function Index() {
     if (parentGroup) setOpenGroups(prev => new Set([...prev, parentGroup.group]));
   };
 
+  const navValue = useMemo(() => ({
+    openOrder: (orderId: string) => {
+      setActive("orders");
+      setOpenOrder(orderId);
+      setOpenClient(null);
+      setCreatingOrder(false);
+    },
+  }), []);
+
   if (screen === "landing") return <LandingPage onStart={() => setScreen("login")} />;
   if (screen === "login")   return <LoginPage onLogin={() => setScreen("role-select")} onBack={() => setScreen("landing")} />;
   if (screen === "role-select") return <RoleSelect onSelect={handleRoleSelect} />;
@@ -168,6 +178,7 @@ export default function Index() {
   };
 
   return (
+    <NavContext.Provider value={navValue}>
     <div className="flex h-screen bg-[#fafafa] font-golos overflow-hidden">
 
       {/* Sidebar */}
@@ -396,5 +407,6 @@ export default function Index() {
         </div>
       )}
     </div>
+    </NavContext.Provider>
   );
 }

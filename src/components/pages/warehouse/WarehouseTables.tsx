@@ -1,11 +1,25 @@
 import { useState } from "react";
 import Icon from "@/components/ui/icon";
+import { useNav } from "@/store/navStore";
 import {
   RawMaterial, Blank, Movement,
   getLevelRaw, getLevelBlank, getAvailable, getAvailableBlank, getLevelBlankReserved,
   LEVEL_STYLE, MOVE_TYPE,
   MaterialReserve, BlankReserve,
 } from "./warehouse.types";
+
+/* ─── Кликабельный ID заказа ─── */
+function OrderLink({ orderId }: { orderId: string }) {
+  const { openOrder } = useNav();
+  return (
+    <button
+      onClick={() => openOrder(orderId)}
+      className="text-[12px] font-semibold text-[#6366f1] hover:underline underline-offset-2 transition-colors"
+    >
+      {orderId}
+    </button>
+  );
+}
 
 /* ─── Таблица сырья (с резервами) ─── */
 export function RawTable({
@@ -181,7 +195,7 @@ export function RawTable({
                             key={o.orderId}
                             className="flex items-center gap-2 bg-white border border-amber-200 rounded-lg px-3 py-1.5"
                           >
-                            <span className="text-[12px] font-semibold text-[#1a1a1a]">{o.orderId}</span>
+                            <OrderLink orderId={o.orderId} />
                             <span className="text-[11px] text-[#6b6b6b]">→</span>
                             <span className="text-[12px] font-mono font-semibold text-amber-700">
                               {o.qty} {r.unit}
@@ -362,7 +376,7 @@ export function BlanksTable({
                             key={o.orderId}
                             className="flex items-center gap-2 bg-white border border-amber-200 rounded-lg px-3 py-1.5"
                           >
-                            <span className="text-[12px] font-semibold text-[#1a1a1a]">{o.orderId}</span>
+                            <OrderLink orderId={o.orderId} />
                             <span className="text-[11px] text-[#6b6b6b]">→</span>
                             <span className="text-[12px] font-mono font-semibold text-amber-700">
                               {o.qty} шт.
