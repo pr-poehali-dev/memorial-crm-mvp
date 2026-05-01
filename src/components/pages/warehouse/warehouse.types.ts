@@ -45,6 +45,13 @@ export type MaterialReserve = {
   orders: { orderId: string; qty: number }[];
 };
 
+/* ─── Резерв по заготовке ─── */
+export type BlankReserve = {
+  blankId: string;
+  totalReserved: number;
+  orders: { orderId: string; qty: number }[];
+};
+
 /* ─── Маппинг: stone → rawMaterial ─── */
 const STONE_TO_RAW_ID: Record<string, string> = {
   "Гранит чёрный":        "r1",
@@ -83,6 +90,44 @@ export function calcReserves(orders: Order[]): MaterialReserve[] {
   }
 
   return Object.entries(map).map(([materialId, v]) => ({ materialId, ...v }));
+}
+
+/* ─── Маппинг: stone → blankId (по размеру) ─── */
+const SIZE_TO_BLANK_ID: Record<string, string> = {
+  "100×50×8":  "b1",
+  "120×60×10": "b2",
+  "80×40×6":   "b3",
+  "90×45×7":   "b4",
+};
+
+/* ─── Расчёт резервов заготовок из заказов ─── */
+export function calcBlankReserves(orders: Order[]): BlankReserve[] {
+  const map: Record<string, { totalReserved: number; orders: { orderId: string; qty: number }[] }> = {};
+
+  for (const o of orders) {
+    if (!ACTIVE_STATUSES.includes(o.status)) continue;
+    const blankId = SIZE_TO_BLANK_ID[o.size];
+    if (!blankId) continue;
+    if (!map[blankId]) map[blankId] = { totalReserved: 0, orders: [] };
+    map[blankId].totalReserved += 1;
+    map[blankId].orders.push({ orderId: o.id, qty: 1 });
+  }
+
+  return Object.entries(map).map(([blankId, v]) => ({ blankId, ...v }));
+}
+
+/* ─── Доступно заготовок ─── */
+export function getAvailableBlank(b: Blank, reserved: number): number {
+  return b.qty - reserved;
+}
+
+/* ─── Уровень заготовки с учётом резерва ─── */
+export function getLevelBlankReserved(b: Blank, reserved: number): "critical" | "low" | "ok" {
+  const avail = getAvailableBlank(b, reserved);
+  if (avail < 0) return "critical";
+  if (avail < b.min * 0.5) return "critical";
+  if (avail <= b.min) return "low";
+  return "ok";
 }
 
 /* ─── Данные: сырьё ─── */
