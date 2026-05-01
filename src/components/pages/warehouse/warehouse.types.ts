@@ -134,7 +134,7 @@ export function getLevelBlankReserved(b: Blank, reserved: number): "critical" | 
 export const initRaw: RawMaterial[] = [
   { id: "r1", name: "Гранит чёрный (габбро)", unit: "м²", qty: 14.5, min: 5,  price: 4200 },
   { id: "r2", name: "Гранит серый",           unit: "м²", qty: 7.2,  min: 5,  price: 3800 },
-  { id: "r3", name: "Гранит красный",         unit: "м²", qty: 3.1,  min: 5,  price: 5100 },
+  { id: "r3", name: "Гранит красный",         unit: "м²", qty: 0.5,  min: 5,  price: 5100 },
   { id: "r4", name: "Мрамор белый",           unit: "м²", qty: 2.4,  min: 4,  price: 6500 },
   { id: "r5", name: "Мрамор серый",           unit: "м²", qty: 5.8,  min: 3,  price: 5800 },
 ];
