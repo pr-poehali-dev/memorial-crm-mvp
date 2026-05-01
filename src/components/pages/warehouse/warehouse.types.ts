@@ -1,3 +1,5 @@
+import type { Order } from "../orders/orders.types";
+
 /* ─── Типы ─── */
 export type RawMaterial = {
   id: string;
@@ -36,6 +38,53 @@ export type Movement = {
 
 export type ModalType = "in" | "cut" | "use" | null;
 
+/* ─── Резерв по материалу ─── */
+export type MaterialReserve = {
+  materialId: string;
+  totalReserved: number;
+  orders: { orderId: string; qty: number }[];
+};
+
+/* ─── Маппинг: stone → rawMaterial ─── */
+const STONE_TO_RAW_ID: Record<string, string> = {
+  "Гранит чёрный":        "r1",
+  "Гранит чёрный (габбро)":"r1",
+  "Гранит габбро":        "r1",
+  "Гранит серый":         "r2",
+  "Гранит красный":       "r3",
+  "Мрамор белый":         "r4",
+  "Мрамор серый":         "r5",
+};
+
+/* ─── Площадь изделия из размера ─── */
+function calcAreaFromSize(size: string): number {
+  const parts = size.split("×").map(s => parseFloat(s.trim()));
+  if (parts.length < 2 || parts.some(isNaN)) return 0;
+  const [w, h] = parts;
+  return +(w / 100 * h / 100).toFixed(2);
+}
+
+/* ─── Активные статусы (сырьё ещё расходуется) ─── */
+const ACTIVE_STATUSES = ["Эскиз", "Производство", "Готов", "Доставка"];
+
+/* ─── Расчёт резервов из заказов ─── */
+export function calcReserves(orders: Order[]): MaterialReserve[] {
+  const map: Record<string, { totalReserved: number; orders: { orderId: string; qty: number }[] }> = {};
+
+  for (const o of orders) {
+    if (!ACTIVE_STATUSES.includes(o.status)) continue;
+    const rawId = STONE_TO_RAW_ID[o.stone];
+    if (!rawId) continue;
+    const qty = calcAreaFromSize(o.size);
+    if (qty <= 0) continue;
+    if (!map[rawId]) map[rawId] = { totalReserved: 0, orders: [] };
+    map[rawId].totalReserved = +(map[rawId].totalReserved + qty).toFixed(2);
+    map[rawId].orders.push({ orderId: o.id, qty });
+  }
+
+  return Object.entries(map).map(([materialId, v]) => ({ materialId, ...v }));
+}
+
 /* ─── Данные: сырьё ─── */
 export const initRaw: RawMaterial[] = [
   { id: "r1", name: "Гранит чёрный (габбро)", unit: "м²", qty: 14.5, min: 5,  price: 4200 },
@@ -65,9 +114,15 @@ export const initMovements: Movement[] = [
 ];
 
 /* ─── Вспомогалки ─── */
-export function getLevelRaw(r: RawMaterial): "critical" | "low" | "ok" {
-  if (r.qty <= 0 || r.qty < r.min * 0.5) return "critical";
-  if (r.qty <= r.min) return "low";
+export function getAvailable(r: RawMaterial, reserved: number): number {
+  return +(r.qty - reserved).toFixed(2);
+}
+
+export function getLevelRaw(r: RawMaterial, reserved = 0): "critical" | "low" | "ok" {
+  const avail = getAvailable(r, reserved);
+  if (avail < 0) return "critical";
+  if (avail < r.min * 0.5) return "critical";
+  if (avail <= r.min) return "low";
   return "ok";
 }
 

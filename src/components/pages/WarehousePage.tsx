@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Icon from "@/components/ui/icon";
 import {
   RawMaterial, Blank, Movement, ModalType,
   initRaw, initBlanks, initMovements,
-  getLevelRaw, getLevelBlank, LEVEL_STYLE,
-  calcRawPerUnit,
+  getLevelRaw, getLevelBlank, getAvailable,
+  calcRawPerUnit, calcReserves,
 } from "./warehouse/warehouse.types";
 import { RawTable, BlanksTable, MovementHistory } from "./warehouse/WarehouseTables";
 import {
@@ -14,6 +14,7 @@ import {
 } from "./warehouse/WarehouseModals";
 import { useTasks } from "@/store/tasksStore";
 import { BLANK_TYPES as CUTTING_BLANK_TYPES } from "./cutting/cutting.types";
+import { orders as allOrders } from "./orders/orders.types";
 
 const nowDate = () => new Date().toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
 
@@ -155,10 +156,13 @@ export default function WarehousePage() {
   const filteredRaw    = rawMat.filter(r => r.name.toLowerCase().includes(search.toLowerCase()));
   const filteredBlanks = blanks.filter(b => b.name.toLowerCase().includes(search.toLowerCase()));
 
-  const toBuy        = rawMat.filter(r => getLevelRaw(r) !== "ok");
-  const totalRawVal  = rawMat.reduce((s, r) => s + r.qty * r.price, 0);
-  const criticalRaw  = rawMat.filter(r => getLevelRaw(r) === "critical").length;
-  const critBlanks   = blanks.filter(b => getLevelBlank(b) === "critical").length;
+  const reserves    = useMemo(() => calcReserves(allOrders), []);
+  const getReserved = (id: string) => reserves.find(r => r.materialId === id)?.totalReserved ?? 0;
+
+  const toBuy       = rawMat.filter(r => getAvailable(r, getReserved(r.id)) < 0);
+  const totalRawVal = rawMat.reduce((s, r) => s + r.qty * r.price, 0);
+  const criticalRaw = rawMat.filter(r => getLevelRaw(r, getReserved(r.id)) === "critical").length;
+  const critBlanks  = blanks.filter(b => getLevelBlank(b) === "critical").length;
 
   return (
     <div className="p-7 max-w-[1100px] mx-auto w-full space-y-5">
@@ -201,32 +205,76 @@ export default function WarehousePage() {
         <MiniStat icon="AlertTriangle" color="#ef4444" label="Критичных позиций" value={String(criticalRaw + critBlanks)} alert={criticalRaw + critBlanks > 0} />
       </div>
 
-      {/* ── Что закупить ── */}
+      {/* ── Акцент: доступно к использованию ── */}
+      <div className="grid grid-cols-3 gap-3">
+        {rawMat.filter(r => getReserved(r.id) > 0).map(r => {
+          const reserved  = getReserved(r.id);
+          const available = getAvailable(r, reserved);
+          const isDeficit = available < 0;
+          return (
+            <div
+              key={r.id}
+              className={`rounded-xl border px-4 py-3 flex items-center justify-between ${
+                isDeficit ? "bg-red-50 border-red-200" : "bg-white border-[#ebebeb]"
+              }`}
+            >
+              <div>
+                <p className="text-[11px] text-[#9b9b9b] mb-0.5">{r.name}</p>
+                <div className="flex items-baseline gap-1">
+                  <span className={`text-[22px] font-black font-mono ${isDeficit ? "text-red-500" : "text-[#1a1a1a]"}`}>
+                    {available}
+                  </span>
+                  <span className="text-[12px] text-[#9b9b9b]">{r.unit}</span>
+                  {isDeficit && <span className="text-[11px] text-red-500 font-semibold ml-1">дефицит</span>}
+                </div>
+                <p className="text-[10px] text-[#b5b5b5] mt-0.5">
+                  Остаток {r.qty} · Резерв {reserved}
+                </p>
+              </div>
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${isDeficit ? "bg-red-100" : "bg-[#f0fdf4]"}`}>
+                <Icon name={isDeficit ? "TrendingDown" : "TrendingUp"} size={18} className={isDeficit ? "text-red-500" : "text-green-600"} />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ── Что закупить (дефицит: Доступно < 0) ── */}
       {toBuy.length > 0 && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4">
           <div className="flex items-center gap-2 mb-3">
-            <Icon name="ShoppingCart" size={14} className="text-amber-600" />
-            <span className="text-[13px] font-semibold text-amber-800">Что нужно закупить</span>
-            <span className="text-[11px] bg-amber-200 text-amber-700 px-2 py-0.5 rounded-full font-bold">{toBuy.length}</span>
+            <Icon name="ShoppingCart" size={14} className="text-red-600" />
+            <span className="text-[13px] font-semibold text-red-800">Срочно закупить</span>
+            <span className="text-[11px] bg-red-200 text-red-700 px-2 py-0.5 rounded-full font-bold">{toBuy.length}</span>
+            <span className="text-[11px] text-red-500 ml-1">— доступно меньше нуля</span>
           </div>
           <div className="grid grid-cols-3 gap-2">
             {toBuy.map(r => {
-              const lv     = getLevelRaw(r);
-              const st     = LEVEL_STYLE[lv];
-              const needed = Math.max(0, r.min * 2 - r.qty);
+              const reserved  = getReserved(r.id);
+              const available = getAvailable(r, reserved);
+              const shortage  = Math.abs(available);
               return (
-                <div key={r.id} className="bg-white rounded-lg border border-amber-100 px-3 py-2.5 flex items-center gap-2.5">
-                  <span className={`w-2 h-2 rounded-full shrink-0 ${st.dot}`} />
-                  <div className="flex-1 min-w-0">
+                <div key={r.id} className="bg-white rounded-lg border border-red-100 px-3 py-3">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <span className="w-2 h-2 rounded-full bg-red-400 shrink-0" />
                     <p className="text-[12px] font-semibold text-[#1a1a1a] truncate">{r.name}</p>
-                    <p className="text-[11px] text-[#9b9b9b]">
-                      Есть: <b className={lv === "critical" ? "text-red-500" : "text-amber-600"}>{r.qty} {r.unit}</b>
-                      <span className="mx-1">·</span>Докупить: <b>{needed.toFixed(1)} {r.unit}</b>
-                    </p>
                   </div>
-                  <div className="shrink-0 text-right">
-                    <p className="text-[11px] font-semibold text-[#1a1a1a]">{(needed * r.price).toLocaleString("ru")} ₽</p>
-                    <p className="text-[10px] text-[#b5b5b5]">~стоимость</p>
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-[11px]">
+                      <span className="text-[#9b9b9b]">Есть на складе:</span>
+                      <span className="font-mono font-semibold text-[#1a1a1a]">{r.qty} {r.unit}</span>
+                    </div>
+                    <div className="flex justify-between text-[11px]">
+                      <span className="text-[#9b9b9b]">Зарезервировано:</span>
+                      <span className="font-mono font-semibold text-amber-600">{reserved} {r.unit}</span>
+                    </div>
+                    <div className="flex justify-between text-[11px] border-t border-red-100 pt-1 mt-1">
+                      <span className="text-red-700 font-semibold">Нужно докупить:</span>
+                      <span className="font-mono font-bold text-red-600">{shortage.toFixed(2)} {r.unit}</span>
+                    </div>
+                    <div className="text-right text-[10px] text-[#9b9b9b]">
+                      ≈ {(shortage * r.price).toLocaleString("ru")} ₽
+                    </div>
                   </div>
                 </div>
               );
@@ -255,6 +303,7 @@ export default function WarehousePage() {
       {tab === "raw"    && (
         <RawTable
           filteredRaw={filteredRaw}
+          reserves={reserves}
           onHistory={mat => setMatDetail(mat)}
         />
       )}
