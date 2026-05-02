@@ -1,11 +1,34 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Icon from "@/components/ui/icon";
 import {
   RawMaterial, Blank, Movement, ModalType, StockItem,
-  initRaw, initBlanks, initMovements, initStock,
   getLevelRaw, getLevelBlank, getAvailable, getAvailableBlank,
   calcRawPerUnit, calcReserves, calcBlankReserves,
 } from "./warehouse/warehouse.types";
+import { warehouseApi, DbMaterial, DbBlank, DbMovement, DbStockItem } from "@/api/client";
+
+function dbToRaw(m: DbMaterial): RawMaterial {
+  return { id: String(m.id), name: m.name, unit: m.unit, qty: Number(m.qty),
+           min: Number(m.min_qty), price: Number(m.price), imageUrl: m.image_url };
+}
+function dbToBlank(b: DbBlank): Blank {
+  return { id: String(b.id), name: b.name, size: b.size||"", materialId: String(b.material_id),
+           qty: Number(b.qty), min: Number(b.min_qty) };
+}
+function dbToMovement(m: DbMovement): Movement {
+  return { id: String(m.id), date: new Date(m.move_date).toLocaleDateString("ru-RU", {day:"numeric",month:"short"}),
+           type: m.move_type as Movement["type"], materialId: m.material_id ? String(m.material_id) : undefined,
+           blankId: m.blank_id ? String(m.blank_id) : undefined, qty: Number(m.qty),
+           pricePerUnit: m.price_per_unit ? Number(m.price_per_unit) : undefined,
+           totalSum: m.total_sum ? Number(m.total_sum) : undefined,
+           note: m.note, receiptId: m.receipt_id||undefined, order: m.order_ref||undefined,
+           remainAfter: m.remain_after ? Number(m.remain_after) : undefined };
+}
+function dbToStock(s: DbStockItem): StockItem {
+  return { id: String(s.id), catalogId: s.catalog_id||"", name: s.name, category: s.category,
+           qty: s.qty, price: Number(s.price), addedAt: new Date(s.added_at).toLocaleDateString("ru-RU",{day:"numeric",month:"short"}),
+           note: s.note };
+}
 import { RawTable, BlanksTable, MovementHistory } from "./warehouse/WarehouseTables";
 import {
   MiniStat, TabBtn,
@@ -22,11 +45,26 @@ const nowDate = () => new Date().toLocaleDateString("ru-RU", { day: "numeric", m
 
 export default function WarehousePage() {
   const [tab, setTab]             = useState<"raw" | "blanks" | "stock">("raw");
-  const [rawMat, setRawMat]       = useState<RawMaterial[]>(initRaw);
-  const [blanks, setBlanks]       = useState<Blank[]>(initBlanks);
-  const [movements, setMovements] = useState<Movement[]>(initMovements);
-  const [stock, setStock]         = useState<StockItem[]>(initStock);
+  const [rawMat, setRawMat]       = useState<RawMaterial[]>([]);
+  const [blanks, setBlanks]       = useState<Blank[]>([]);
+  const [movements, setMovements] = useState<Movement[]>([]);
+  const [stock, setStock]         = useState<StockItem[]>([]);
   const [modal, setModal]         = useState<ModalType>(null);
+  const [loadingData, setLoadingData] = useState(true);
+
+  useEffect(() => {
+    Promise.all([
+      warehouseApi.materials(),
+      warehouseApi.blanks(),
+      warehouseApi.movements(),
+      warehouseApi.stock(),
+    ]).then(([mats, bls, movs, stk]) => {
+      setRawMat(mats.map(dbToRaw));
+      setBlanks(bls.map(dbToBlank));
+      setMovements(movs.map(dbToMovement));
+      setStock(stk.map(dbToStock));
+    }).catch(console.error).finally(() => setLoadingData(false));
+  }, []);
   const [search, setSearch]       = useState("");
   const { addTask } = useTasks();
 

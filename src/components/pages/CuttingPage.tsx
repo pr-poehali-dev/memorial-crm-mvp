@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Icon from "@/components/ui/icon";
 import {
   Shift, ShiftResult, WorkType,
   PLACES, EMPLOYEES, BLANK_TYPES,
-  initShifts, today, yesterday, emptyResult,
+  today, yesterday, emptyResult,
   shiftTotalProduced, shiftTotalRaw,
 } from "./cutting/cutting.types";
+import { cuttingApi, DbShift, DbPlace, DbEmployee, DbBlankType } from "@/api/client";
 import CuttingShiftCards from "./cutting/CuttingShiftCards";
 import { ActiveColumn, DoneColumn } from "./cutting/CuttingShiftCards";
 import CuttingJournal from "./cutting/CuttingJournal";
@@ -15,9 +16,35 @@ import { useTasks } from "@/store/tasksStore";
 
 type Tab = "today" | "yesterday" | "journal";
 
+function dbToShift(s: DbShift): Shift {
+  return {
+    id: String(s.id),
+    placeId: String(s.place_id),
+    employeeId: String(s.employee_id),
+    workType: s.work_type as WorkType,
+    date: s.shift_date?.substring(0,10) || today,
+    status: s.status as "active"|"done",
+    startedAt: s.started_at?.substring(0,5) || "08:00",
+    finishedAt: s.finished_at?.substring(0,5),
+    taskId: s.task_id ? String(s.task_id) : undefined,
+    taskQtyAssigned: s.task_qty_assigned || undefined,
+    results: (s.results || []).map(r => ({
+      blankTypeId: String(r.blank_type_id),
+      produced: r.produced,
+      rawAuto: true,
+      rawUsed: Number(r.raw_used),
+      orderId: r.order_ref || undefined,
+    })),
+  };
+}
+
 export default function CuttingPage() {
   const [tab,    setTab]    = useState<Tab>("today");
-  const [shifts, setShifts] = useState<Shift[]>(initShifts);
+  const [shifts, setShifts] = useState<Shift[]>([]);
+
+  useEffect(() => {
+    cuttingApi.shifts().then(data => setShifts(data.map(dbToShift))).catch(console.error);
+  }, []);
   const { updateTask, tasks } = useTasks();
 
   /* Модалки */

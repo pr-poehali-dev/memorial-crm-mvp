@@ -1,0 +1,175 @@
+"""Склад: материалы, заготовки, движения, готовые изделия"""
+import json, os, hashlib
+import psycopg2
+from psycopg2.extras import RealDictCursor
+
+SCHEMA = "t_p9542363_memorial_crm_mvp"
+CORS = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, X-Session-Token",
+}
+
+def get_db():
+    return psycopg2.connect(os.environ["DATABASE_URL"])
+
+def get_company_id(token: str) -> int | None:
+    if not token:
+        return None
+    secret = os.environ.get("SESSION_SECRET", "memorial-crm-secret")
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute(f"SELECT id, login, company_id FROM {SCHEMA}.users WHERE active=TRUE")
+    rows = cur.fetchall()
+    conn.close()
+    for uid, login, cid in rows:
+        if hashlib.sha256(f"{uid}:{login}:{secret}".encode()).hexdigest() == token:
+            return cid
+    return None
+
+def handler(event: dict, context) -> dict:
+    """Склад. GET /?section=materials|blanks|movements|stock. POST /?action=in|cut|use|adjust|add_material|add_blank"""
+    if event.get("httpMethod") == "OPTIONS":
+        return {"statusCode": 200, "headers": CORS, "body": ""}
+
+    token = event.get("headers", {}).get("X-Session-Token", "")
+    company_id = get_company_id(token)
+    if not company_id:
+        return {"statusCode": 401, "headers": CORS, "body": json.dumps({"error": "unauthorized"})}
+
+    method = event.get("httpMethod", "GET")
+    params = event.get("queryStringParameters") or {}
+    section = params.get("section", "materials")
+    action  = params.get("action", "")
+
+    conn = get_db()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    try:
+        if method == "GET":
+            if section == "materials":
+                cur.execute(
+                    f"SELECT * FROM {SCHEMA}.materials WHERE company_id=%s AND active=TRUE ORDER BY name",
+                    (company_id,)
+                )
+            elif section == "blanks":
+                cur.execute(
+                    f"""SELECT b.*, m.name as material_name, m.unit as material_unit
+                        FROM {SCHEMA}.blanks b
+                        LEFT JOIN {SCHEMA}.materials m ON m.id=b.material_id
+                        WHERE b.company_id=%s ORDER BY b.name""",
+                    (company_id,)
+                )
+            elif section == "movements":
+                cur.execute(
+                    f"""SELECT wm.*, m.name as material_name, b.name as blank_name
+                        FROM {SCHEMA}.warehouse_movements wm
+                        LEFT JOIN {SCHEMA}.materials m ON m.id=wm.material_id
+                        LEFT JOIN {SCHEMA}.blanks b ON b.id=wm.blank_id
+                        WHERE wm.company_id=%s
+                        ORDER BY wm.move_date DESC, wm.id DESC
+                        LIMIT 100""",
+                    (company_id,)
+                )
+            elif section == "stock":
+                cur.execute(
+                    f"SELECT * FROM {SCHEMA}.stock_items WHERE company_id=%s ORDER BY added_at DESC",
+                    (company_id,)
+                )
+            else:
+                return {"statusCode": 400, "headers": CORS, "body": json.dumps({"error": "unknown section"})}
+
+            rows = cur.fetchall()
+            return {"statusCode": 200, "headers": CORS,
+                    "body": json.dumps([dict(r) for r in rows], default=str)}
+
+        if method == "POST":
+            body = json.loads(event.get("body") or "{}")
+
+            if action == "add_material":
+                cur.execute(
+                    f"""INSERT INTO {SCHEMA}.materials
+                        (company_id, name, unit, qty, min_qty, price, image_url)
+                        VALUES (%s,%s,%s,%s,%s,%s,%s) RETURNING id""",
+                    (company_id, body["name"], body.get("unit","м²"),
+                     body.get("qty",0), body.get("minQty",5),
+                     body.get("price",0), body.get("imageUrl"))
+                )
+                new_id = cur.fetchone()["id"]
+                conn.commit()
+                return {"statusCode": 201, "headers": CORS, "body": json.dumps({"id": new_id})}
+
+            if action in ("in", "cut", "use", "adjust"):
+                mat_id = body.get("materialId")
+                blank_id = body.get("blankId")
+                qty = float(body.get("qty", 0))
+
+                # Обновляем количество материала
+                if action == "in" and mat_id:
+                    cur.execute(
+                        f"UPDATE {SCHEMA}.materials SET qty=qty+%s, updated_at=NOW() WHERE id=%s AND company_id=%s",
+                        (qty, mat_id, company_id)
+                    )
+                elif action == "use" and mat_id:
+                    cur.execute(
+                        f"UPDATE {SCHEMA}.materials SET qty=GREATEST(0,qty-%s), updated_at=NOW() WHERE id=%s AND company_id=%s",
+                        (qty, mat_id, company_id)
+                    )
+                elif action == "cut" and mat_id and blank_id:
+                    cur.execute(
+                        f"UPDATE {SCHEMA}.materials SET qty=GREATEST(0,qty-%s), updated_at=NOW() WHERE id=%s AND company_id=%s",
+                        (qty, mat_id, company_id)
+                    )
+                    cur.execute(
+                        f"UPDATE {SCHEMA}.blanks SET qty=qty+%s, updated_at=NOW() WHERE id=%s AND company_id=%s",
+                        (body.get("blankQty", 1), blank_id, company_id)
+                    )
+
+                # Получаем текущий остаток
+                remain = None
+                if mat_id:
+                    cur.execute(f"SELECT qty FROM {SCHEMA}.materials WHERE id=%s", (mat_id,))
+                    row = cur.fetchone()
+                    if row:
+                        remain = float(row["qty"])
+
+                # Записываем движение
+                cur.execute(
+                    f"""INSERT INTO {SCHEMA}.warehouse_movements
+                        (company_id, move_date, move_type, material_id, blank_id,
+                         qty, price_per_unit, total_sum, note, receipt_id, order_ref, remain_after)
+                        VALUES (%s, CURRENT_DATE, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        RETURNING id""",
+                    (company_id, action, mat_id, blank_id, qty,
+                     body.get("pricePerUnit"), body.get("totalSum"),
+                     body.get("note",""), body.get("receiptId"),
+                     body.get("orderRef"), remain)
+                )
+                conn.commit()
+                return {"statusCode": 201, "headers": CORS, "body": json.dumps({"ok": True})}
+
+            if action == "add_stock":
+                cur.execute(
+                    f"""INSERT INTO {SCHEMA}.stock_items
+                        (company_id, catalog_id, name, category, qty, price, note)
+                        VALUES (%s,%s,%s,%s,%s,%s,%s) RETURNING id""",
+                    (company_id, body.get("catalogId"), body["name"],
+                     body.get("category","other"), body.get("qty",0),
+                     body.get("price",0), body.get("note"))
+                )
+                new_id = cur.fetchone()["id"]
+                conn.commit()
+                return {"statusCode": 201, "headers": CORS, "body": json.dumps({"id": new_id})}
+
+            if action == "update_stock_qty":
+                cur.execute(
+                    f"UPDATE {SCHEMA}.stock_items SET qty=%s WHERE id=%s AND company_id=%s",
+                    (body.get("qty",0), body.get("id"), company_id)
+                )
+                conn.commit()
+                return {"statusCode": 200, "headers": CORS, "body": json.dumps({"ok": True})}
+
+        return {"statusCode": 405, "headers": CORS, "body": json.dumps({"error": "method not allowed"})}
+
+    finally:
+        conn.close()

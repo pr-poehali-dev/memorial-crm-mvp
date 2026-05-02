@@ -1,9 +1,33 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Icon from "@/components/ui/icon";
-import { orders, miniStats, FilterKey, Order } from "./orders/orders.types";
+import { miniStats, FilterKey, Order } from "./orders/orders.types";
 import OrdersTable from "./orders/OrdersTable";
 import OrdersSidePanel from "./orders/OrdersSidePanel";
 import OrdersControlBoard from "./orders/OrdersControlBoard";
+import { ordersApi, DbOrder } from "@/api/client";
+import { useApiData } from "@/api/useApiData";
+
+function dbToOrder(o: DbOrder): Order {
+  return {
+    id:            o.id,
+    client:        o.client_name,
+    phone:         o.phone || "",
+    stone:         o.stone || "",
+    size:          o.size || "",
+    inscription:   o.inscription || "",
+    design:        o.design || "",
+    status:        o.status,
+    statusColor:   o.status_color,
+    amount:        Number(o.amount),
+    paid:          Number(o.paid),
+    date:          o.order_date ? new Date(o.order_date).toLocaleDateString("ru-RU") : "",
+    deadline:      o.deadline   ? new Date(o.deadline).toLocaleDateString("ru-RU") : "",
+    manager:       o.manager || "",
+    comment:       o.comment || "",
+    deadlineState: (o.deadline_state as Order["deadlineState"]) || "ok",
+    payStatus:     (o.pay_status  as Order["payStatus"])  || "unpaid",
+  };
+}
 
 const FILTERS: { key: FilterKey; label: string }[] = [
   { key: "all",     label: "Все" },
@@ -17,6 +41,9 @@ export default function OrdersPage({ onOpenOrder, onNewOrder }: { onOpenOrder?: 
   const [filter, setFilter]     = useState<FilterKey>("all");
   const [search, setSearch]     = useState("");
   const [selected, setSelected] = useState<Order | null>(null);
+
+  const { data: rawOrders, loading } = useApiData(() => ordersApi.list());
+  const orders: Order[] = useMemo(() => (rawOrders || []).map(dbToOrder), [rawOrders]);
 
   const applyFilter = (o: Order) => {
     if (filter === "mine")    return o.manager === "Олег К.";
@@ -155,12 +182,19 @@ export default function OrdersPage({ onOpenOrder, onNewOrder }: { onOpenOrder?: 
         {/* Таблица */}
         {view === "list" && (
           <div className="px-7 pb-7 max-w-[1100px] w-full mx-auto">
-            <OrdersTable
-              filtered={filtered}
-              selected={selected}
-              onSelect={(o) => setSelected(selected?.id === o.id ? null : o)}
-              onOpenOrder={onOpenOrder}
-            />
+            {loading ? (
+              <div className="flex items-center justify-center py-16 text-[13px] text-[#9b9b9b] gap-2">
+                <div className="w-4 h-4 border-2 border-[#6366f1] border-t-transparent rounded-full animate-spin" />
+                Загрузка заказов...
+              </div>
+            ) : (
+              <OrdersTable
+                filtered={filtered}
+                selected={selected}
+                onSelect={(o) => setSelected(selected?.id === o.id ? null : o)}
+                onOpenOrder={onOpenOrder}
+              />
+            )}
           </div>
         )}
       </div>

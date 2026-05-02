@@ -1,10 +1,22 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Icon from "@/components/ui/icon";
 import {
-  CATALOG, CATEGORY_META, CALC_TYPE_META,
+  CATEGORY_META, CALC_TYPE_META,
   CatalogCategory, CatalogItem, CalcType,
 } from "@/data/catalog";
-import { initStock } from "./warehouse/warehouse.types";
+import { catalogApi, DbCatalogItem } from "@/api/client";
+
+function dbToCatalog(c: DbCatalogItem): CatalogItem {
+  return {
+    id: c.id, name: c.name,
+    category: c.category as CatalogCategory,
+    unit: c.unit, price: Number(c.price), cost: Number(c.cost),
+    calcType: c.calc_type as CalcType, active: c.active,
+    comment: c.comment || "", usedInOrders: c.used_in_orders || 0,
+    createdBy: c.created_by || "", updatedAt: "",
+    stockQty: c.stock_qty || 0,
+  };
+}
 
 type FilterCat = CatalogCategory | "all";
 type View = "table" | "detail";
@@ -17,7 +29,11 @@ const ALL_CATS: { id: FilterCat; label: string }[] = [
 function uid() { return Math.random().toString(36).slice(2, 8); }
 
 export default function CatalogPage({ canEdit = true }: { canEdit?: boolean }) {
-  const [items, setItems]         = useState<CatalogItem[]>(CATALOG);
+  const [items, setItems]         = useState<CatalogItem[]>([]);
+
+  useEffect(() => {
+    catalogApi.list().then(data => setItems(data.map(dbToCatalog))).catch(console.error);
+  }, []);
   const [filterCat, setFilterCat] = useState<FilterCat>("all");
   const [filterActive, setFilterActive] = useState<"all" | "active" | "inactive">("all");
   const [search, setSearch]       = useState("");
@@ -156,8 +172,7 @@ export default function CatalogPage({ canEdit = true }: { canEdit?: boolean }) {
                   const calcM  = CALC_TYPE_META[item.calcType];
                   const margin = item.price > 0 ? Math.round(((item.price - item.cost) / item.price) * 100) : null;
                   const isLast = i === filtered.length - 1;
-                  const stockItem = initStock.find(s => s.catalogId === item.id);
-                  const stockQty  = stockItem?.qty ?? 0;
+                  const stockQty  = item.stockQty ?? 0;
 
                   return (
                     <tr key={item.id}

@@ -1,0 +1,7 @@
+{
+  "clients": "https://functions.poehali.dev/5c7d2169-a671-4e0a-91a1-c3d2ad0c7d35",
+  "auth": "https://functions.poehali.dev/0e06719c-34f7-4c26-8b70-560def4ad283",
+  "cutting": "https://functions.poehali.dev/a191e962-1806-4049-bba4-51aa5384f467",
+  "orders": "https://functions.poehali.dev/9a0900f9-bce7-4297-8845-9ae158944320",
+  "warehouse": "https://functions.poehali.dev/394b9d79-d492-44cc-8a4b-d92916ad4d0b"
+}

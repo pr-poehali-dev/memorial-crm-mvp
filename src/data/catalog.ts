@@ -17,6 +17,7 @@ export type CatalogItem = {
   usedInOrders: number;
   createdBy: string;
   updatedAt: string;
+  stockQty?: number;
 };
 
 export const CATEGORY_META: Record<CatalogCategory, { label: string; icon: string; color: string; bg: string }> = {

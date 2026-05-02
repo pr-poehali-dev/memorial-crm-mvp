@@ -1,6 +1,26 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Icon from "@/components/ui/icon";
 import { useNav } from "@/store/navStore";
+import { clientsApi, DbClient } from "@/api/client";
+import { useApiData } from "@/api/useApiData";
+
+function dbToClient(c: DbClient): Client {
+  return {
+    id:       String(c.id),
+    name:     c.name,
+    phone:    c.phone || "",
+    city:     c.city  || "",
+    address:  c.address || "",
+    orders:   Number(c.orders_count || 0),
+    total:    Number(c.total_amount || 0),
+    paid:     Number(c.total_paid || 0),
+    last:     c.last_order_date ? new Date(c.last_order_date).toLocaleDateString("ru-RU") : "",
+    active:   c.active,
+    comment:  c.comment || "",
+    manager:  c.manager || "",
+    since:    c.since_label || "",
+  };
+}
 
 export type Client = {
   id: string;
@@ -295,9 +315,12 @@ export default function ClientsPage({ onOpenClient: _onOpenClient }: { onOpenCli
   const [filterActive, setFilterActive] = useState<"all" | "active" | "inactive">("all");
   const [selected, setSelected]       = useState<Client | null>(null);
 
+  const { data: rawClients, loading } = useApiData(() => clientsApi.list());
+  const CLIENTS: Client[] = useMemo(() => (rawClients || []).map(dbToClient), [rawClients]);
+
   const filtered = CLIENTS.filter(c => {
     const q = search.toLowerCase();
-    const matchSearch = !q || c.name.toLowerCase().includes(q) || c.phone.includes(q) || c.city.toLowerCase().includes(q);
+    const matchSearch = !q || c.name.toLowerCase().includes(q) || (c.phone||"").includes(q) || (c.city||"").toLowerCase().includes(q);
     const matchFilter = filterActive === "all" || (filterActive === "active" ? c.active : !c.active);
     return matchSearch && matchFilter;
   });

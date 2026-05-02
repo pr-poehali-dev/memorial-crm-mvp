@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useAuth } from "@/store/authStore";
 
 type Props = { onLogin: () => void; onBack: () => void };
 
@@ -6,24 +7,21 @@ export default function LoginPage({ onLogin, onBack }: Props) {
   const [login, setLogin]       = useState("");
   const [password, setPassword] = useState("");
   const [error, setError]       = useState("");
-  const [loading, setLoading]   = useState(false);
+  const { login: doLogin, loading } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!login.trim() || !password.trim()) {
       setError("Введите логин и пароль");
       return;
     }
-    if (login !== "123" || password !== "123") {
-      setError("Неверный логин или пароль");
-      return;
-    }
     setError("");
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      await doLogin(login.trim(), password.trim());
       onLogin();
-    }, 600);
+    } catch (err) {
+      setError((err as Error).message || "Ошибка входа");
+    }
   };
 
   return (
@@ -118,7 +116,8 @@ export default function LoginPage({ onLogin, onBack }: Props) {
             </form>
 
             <div className="mt-6 pt-5 border-t border-[#f5f5f5] text-center">
-              <p className="text-[11px] text-[#b5b5b5]">Логин: <span className="font-semibold text-[#9b9b9b]">123</span> · Пароль: <span className="font-semibold text-[#9b9b9b]">123</span></p>
+              <p className="text-[11px] text-[#b5b5b5]">Демо: логин <span className="font-semibold text-[#9b9b9b]">2</span> · пароль <span className="font-semibold text-[#9b9b9b]">2</span></p>
+              <p className="text-[11px] text-[#c5c5c5] mt-0.5">Пустая компания: логин <span className="font-semibold">1</span> · пароль <span className="font-semibold">1</span></p>
             </div>
           </div>
 
