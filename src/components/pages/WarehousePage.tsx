@@ -39,7 +39,7 @@ import { ModalAddMaterial } from "./warehouse/ModalAddMaterial";
 import StockTable from "./warehouse/StockTable";
 import { useTasks } from "@/store/tasksStore";
 import { BLANK_TYPES as CUTTING_BLANK_TYPES } from "./cutting/cutting.types";
-import { orders as allOrders } from "./orders/orders.types";
+
 
 const nowDate = () => new Date().toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
 
@@ -74,20 +74,20 @@ export default function WarehousePage() {
   const [showAddMat,    setShowAddMat]    = useState(false);
 
   /* ── форма Приход ── */
-  const [inRawId,     setInRawId]     = useState(initRaw[0].id);
+  const [inRawId,     setInRawId]     = useState("");
   const [inQty,       setInQty]       = useState("");
   const [inReceiptId, setInReceiptId] = useState("");
   const [inPrice,     setInPrice]     = useState("");
 
   /* ── форма Нарезка ── */
-  const [cutRawId,    setCutRawId]    = useState(initRaw[0].id);
-  const [cutBlankId,  setCutBlankId]  = useState(initBlanks[0].id);
+  const [cutRawId,    setCutRawId]    = useState("");
+  const [cutBlankId,  setCutBlankId]  = useState("");
   const [cutQty,      setCutQty]      = useState("");
   const [cutRawPer,   setCutRawPer]   = useState("");
   const [cutDeadline, setCutDeadline] = useState("");
 
   /* ── форма Списание ── */
-  const [useBlankId, setUseBlankId] = useState(initBlanks[0].id);
+  const [useBlankId, setUseBlankId] = useState("");
   const [useQty,     setUseQty]     = useState("");
   const [useOrder,   setUseOrder]   = useState("");
 
@@ -198,8 +198,8 @@ export default function WarehousePage() {
   const filteredRaw    = rawMat.filter(r => r.name.toLowerCase().includes(search.toLowerCase()));
   const filteredBlanks = blanks.filter(b => b.name.toLowerCase().includes(search.toLowerCase()));
 
-  const reserves       = useMemo(() => calcReserves(allOrders), []);
-  const blankReserves  = useMemo(() => calcBlankReserves(allOrders), []);
+  const reserves       = useMemo(() => calcReserves([]), []);
+  const blankReserves  = useMemo(() => calcBlankReserves([]), []);
   const getReserved    = (id: string) => reserves.find(r => r.materialId === id)?.totalReserved ?? 0;
   const getBlankReserved = (id: string) => blankReserves.find(r => r.blankId === id)?.totalReserved ?? 0;
 
