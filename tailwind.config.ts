@@ -74,7 +74,7 @@ export default {
 			},
 			keyframes: {
 				'slide-in-right': {
-					from: { transform: 'translateX(20px)', opacity: '0' },
+					from: { transform: 'translateX(100%)', opacity: '0' },
 					to: { transform: 'translateX(0)', opacity: '1' },
 				},
 				'fade-in': {

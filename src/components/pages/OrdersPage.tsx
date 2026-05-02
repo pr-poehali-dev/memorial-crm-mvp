@@ -37,7 +37,7 @@ export default function OrdersPage({ onOpenOrder, onNewOrder }: { onOpenOrder?: 
 
   return (
     <div className="flex h-full min-h-0">
-      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto">
+      <div className="flex-1 flex flex-col min-w-0 overflow-y-auto relative">
 
         {/* ── Sticky-шапка ── */}
         <div className="sticky top-0 z-20 bg-[#fafafa] border-b border-[#ebebeb]">
@@ -165,9 +165,13 @@ export default function OrdersPage({ onOpenOrder, onNewOrder }: { onOpenOrder?: 
         )}
       </div>
 
-      {/* Боковая панель */}
+      {/* Боковая панель — overlay */}
       {selected && (
-        <OrdersSidePanel selected={selected} onClose={() => setSelected(null)} />
+        <OrdersSidePanel
+          selected={selected}
+          onClose={() => setSelected(null)}
+          onOpenOrder={onOpenOrder}
+        />
       )}
     </div>
   );

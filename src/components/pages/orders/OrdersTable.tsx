@@ -1,13 +1,16 @@
-import { useState } from "react";
 import Icon from "@/components/ui/icon";
 import { Order, PAY_LABELS, DEADLINE_ROW } from "./orders.types";
 
-function ActionBtn({ icon, title, onClick }: { icon: string; title: string; onClick?: () => void }) {
+function ActionBtn({ icon, title, onClick, accent }: { icon: string; title: string; onClick?: () => void; accent?: boolean }) {
   return (
     <button
       title={title}
       onClick={(e) => { e.stopPropagation(); onClick?.(); }}
-      className="w-7 h-7 flex items-center justify-center rounded-[6px] bg-white border border-[#e5e5e5] text-[#6b6b6b] hover:text-[#1a1a1a] hover:border-[#c5c5c5] transition-all"
+      className={`w-7 h-7 flex items-center justify-center rounded-[6px] border transition-all
+        ${accent
+          ? "bg-[#1a1a1a] border-[#1a1a1a] text-white hover:bg-[#333]"
+          : "bg-white border-[#e5e5e5] text-[#6b6b6b] hover:text-[#1a1a1a] hover:border-[#c0c0c0] hover:bg-[#f8f8f8]"
+        }`}
     >
       <Icon name={icon as never} size={12} />
     </button>
@@ -22,7 +25,6 @@ type Props = {
 };
 
 export default function OrdersTable({ filtered, selected, onSelect, onOpenOrder }: Props) {
-  const [actionRow, setActionRow] = useState<string | null>(null);
 
   return (
     <div className="bg-white border border-[#ebebeb] rounded-xl overflow-hidden">
@@ -48,8 +50,6 @@ export default function OrdersTable({ filtered, selected, onSelect, onOpenOrder 
               <tr
                 key={o.id}
                 onClick={() => { onSelect(o); }}
-                onMouseEnter={() => setActionRow(o.id)}
-                onMouseLeave={() => setActionRow(null)}
                 className={`cursor-pointer transition-colors relative
                   ${DEADLINE_ROW[o.deadlineState]}
                   ${selected?.id === o.id ? "!bg-[#f0f4ff]" : ""}
@@ -129,12 +129,12 @@ export default function OrdersTable({ filtered, selected, onSelect, onOpenOrder 
                   )}
                 </td>
 
-                {/* Быстрые действия */}
-                <td className="px-3 py-3">
-                  <div className={`flex items-center gap-1 transition-opacity ${actionRow === o.id ? "opacity-100" : "opacity-0"}`}>
-                    <ActionBtn icon="Eye" title="Открыть" onClick={() => onOpenOrder?.(o.id)} />
-                    <ActionBtn icon="Pencil" title="Редактировать" />
-                    <ActionBtn icon="Banknote" title="Добавить оплату" />
+                {/* Быстрые действия — всегда видимы */}
+                <td className="px-3 py-3" onClick={e => e.stopPropagation()}>
+                  <div className="flex items-center gap-1">
+                    <ActionBtn icon="Eye"       title="Открыть заказ"    onClick={() => onOpenOrder?.(o.id)} accent />
+                    <ActionBtn icon="Pencil"    title="Редактировать" />
+                    <ActionBtn icon="Banknote"  title="Добавить оплату" />
                     <ActionBtn icon="RefreshCw" title="Изменить статус" />
                   </div>
                 </td>
