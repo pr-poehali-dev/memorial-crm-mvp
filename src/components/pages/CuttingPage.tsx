@@ -7,6 +7,7 @@ import {
   shiftTotalProduced, shiftTotalRaw,
 } from "./cutting/cutting.types";
 import CuttingShiftCards from "./cutting/CuttingShiftCards";
+import { ActiveColumn, DoneColumn } from "./cutting/CuttingShiftCards";
 import CuttingJournal from "./cutting/CuttingJournal";
 import CuttingTaskBlock from "./cutting/CuttingTaskBlock";
 import { AssignModal, FinishModal } from "./cutting/CuttingModals";
@@ -17,7 +18,7 @@ type Tab = "today" | "yesterday" | "journal";
 export default function CuttingPage() {
   const [tab,    setTab]    = useState<Tab>("today");
   const [shifts, setShifts] = useState<Shift[]>(initShifts);
-  const { updateTask } = useTasks();
+  const { updateTask, tasks } = useTasks();
 
   /* Модалки */
   const [assignModal,   setAssignModal]   = useState(false);
@@ -190,24 +191,75 @@ export default function CuttingPage() {
       </div>
 
       {/* ── Тело ── */}
-      <div className="flex-1 overflow-y-auto px-7 py-5">
+      <div className="flex-1 overflow-hidden flex flex-col">
 
         {/* ════ Сегодня ════ */}
         {tab === "today" && (
-          <>
-            <CuttingTaskBlock />
-            <CuttingShiftCards
-              activeShifts={activeShifts}
-              todayDone={todayDone}
-              onFinishClick={(id) => { setFinishShiftId(id); setFResults([emptyResult()]); }}
-            />
-          </>
+          <div className="flex-1 overflow-hidden grid grid-cols-3 divide-x divide-[#f0f0f0]">
+
+            {/* ── Колонка 1: ЗАДАЧИ ── */}
+            <div className="flex flex-col overflow-hidden">
+              <div className="shrink-0 px-5 py-3 border-b border-[#f0f0f0] flex items-center gap-2">
+                <div className="w-5 h-5 rounded-md bg-[#ede9fe] flex items-center justify-center shrink-0">
+                  <Icon name="ClipboardList" size={11} className="text-[#6366f1]" />
+                </div>
+                <p className="text-[11px] font-bold uppercase tracking-widest text-[#6366f1]">Задачи</p>
+                {tasks.filter(t => t.status !== "done").length > 0 && (
+                  <span className="text-[10px] font-bold bg-[#6366f1] text-white px-1.5 py-px rounded-full">
+                    {tasks.filter(t => t.status !== "done").length}
+                  </span>
+                )}
+              </div>
+              <div className="flex-1 overflow-y-auto px-5 py-4">
+                <CuttingTaskBlock />
+              </div>
+            </div>
+
+            {/* ── Колонка 2: АКТИВНЫЕ ── */}
+            <div className="flex flex-col overflow-hidden">
+              <div className="shrink-0 px-5 py-3 border-b border-[#f0f0f0] flex items-center gap-2">
+                <div className="w-5 h-5 rounded-md bg-[#dcfce7] flex items-center justify-center shrink-0">
+                  <Icon name="Play" size={11} className="text-[#16a34a]" />
+                </div>
+                <p className="text-[11px] font-bold uppercase tracking-widest text-[#16a34a]">Активные</p>
+                {activeShifts.length > 0 && (
+                  <span className="text-[10px] font-bold bg-[#22c55e] text-white px-1.5 py-px rounded-full">
+                    {activeShifts.length}
+                  </span>
+                )}
+              </div>
+              <div className="flex-1 overflow-y-auto px-5 py-4">
+                <ActiveColumn
+                  shifts={activeShifts}
+                  onFinishClick={(id) => { setFinishShiftId(id); setFResults([emptyResult()]); }}
+                />
+              </div>
+            </div>
+
+            {/* ── Колонка 3: ЗАВЕРШЕНО ── */}
+            <div className="flex flex-col overflow-hidden">
+              <div className="shrink-0 px-5 py-3 border-b border-[#f0f0f0] flex items-center gap-2">
+                <div className="w-5 h-5 rounded-md bg-[#f4f4f4] flex items-center justify-center shrink-0">
+                  <Icon name="CheckCheck" size={11} className="text-[#9b9b9b]" />
+                </div>
+                <p className="text-[11px] font-bold uppercase tracking-widest text-[#9b9b9b]">Завершено</p>
+                {todayDone.length > 0 && (
+                  <span className="text-[10px] font-bold bg-[#9b9b9b] text-white px-1.5 py-px rounded-full">
+                    {todayDone.length}
+                  </span>
+                )}
+              </div>
+              <div className="flex-1 overflow-y-auto px-5 py-4">
+                <DoneColumn shifts={todayDone} />
+              </div>
+            </div>
+
+          </div>
         )}
 
         {/* ════ Вчера ════ */}
         {tab === "yesterday" && (
-          <div className="space-y-4">
-            {/* Краткая статистика */}
+          <div className="flex-1 overflow-y-auto px-7 py-5 space-y-4">
             <div className="grid grid-cols-3 gap-3">
               {[
                 { label: "Смен",          value: String(yesterdayDone.length), sub: null },
@@ -223,8 +275,6 @@ export default function CuttingPage() {
                 </div>
               ))}
             </div>
-
-            {/* Смены — всегда раскрыты, без аккордеона */}
             {yesterdayDone.length === 0 ? (
               <EmptyState text="Нет смен за вчера" />
             ) : (
@@ -243,7 +293,9 @@ export default function CuttingPage() {
 
         {/* ════ Журнал ════ */}
         {tab === "journal" && (
-          <CuttingJournal doneShifts={allDone} />
+          <div className="flex-1 overflow-y-auto px-7 py-5">
+            <CuttingJournal doneShifts={allDone} />
+          </div>
         )}
       </div>
 
