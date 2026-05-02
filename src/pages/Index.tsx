@@ -7,7 +7,7 @@ import OrderDetailPage from "@/components/pages/OrderDetailPage";
 import ProductionPage from "@/components/pages/ProductionPage";
 import WarehousePage from "@/components/pages/WarehousePage";
 import ClientsPage from "@/components/pages/ClientsPage";
-import ClientDetailPage from "@/components/pages/ClientDetailPage";
+
 import AnalyticsPage from "@/components/pages/AnalyticsPage";
 import SettingsPage from "@/components/pages/SettingsPage";
 import AiAssistant from "@/components/AiAssistant";
@@ -104,7 +104,6 @@ export default function Index() {
   const [active, setActive]     = useState<Section>("overview");
   const [collapsed, setCollapsed]   = useState(false);
   const [openOrder, setOpenOrder]   = useState<string | null>(null);
-  const [openClient, setOpenClient] = useState<string | null>(null);
   const [showRolePicker, setShowRolePicker] = useState(false);
   const [creatingOrder, setCreatingOrder]   = useState(false);
   const [aiOpen, setAiOpen]               = useState(false);
@@ -129,14 +128,12 @@ export default function Index() {
     setRole(r);
     setActive(ROLE_DEFAULT[r]);
     setOpenOrder(null);
-    setOpenClient(null);
     setScreen("app");
   };
 
   const handleNavClick = (id: Section) => {
     setActive(id);
     setOpenOrder(null);
-    setOpenClient(null);
     setCreatingOrder(false);
     // auto-expand group containing this item
     const parentGroup = NAV_GROUPS.find(g => g.items.some(i => i.id === id));
@@ -147,7 +144,6 @@ export default function Index() {
     openOrder: (orderId: string) => {
       setActive("orders");
       setOpenOrder(orderId);
-      setOpenClient(null);
       setCreatingOrder(false);
     },
   }), []);
@@ -160,15 +156,14 @@ export default function Index() {
 
   const renderMain = () => {
     if (creatingOrder) return <NewOrderPage onBack={() => setCreatingOrder(false)} />;
-    if (active === "orders" && openOrder)   return <OrderDetailPage onBack={() => setOpenOrder(null)} />;
-    if (active === "clients" && openClient) return <ClientDetailPage clientId={openClient} onBack={() => setOpenClient(null)} />;
+    if (active === "orders" && openOrder) return <OrderDetailPage onBack={() => setOpenOrder(null)} />;
     switch (active) {
       case "overview":   return <OverviewPage />;
       case "orders":     return <OrdersPage onOpenOrder={(id) => setOpenOrder(id)} onNewOrder={() => setCreatingOrder(true)} />;
       case "production": return <ProductionPage />;
       case "cutting":    return <CuttingPage />;
       case "warehouse":  return <WarehousePage />;
-      case "clients":    return <ClientsPage onOpenClient={(id) => setOpenClient(id)} />;
+      case "clients":    return <ClientsPage />;
       case "analytics":  return <AnalyticsPage />;
       case "estimate":   return <EstimatePage />;
       case "catalog":          return <CatalogPage canEdit={role === "estimator" || role === "owner"} />;
