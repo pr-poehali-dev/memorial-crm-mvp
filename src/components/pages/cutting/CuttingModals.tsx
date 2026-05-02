@@ -190,8 +190,8 @@ export function FinishModal({
 }: FinishProps) {
   const { tasks } = useTasks();
 
-  const place    = PLACES.find(p => p.id === shift.placeId)!;
-  const employee = EMPLOYEES.find(e => e.id === shift.employeeId)!;
+  const place    = PLACES.find(p => p.id === shift.placeId)       ?? { name: shift.placeId,    machine: "" };
+  const employee = EMPLOYEES.find(e => e.id === shift.employeeId) ?? { id: shift.employeeId, name: shift.employeeId };
 
   /* Задача, привязанная к смене */
   const task    = shift.taskId ? tasks.find(t => t.id === shift.taskId) ?? null : null;
