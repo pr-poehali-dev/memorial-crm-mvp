@@ -8,6 +8,7 @@ export type RawMaterial = {
   qty: number;
   min: number;
   price: number;
+  imageUrl?: string;
 };
 
 export type Blank = {
@@ -54,13 +55,23 @@ export type BlankReserve = {
 
 /* ─── Маппинг: stone → rawMaterial ─── */
 const STONE_TO_RAW_ID: Record<string, string> = {
-  "Гранит чёрный":        "r1",
-  "Гранит чёрный (габбро)":"r1",
-  "Гранит габбро":        "r1",
-  "Гранит серый":         "r2",
-  "Гранит красный":       "r3",
-  "Мрамор белый":         "r4",
-  "Мрамор серый":         "r5",
+  "Гранит чёрный":           "r1",
+  "Гранит чёрный (габбро)":  "r1",
+  "Гранит габбро":           "r1",
+  "Габбро-диабаз":           "r1",
+  "Гранит серый":            "r6",
+  "Серый гранит":            "r6",
+  "Гранит красный":          "r7",
+  "Курдай":                  "r7",
+  "Мрамор":                  "r8",
+  "Мрамор белый":            "r8",
+  "Мрамор серый":            "r8",
+  "Шонгуй":                  "r2",
+  "Шонгуй гранит":           "r2",
+  "Дымовский гранит":        "r3",
+  "Гранатовый амфиболит":    "r4",
+  "Балтик грин":             "r5",
+  "Калгуваара":              "r9",
 };
 
 /* ─── Площадь изделия из размера ─── */
@@ -132,11 +143,15 @@ export function getLevelBlankReserved(b: Blank, reserved: number): "critical" | 
 
 /* ─── Данные: сырьё ─── */
 export const initRaw: RawMaterial[] = [
-  { id: "r1", name: "Гранит чёрный (габбро)", unit: "м²", qty: 14.5, min: 5,  price: 4200 },
-  { id: "r2", name: "Гранит серый",           unit: "м²", qty: 7.2,  min: 5,  price: 3800 },
-  { id: "r3", name: "Гранит красный",         unit: "м²", qty: 0.5,  min: 5,  price: 5100 },
-  { id: "r4", name: "Мрамор белый",           unit: "м²", qty: 2.4,  min: 4,  price: 6500 },
-  { id: "r5", name: "Мрамор серый",           unit: "м²", qty: 5.8,  min: 3,  price: 5800 },
+  { id: "r1", name: "Габбро-диабаз",         unit: "м²", qty: 14.5, min: 5,  price: 4200, imageUrl: "https://cdn.poehali.dev/projects/4e0e07db-0b5c-4868-8b3d-3bd655c50b19/files/52f21ceb-e82f-4f4e-9491-681a2d1d464e.jpg" },
+  { id: "r2", name: "Шонгуй",                unit: "м²", qty: 7.2,  min: 5,  price: 3800, imageUrl: "https://cdn.poehali.dev/projects/4e0e07db-0b5c-4868-8b3d-3bd655c50b19/files/dd33d480-24c9-4770-9424-d8bc0e1dbe09.jpg" },
+  { id: "r3", name: "Дымовский гранит",      unit: "м²", qty: 0.5,  min: 5,  price: 5100, imageUrl: "https://cdn.poehali.dev/projects/4e0e07db-0b5c-4868-8b3d-3bd655c50b19/files/9c28763e-2124-4e43-993e-00e81bdbdc83.jpg" },
+  { id: "r4", name: "Гранатовый амфиболит",  unit: "м²", qty: 2.4,  min: 4,  price: 6500, imageUrl: "https://cdn.poehali.dev/projects/4e0e07db-0b5c-4868-8b3d-3bd655c50b19/files/392d6678-b602-4bcd-86b7-bc68d4d29cc5.jpg" },
+  { id: "r5", name: "Балтик грин",           unit: "м²", qty: 5.8,  min: 3,  price: 5800, imageUrl: "https://cdn.poehali.dev/projects/4e0e07db-0b5c-4868-8b3d-3bd655c50b19/files/3020b092-f3d3-43f1-8c74-ed1003758496.jpg" },
+  { id: "r6", name: "Серый гранит",          unit: "м²", qty: 6.0,  min: 4,  price: 3600, imageUrl: "https://cdn.poehali.dev/projects/4e0e07db-0b5c-4868-8b3d-3bd655c50b19/files/972d57f4-7fc6-4f6c-bb2d-26104b7ec2b2.jpg" },
+  { id: "r7", name: "Курдай",                unit: "м²", qty: 3.2,  min: 3,  price: 4800, imageUrl: "https://cdn.poehali.dev/projects/4e0e07db-0b5c-4868-8b3d-3bd655c50b19/files/ee527fda-57fd-434a-acd0-2debddf42b05.jpg" },
+  { id: "r8", name: "Мрамор",                unit: "м²", qty: 2.1,  min: 4,  price: 6800, imageUrl: "https://cdn.poehali.dev/projects/4e0e07db-0b5c-4868-8b3d-3bd655c50b19/files/194d6710-d482-426e-9403-4bae2f110311.jpg" },
+  { id: "r9", name: "Калгуваара",            unit: "м²", qty: 4.5,  min: 3,  price: 5200, imageUrl: "https://cdn.poehali.dev/projects/4e0e07db-0b5c-4868-8b3d-3bd655c50b19/files/b0217f0d-4283-4bc0-8489-60f35337d747.jpg" },
 ];
 
 /* ─── Данные: заготовки ─── */

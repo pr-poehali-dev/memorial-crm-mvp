@@ -92,8 +92,16 @@ export function RawTable({
                 >
                   {/* Материал */}
                   <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
-                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${st.dot}`} />
+                    <div className="flex items-center gap-2.5">
+                      {r.imageUrl ? (
+                        <img
+                          src={r.imageUrl}
+                          alt={r.name}
+                          className="w-7 h-7 rounded-[5px] object-cover shrink-0 border border-[#e8e8e8]"
+                        />
+                      ) : (
+                        <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${st.dot}`} />
+                      )}
                       <span className="text-[13px] font-medium text-[#1a1a1a]">{r.name}</span>
                       {hasReserve && (
                         <Icon
