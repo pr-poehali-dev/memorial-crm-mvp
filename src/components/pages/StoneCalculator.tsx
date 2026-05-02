@@ -1,20 +1,33 @@
 import { useState, useMemo } from "react";
 import Icon from "@/components/ui/icon";
 import { LineItem, uid } from "./estimate.types";
+import { initRaw } from "./warehouse/warehouse.types";
 
 type Props = {
   onClose: () => void;
   onAdd: (item: LineItem) => void;
 };
 
-const MATERIALS = [
-  { id: "granite_black",  label: "Гранит чёрный",   priceM2: 8500,  costM2: 4200  },
-  { id: "granite_grey",   label: "Гранит серый",     priceM2: 7800,  costM2: 3900  },
-  { id: "granite_red",    label: "Гранит красный",   priceM2: 9200,  costM2: 4600  },
-  { id: "marble_white",   label: "Мрамор белый",     priceM2: 6500,  costM2: 3200  },
-  { id: "marble_grey",    label: "Мрамор серый",     priceM2: 6200,  costM2: 3000  },
-  { id: "gabbro",         label: "Гранит габбро",    priceM2: 9800,  costM2: 4900  },
-];
+/* Берём реальные материалы со склада + добавляем расценки */
+const MAT_PRICE: Record<string, { priceM2: number; costM2: number }> = {
+  "Габбро-диабаз":        { priceM2: 9800, costM2: 4200 },
+  "Шонгуй":               { priceM2: 8200, costM2: 3800 },
+  "Дымовский гранит":     { priceM2: 9500, costM2: 5100 },
+  "Гранатовый амфиболит": { priceM2: 12000, costM2: 6500 },
+  "Балтик грин":          { priceM2: 10500, costM2: 5800 },
+  "Серый гранит":         { priceM2: 7800,  costM2: 3600 },
+  "Курдай":               { priceM2: 9200,  costM2: 4800 },
+  "Мрамор":               { priceM2: 11000, costM2: 6800 },
+  "Калгуваара":           { priceM2: 9800,  costM2: 5200 },
+};
+
+const MATERIALS = initRaw.map(r => ({
+  id:      r.id,
+  label:   r.name,
+  priceM2: MAT_PRICE[r.name]?.priceM2 ?? r.price * 2,
+  costM2:  MAT_PRICE[r.name]?.costM2  ?? r.price,
+  stock:   r.qty,
+}));
 
 const SHAPES = [
   { id: "straight", label: "Прямая",    coef: 1.0  },
@@ -47,8 +60,6 @@ const MARGIN_PRESETS = [
   { id: "premium",  label: "Премиум",   pct: 60 },
   { id: "manual",   label: "Вручную",   pct: 0  },
 ];
-
-const WAREHOUSE_M2 = 12.4;
 
 export default function StoneCalculator({ onClose, onAdd }: Props) {
   const [material,  setMaterial]  = useState(MATERIALS[0].id);
@@ -86,8 +97,9 @@ export default function StoneCalculator({ onClose, onAdd }: Props) {
     const profit  = price - totalCost;
     const actualMarginPct = price > 0 ? Math.round((profit / price) * 100) : 0;
 
-    const available = WAREHOUSE_M2 - areaCoef;
-    const hasStock  = available >= 0;
+    const warehouseQty = mat.stock ?? 0;
+    const available    = +(warehouseQty - areaCoef).toFixed(2);
+    const hasStock     = available >= 0;
 
     return {
       area: +area.toFixed(3),
@@ -253,13 +265,18 @@ export default function StoneCalculator({ onClose, onAdd }: Props) {
             </ResultBlock>
 
             {/* Склад */}
-            <ResultBlock title="Проверка склада">
-              <Row label="На складе" value={`${WAREHOUSE_M2} м²`} />
-              <Row label="После заказа останется" value={`${calc.available} м²`} dim />
-              <div className={`flex items-center gap-2 mt-1 px-3 py-2 rounded-lg text-[12px] font-semibold
-                ${calc.hasStock ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-600 border border-red-200"}`}>
+            <ResultBlock title="Склад · Проверка">
+              <Row label={`${mat.label} на складе`} value={`${mat.stock ?? 0} м²`} />
+              <Row label="Требуется для заказа" value={`${calc.areaCoef} м²`} />
+              <Row label="Останется после" value={`${calc.available} м²`} dim />
+              <div className={`flex items-center gap-2 mt-1.5 px-3 py-2 rounded-lg text-[12px] font-semibold
+                ${calc.hasStock
+                  ? "bg-green-50 text-green-700 border border-green-200"
+                  : "bg-red-50 text-red-600 border border-red-200"}`}>
                 <Icon name={calc.hasStock ? "CheckCircle2" : "AlertTriangle"} size={13} />
-                {calc.hasStock ? "Материала хватает" : "Недостаточно материала"}
+                {calc.hasStock
+                  ? `Материала хватает (запас ${calc.available} м²)`
+                  : `Не хватает ${Math.abs(calc.available)} м² — нужен заказ`}
               </div>
             </ResultBlock>
 

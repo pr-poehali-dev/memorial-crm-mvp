@@ -1,5 +1,7 @@
 import { useState } from "react";
 import Icon from "@/components/ui/icon";
+import StoneCalculator from "./StoneCalculator";
+import { LineItem } from "./estimate.types";
 
 const STAGES = ["Эскиз", "Распил", "Гравировка", "Полировка", "Готов", "Выдан"];
 
@@ -29,11 +31,13 @@ const ORDER = {
   clientComment: "Клиент просил сделать надпись крупнее, портрет — черно-белый, без цветной обработки.",
 };
 
-const ITEMS = [
-  { name: "Изготовление памятника", qty: 1, unit: "шт.", price: 22000, approved: true },
-  { name: "Гравировка надписи",     qty: 1, unit: "шт.", price: 6500,  approved: true },
-  { name: "Портретное фото",        qty: 1, unit: "шт.", price: 5000,  approved: null },
-  { name: "Доставка и установка",   qty: 1, unit: "шт.", price: 5000,  approved: false },
+type OrderItem = { id: string; name: string; qty: number; unit: string; price: number; approved: boolean | null; hasCalc: boolean };
+
+const ITEMS: OrderItem[] = [
+  { id: "i1", name: "Изготовление памятника", qty: 1, unit: "шт.", price: 22000, approved: true,  hasCalc: true  },
+  { id: "i2", name: "Гравировка надписи",     qty: 1, unit: "шт.", price: 6500,  approved: true,  hasCalc: true  },
+  { id: "i3", name: "Портретное фото",        qty: 1, unit: "шт.", price: 5000,  approved: null,  hasCalc: false },
+  { id: "i4", name: "Доставка и установка",   qty: 1, unit: "шт.", price: 5000,  approved: false, hasCalc: false },
 ];
 
 const MATERIALS = [
@@ -87,17 +91,34 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 }
 
 export default function OrderDetailPage({ onBack }: { onBack: () => void }) {
-  const [newComment, setNewComment] = useState("");
-  const [comments, setComments]     = useState(COMMENTS);
+  const [newComment, setNewComment]   = useState("");
+  const [comments, setComments]       = useState(COMMENTS);
   const [activeStage, setActiveStage] = useState(ORDER.currentStage);
+  const [orderItems, setOrderItems]   = useState<OrderItem[]>(ITEMS);
+  const [showCalc, setShowCalc]       = useState(false);
+  const [calcItemId, setCalcItemId]   = useState<string | null>(null);
+
+  const openCalcFor = (id: string) => { setCalcItemId(id); setShowCalc(true); };
+
+  const handleCalcResult = (result: LineItem) => {
+    if (calcItemId) {
+      setOrderItems(prev => prev.map(it =>
+        it.id === calcItemId
+          ? { ...it, price: result.price, hasCalc: true, approved: null }
+          : it
+      ));
+    }
+    setShowCalc(false);
+    setCalcItemId(null);
+  };
 
   const debt    = ORDER.amount - ORDER.paid;
   const paidPct = Math.round((ORDER.paid / ORDER.amount) * 100);
 
-  const totalApproved   = ITEMS.filter(i => i.approved === true).reduce((s, i) => s + i.qty * i.price, 0);
-  const totalUnapproved = ITEMS.filter(i => i.approved === false).reduce((s, i) => s + i.qty * i.price, 0);
-  const totalPending    = ITEMS.filter(i => i.approved === null).reduce((s, i) => s + i.qty * i.price, 0);
-  const allApproved     = ITEMS.every(i => i.approved === true);
+  const totalApproved   = orderItems.filter(i => i.approved === true).reduce((s, i) => s + i.qty * i.price, 0);
+  const totalUnapproved = orderItems.filter(i => i.approved === false).reduce((s, i) => s + i.qty * i.price, 0);
+  const totalPending    = orderItems.filter(i => i.approved === null).reduce((s, i) => s + i.qty * i.price, 0);
+  const allApproved     = orderItems.every(i => i.approved === true);
 
   const currentStageName = STAGES[activeStage];
   const routeTarget      = STAGE_ROUTE[currentStageName];
@@ -110,6 +131,9 @@ export default function OrderDetailPage({ onBack }: { onBack: () => void }) {
 
   return (
     <div className="h-full overflow-y-auto bg-[#fafafa]">
+      {showCalc && (
+        <StoneCalculator onClose={() => { setShowCalc(false); setCalcItemId(null); }} onAdd={handleCalcResult} />
+      )}
       <div className="max-w-[1100px] mx-auto px-6 py-5">
 
         {/* Breadcrumb */}
@@ -196,20 +220,24 @@ export default function OrderDetailPage({ onBack }: { onBack: () => void }) {
               <table className="w-full mb-4">
                 <thead>
                   <tr className="border-b border-[#f5f5f5]">
-                    {["Позиция", "Кол.", "Цена", "Сумма", "Статус"].map(h => (
+                    {["Позиция", "Кол.", "Цена", "Сумма", "Статус", ""].map(h => (
                       <th key={h} className="pb-2.5 text-left text-[10px] font-semibold text-[#b5b5b5] uppercase tracking-wide whitespace-nowrap">{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
-                  {ITEMS.map((item, i) => {
+                  {orderItems.map((item, i) => {
                     const cfg = APPROVE_CFG[String(item.approved) as keyof typeof APPROVE_CFG];
                     return (
-                      <tr key={i} className="border-b border-[#f8f8f8] last:border-0">
+                      <tr key={i} className="border-b border-[#f8f8f8] last:border-0 group">
                         <td className="py-2.5 text-[13px] text-[#1a1a1a] pr-3">{item.name}</td>
                         <td className="py-2.5 text-[12px] text-[#6b6b6b]">{item.qty} {item.unit}</td>
-                        <td className="py-2.5 text-[12px] text-[#6b6b6b] font-mono">{item.price.toLocaleString("ru")} ₽</td>
-                        <td className="py-2.5 text-[13px] font-semibold text-[#1a1a1a] font-mono">{(item.qty * item.price).toLocaleString("ru")} ₽</td>
+                        <td className="py-2.5 text-[12px] text-[#6b6b6b] font-mono">
+                          {item.price > 0 ? `${item.price.toLocaleString("ru")} ₽` : <span className="text-[#d97706]">—</span>}
+                        </td>
+                        <td className="py-2.5 text-[13px] font-semibold text-[#1a1a1a] font-mono">
+                          {item.price > 0 ? `${(item.qty * item.price).toLocaleString("ru")} ₽` : "—"}
+                        </td>
                         <td className="py-2.5">
                           <span
                             className="text-[10px] font-semibold px-2 py-0.5 rounded-md whitespace-nowrap"
@@ -217,6 +245,20 @@ export default function OrderDetailPage({ onBack }: { onBack: () => void }) {
                           >
                             {cfg.label}
                           </span>
+                        </td>
+                        {/* Кнопка расчёта */}
+                        <td className="py-2.5 pl-2">
+                          <button
+                            onClick={() => openCalcFor(item.id)}
+                            className={`flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-[7px] border transition-colors whitespace-nowrap
+                              ${item.hasCalc
+                                ? "border-[#e8e8e8] text-[#6b6b6b] hover:border-[#c0c0c0] hover:text-[#1a1a1a]"
+                                : "border-[#6366f1] bg-[#f5f3ff] text-[#6366f1] hover:bg-[#ede9fe]"
+                              }`}
+                          >
+                            <Icon name="Calculator" size={10} />
+                            {item.hasCalc ? "Пересчитать" : "Рассчитать"}
+                          </button>
                         </td>
                       </tr>
                     );
