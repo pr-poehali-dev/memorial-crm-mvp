@@ -218,3 +218,23 @@ export const MOVE_TYPE: Record<MovementType, { label: string; color: string; ico
 /* ─── Общие CSS-классы ─── */
 export const selectCls = "w-full bg-white border border-[#ebebeb] rounded-[8px] px-3 py-2 text-[13px] text-[#1a1a1a] outline-none focus:border-[#c0c0c0] transition-colors";
 export const inputCls  = "w-full bg-white border border-[#ebebeb] rounded-[8px] px-3 py-2 text-[13px] text-[#1a1a1a] outline-none focus:border-[#c0c0c0] transition-colors placeholder:text-[#c5c5c5]";
+
+/* ─── Готовые изделия на складе ─── */
+export type StockItem = {
+  id: string;
+  catalogId: string;   // ссылка на CatalogItem.id
+  name: string;        // название изделия
+  category: string;    // категория (из каталога)
+  qty: number;         // кол-во на складе (шт.)
+  price: number;       // розничная цена
+  addedAt: string;     // дата поступления
+  note?: string;       // примечание
+};
+
+export const initStock: StockItem[] = [
+  { id: "st1", catalogId: "c01", name: "Памятник стандартный 100×50×8",  category: "monument",  qty: 3, price: 22000, addedAt: "15 апр.", note: "Гранит чёрный, без гравировки" },
+  { id: "st2", catalogId: "c05", name: "Тумба гранитная стандартная",   category: "pedestal",  qty: 5, price: 8500,  addedAt: "18 апр." },
+  { id: "st3", catalogId: "c07", name: "Цветник гранитный 60×40",       category: "flowerbed", qty: 2, price: 7000,  addedAt: "20 апр." },
+  { id: "st4", catalogId: "c13", name: "Крест металлический стандарт",  category: "cross",     qty: 8, price: 3500,  addedAt: "22 апр." },
+  { id: "st5", catalogId: "c02", name: "Памятник премиум 120×60×10",    category: "monument",  qty: 1, price: 38000, addedAt: "25 апр.", note: "Полировка с двух сторон" },
+];

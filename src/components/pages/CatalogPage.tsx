@@ -4,6 +4,7 @@ import {
   CATALOG, CATEGORY_META, CALC_TYPE_META,
   CatalogCategory, CatalogItem, CalcType,
 } from "@/data/catalog";
+import { initStock } from "./warehouse/warehouse.types";
 
 type FilterCat = CatalogCategory | "all";
 type View = "table" | "detail";
@@ -151,10 +152,12 @@ export default function CatalogPage({ canEdit = true }: { canEdit?: boolean }) {
                   <tr><td colSpan={9} className="px-4 py-12 text-center text-[13px] text-[#b5b5b5]">Позиции не найдены</td></tr>
                 )}
                 {filtered.map((item, i) => {
-                  const catM  = CATEGORY_META[item.category];
-                  const calcM = CALC_TYPE_META[item.calcType];
+                  const catM   = CATEGORY_META[item.category];
+                  const calcM  = CALC_TYPE_META[item.calcType];
                   const margin = item.price > 0 ? Math.round(((item.price - item.cost) / item.price) * 100) : null;
                   const isLast = i === filtered.length - 1;
+                  const stockItem = initStock.find(s => s.catalogId === item.id);
+                  const stockQty  = stockItem?.qty ?? 0;
 
                   return (
                     <tr key={item.id}
@@ -171,7 +174,14 @@ export default function CatalogPage({ canEdit = true }: { canEdit?: boolean }) {
                         <div className="flex items-center gap-2.5">
                           <div className="w-1 h-8 rounded-full shrink-0" style={{ backgroundColor: catM.color + "50" }} />
                           <div>
-                            <p className="text-[13px] font-semibold text-[#1a1a1a]">{item.name}</p>
+                            <div className="flex items-center gap-2">
+                              <p className="text-[13px] font-semibold text-[#1a1a1a]">{item.name}</p>
+                              {stockQty > 0 && (
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-100 text-green-700 whitespace-nowrap shrink-0">
+                                  На складе: {stockQty} шт.
+                                </span>
+                              )}
+                            </div>
                             {item.comment && (
                               <p className="text-[11px] text-[#b5b5b5] truncate max-w-[180px]">{item.comment}</p>
                             )}

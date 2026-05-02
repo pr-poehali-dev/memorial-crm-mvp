@@ -1,8 +1,8 @@
 import { useState, useMemo } from "react";
 import Icon from "@/components/ui/icon";
 import {
-  RawMaterial, Blank, Movement, ModalType,
-  initRaw, initBlanks, initMovements,
+  RawMaterial, Blank, Movement, ModalType, StockItem,
+  initRaw, initBlanks, initMovements, initStock,
   getLevelRaw, getLevelBlank, getAvailable, getAvailableBlank,
   calcRawPerUnit, calcReserves, calcBlankReserves,
 } from "./warehouse/warehouse.types";
@@ -13,6 +13,7 @@ import {
   ModalHistory, ModalMaterial,
 } from "./warehouse/WarehouseModals";
 import { ModalAddMaterial } from "./warehouse/ModalAddMaterial";
+import StockTable from "./warehouse/StockTable";
 import { useTasks } from "@/store/tasksStore";
 import { BLANK_TYPES as CUTTING_BLANK_TYPES } from "./cutting/cutting.types";
 import { orders as allOrders } from "./orders/orders.types";
@@ -20,10 +21,11 @@ import { orders as allOrders } from "./orders/orders.types";
 const nowDate = () => new Date().toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
 
 export default function WarehousePage() {
-  const [tab, setTab]             = useState<"raw" | "blanks">("raw");
+  const [tab, setTab]             = useState<"raw" | "blanks" | "stock">("raw");
   const [rawMat, setRawMat]       = useState<RawMaterial[]>(initRaw);
   const [blanks, setBlanks]       = useState<Blank[]>(initBlanks);
   const [movements, setMovements] = useState<Movement[]>(initMovements);
+  const [stock, setStock]         = useState<StockItem[]>(initStock);
   const [modal, setModal]         = useState<ModalType>(null);
   const [search, setSearch]       = useState("");
   const { addTask } = useTasks();
@@ -216,8 +218,9 @@ export default function WarehousePage() {
       {/* ── Вкладки + поиск ── */}
       <div className="flex items-center gap-3">
         <div className="flex gap-0.5 bg-[#f0f0f0] rounded-[8px] p-0.5">
-          <TabBtn active={tab === "raw"}    onClick={() => setTab("raw")}    icon="Layers"  label="Сырьё"     count={criticalRaw} />
-          <TabBtn active={tab === "blanks"} onClick={() => setTab("blanks")} icon="Package" label="Заготовки" count={critBlanks} />
+          <TabBtn active={tab === "raw"}    onClick={() => setTab("raw")}    icon="Layers"    label="Сырьё"     count={criticalRaw} />
+          <TabBtn active={tab === "blanks"} onClick={() => setTab("blanks")} icon="Package"   label="Заготовки" count={critBlanks} />
+          <TabBtn active={tab === "stock"}  onClick={() => setTab("stock")}  icon="LayoutGrid" label="Изделия"   count={0} />
         </div>
         <div className="relative flex-1 max-w-[240px]">
           <Icon name="Search" size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#b5b5b5]" />
@@ -387,8 +390,23 @@ export default function WarehousePage() {
         </>
       )}
 
+      {tab === "stock" && (
+        <StockTable
+          items={stock}
+          onAdd={item => setStock(prev => [...prev, item])}
+          onUpdateQty={(id, delta) =>
+            setStock(prev => prev.map(it =>
+              it.id === id ? { ...it, qty: Math.max(0, it.qty + delta) } : it
+            ))
+          }
+          onRemove={id => setStock(prev => prev.filter(it => it.id !== id))}
+        />
+      )}
+
       {/* ── История движений (компактная) ── */}
-      <MovementHistory movements={movements} onOpenAll={() => setShowHistory(true)} />
+      {tab !== "stock" && (
+        <MovementHistory movements={movements} onOpenAll={() => setShowHistory(true)} />
+      )}
 
       {/* ════════ МОДАЛКИ ════════ */}
 
