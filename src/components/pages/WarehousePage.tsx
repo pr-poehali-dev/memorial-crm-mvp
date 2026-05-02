@@ -12,6 +12,7 @@ import {
   ModalIn, ModalCut, ModalUse,
   ModalHistory, ModalMaterial,
 } from "./warehouse/WarehouseModals";
+import { ModalAddMaterial } from "./warehouse/ModalAddMaterial";
 import { useTasks } from "@/store/tasksStore";
 import { BLANK_TYPES as CUTTING_BLANK_TYPES } from "./cutting/cutting.types";
 import { orders as allOrders } from "./orders/orders.types";
@@ -30,6 +31,7 @@ export default function WarehousePage() {
   /* история / детали материала */
   const [showHistory,   setShowHistory]   = useState(false);
   const [matDetail,     setMatDetail]     = useState<RawMaterial | null>(null);
+  const [showAddMat,    setShowAddMat]    = useState(false);
 
   /* ── форма Приход ── */
   const [inRawId,     setInRawId]     = useState(initRaw[0].id);
@@ -177,6 +179,12 @@ export default function WarehousePage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowAddMat(true)}
+            className="flex items-center gap-2 bg-white border border-[#ebebeb] text-[#4b4b4b] text-[13px] px-4 py-2 rounded-[8px] hover:border-[#c5c5c5] transition-colors"
+          >
+            <Icon name="Plus" size={14} />Материал
+          </button>
           <button
             onClick={() => setModal("in")}
             className="flex items-center gap-2 bg-[#1a1a1a] text-white text-[13px] px-4 py-2 rounded-[8px] hover:bg-[#333] transition-colors"
@@ -426,6 +434,14 @@ export default function WarehousePage() {
           material={matDetail}
           movements={movements}
           onClose={() => setMatDetail(null)}
+        />
+      )}
+
+      {/* Добавить новый материал */}
+      {showAddMat && (
+        <ModalAddMaterial
+          onClose={() => setShowAddMat(false)}
+          onAdd={mat => setRawMat(prev => [...prev, mat])}
         />
       )}
 
