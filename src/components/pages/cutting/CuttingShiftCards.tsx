@@ -49,8 +49,8 @@ function BlankBreakdown({ results }: { results: Shift["results"] }) {
 
 /* ─── Карточка активной смены ─── */
 export function ActiveShiftCard({ s, onFinish }: { s: Shift; onFinish: () => void }) {
-  const place    = PLACES.find(p => p.id === s.placeId)!;
-  const employee = EMPLOYEES.find(e => e.id === s.employeeId)!;
+  const place    = PLACES.find(p => p.id === s.placeId)    ?? { name: s.placeId,    machine: "" };
+  const employee = EMPLOYEES.find(e => e.id === s.employeeId) ?? { id: s.employeeId, name: s.employeeId };
 
   return (
     <div className="bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl overflow-hidden">
@@ -98,8 +98,8 @@ export function ActiveShiftCard({ s, onFinish }: { s: Shift; onFinish: () => voi
 
 /* ─── Карточка завершённой смены ─── */
 function DoneCard({ s }: { s: Shift }) {
-  const place    = PLACES.find(p => p.id === s.placeId)!;
-  const employee = EMPLOYEES.find(e => e.id === s.employeeId)!;
+  const place    = PLACES.find(p => p.id === s.placeId)       ?? { name: s.placeId,    machine: "" };
+  const employee = EMPLOYEES.find(e => e.id === s.employeeId) ?? { id: s.employeeId, name: s.employeeId };
   const totalP   = shiftTotalProduced(s);
   const totalR   = shiftTotalRaw(s);
 
