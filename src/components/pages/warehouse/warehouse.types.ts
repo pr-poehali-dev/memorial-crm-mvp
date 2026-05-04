@@ -18,6 +18,8 @@ export type Blank = {
   materialId: string;
   qty: number;
   min: number;
+  costPrice: number;
+  salePrice: number;
 };
 
 export type MovementType = "in" | "cut" | "use" | "adjust";
@@ -156,11 +158,11 @@ export const initRaw: RawMaterial[] = [
 
 /* ─── Данные: заготовки ─── */
 export const initBlanks: Blank[] = [
-  { id: "b1", name: "Плита стандарт",     size: "100×50×8",  materialId: "r1", qty: 4, min: 2 },
-  { id: "b2", name: "Плита большая",      size: "120×60×10", materialId: "r2", qty: 2, min: 1 },
-  { id: "b3", name: "Плита малая",        size: "80×40×6",   materialId: "r4", qty: 1, min: 2 },
-  { id: "b4", name: "Плита красный гран", size: "90×45×7",   materialId: "r3", qty: 0, min: 1 },
-  { id: "b5", name: "Тумба",              size: "60×30×80",  materialId: "r1", qty: 3, min: 1 },
+  { id: "b1", name: "Плита стандарт",     size: "100×50×8",  materialId: "r1", qty: 4, min: 2, costPrice: 18000, salePrice: 28000 },
+  { id: "b2", name: "Плита большая",      size: "120×60×10", materialId: "r2", qty: 2, min: 1, costPrice: 24000, salePrice: 36000 },
+  { id: "b3", name: "Плита малая",        size: "80×40×6",   materialId: "r4", qty: 1, min: 2, costPrice: 12000, salePrice: 19000 },
+  { id: "b4", name: "Плита красный гран", size: "90×45×7",   materialId: "r3", qty: 0, min: 1, costPrice: 16000, salePrice: 25000 },
+  { id: "b5", name: "Тумба",              size: "60×30×80",  materialId: "r1", qty: 3, min: 1, costPrice: 9000,  salePrice: 14000 },
 ];
 
 /* ─── История движений ─── */

@@ -246,12 +246,18 @@ export function BlanksTable({
   const getBlankReserve = (id: string): BlankReserve | undefined =>
     blankReserves.find(r => r.blankId === id);
 
+  const totalQtyB       = filteredBlanks.reduce((a, b) => a + b.qty, 0);
+  const totalReservedB  = filteredBlanks.reduce((a, b) => a + (getBlankReserve(b.id)?.totalReserved ?? 0), 0);
+  const totalAvailableB = filteredBlanks.reduce((a, b) => a + getAvailableBlank(b, getBlankReserve(b.id)?.totalReserved ?? 0), 0);
+  const totalCostB      = filteredBlanks.reduce((a, b) => a + b.qty * b.costPrice, 0);
+  const totalSaleB      = filteredBlanks.reduce((a, b) => a + b.qty * b.salePrice, 0);
+
   return (
     <div className="bg-white border border-[#ebebeb] rounded-xl overflow-hidden">
       <table className="w-full">
         <thead>
           <tr className="border-b border-[#f0f0f0]">
-            {["Заготовка", "Размер", "Материал", "Остаток", "Зарезервировано", "Доступно", "Мин.", "Статус", ""].map(h => (
+            {["Заготовка", "Размер", "Материал", "Остаток", "Зарезервировано", "Доступно", "Мин.", "Себест.", "Цена прод.", "Статус", ""].map(h => (
               <th key={h} className="px-4 py-3 text-left text-[10px] font-semibold text-[#b5b5b5] uppercase tracking-wide whitespace-nowrap">
                 {h}
               </th>
@@ -261,7 +267,7 @@ export function BlanksTable({
         <tbody>
           {filteredBlanks.length === 0 && (
             <tr>
-              <td colSpan={9} className="px-4 py-10 text-center text-[13px] text-[#b5b5b5]">Ничего не найдено</td>
+              <td colSpan={11} className="px-4 py-10 text-center text-[13px] text-[#b5b5b5]">Ничего не найдено</td>
             </tr>
           )}
           {filteredBlanks.map((b, i) => {
@@ -351,6 +357,12 @@ export function BlanksTable({
                   {/* Мин. */}
                   <td className="px-4 py-3 whitespace-nowrap text-[12px] text-[#1a1a1a] font-mono">{b.min} шт.</td>
 
+                  {/* Себестоимость */}
+                  <td className="px-4 py-3 whitespace-nowrap text-[12px] text-[#6b6b6b] font-mono">{b.costPrice.toLocaleString("ru")} ₽</td>
+
+                  {/* Цена продажи */}
+                  <td className="px-4 py-3 whitespace-nowrap text-[12px] font-semibold text-[#1a1a1a] font-mono">{b.salePrice.toLocaleString("ru")} ₽</td>
+
                   {/* Статус */}
                   <td className="px-4 py-3">
                     <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-md whitespace-nowrap ${
@@ -371,7 +383,7 @@ export function BlanksTable({
                 {/* Раскрытие — список заказов */}
                 {isOpen && reserve && (
                   <tr key={b.id + "-detail"} className="bg-amber-50/40 border-b border-[#f5f5f5]">
-                    <td colSpan={9} className="px-6 py-3">
+                    <td colSpan={11} className="px-6 py-3">
                       <div className="flex items-center gap-2 mb-2">
                         <Icon name="BookOpen" size={12} className="text-amber-600" />
                         <span className="text-[11px] font-semibold text-amber-800 uppercase tracking-wide">
@@ -399,6 +411,18 @@ export function BlanksTable({
             );
           })}
         </tbody>
+        <tfoot>
+          <tr className="border-t-2 border-[#e8e8e8] bg-[#fafafa]">
+            <td colSpan={3} className="px-4 py-3 text-[11px] font-bold text-[#9b9b9b] uppercase tracking-wide">Итого</td>
+            <td className="px-4 py-3 font-mono text-[14px] font-bold text-[#1a1a1a]">{totalQtyB} <span className="text-[11px] font-normal text-[#9b9b9b]">шт.</span></td>
+            <td className="px-4 py-3 font-mono text-[13px] font-semibold text-[#1a1a1a]">{totalReservedB} <span className="text-[11px] font-normal text-[#9b9b9b]">шт.</span></td>
+            <td className="px-4 py-3 font-mono text-[14px] font-bold" style={{ color: totalAvailableB < 0 ? "#ef4444" : "#16a34a" }}>{totalAvailableB} <span className="text-[11px] font-normal text-[#9b9b9b]">шт.</span></td>
+            <td className="px-4 py-3" />
+            <td className="px-4 py-3 font-mono text-[12px] font-semibold text-[#6b6b6b]">{totalCostB.toLocaleString("ru")} ₽</td>
+            <td className="px-4 py-3 font-mono text-[13px] font-bold text-[#6366f1]">{totalSaleB.toLocaleString("ru")} ₽</td>
+            <td colSpan={2} className="px-4 py-3" />
+          </tr>
+        </tfoot>
       </table>
     </div>
   );
