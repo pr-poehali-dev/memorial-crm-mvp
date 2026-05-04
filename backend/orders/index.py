@@ -221,17 +221,26 @@ def handler(event: dict, context) -> dict:
 
         if method == "POST":
             body = json.loads(event.get("body") or "{}")
-            cur.execute(
-                f"SELECT id FROM {SCHEMA}.orders WHERE company_id=%s ORDER BY created_at DESC LIMIT 1",
-                (company_id,)
-            )
-            last = cur.fetchone()
-            if last and last["id"].startswith("МП-"):
-                num = int(last["id"].replace("МП-", "")) + 1
+            # Используем id из запроса если передан, иначе генерируем
+            if body.get("id"):
+                new_id = str(body["id"]).strip()
+                # Проверяем что такой ID не занят
+                cur.execute(f"SELECT id FROM {SCHEMA}.orders WHERE id=%s", (new_id,))
+                if cur.fetchone():
+                    return {"statusCode": 409, "headers": CORS,
+                            "body": json.dumps({"error": f"Заказ с кодом {new_id} уже существует"})}
             else:
-                cur.execute(f"SELECT COUNT(*)+1 FROM {SCHEMA}.orders WHERE company_id=%s", (company_id,))
-                num = cur.fetchone()["count"]
-            new_id = f"МП-{num:04d}"
+                cur.execute(
+                    f"SELECT id FROM {SCHEMA}.orders WHERE company_id=%s ORDER BY created_at DESC LIMIT 1",
+                    (company_id,)
+                )
+                last = cur.fetchone()
+                if last and last["id"].startswith("МП-"):
+                    num = int(last["id"].replace("МП-", "")) + 1
+                else:
+                    cur.execute(f"SELECT COUNT(*)+1 FROM {SCHEMA}.orders WHERE company_id=%s", (company_id,))
+                    num = cur.fetchone()["count"]
+                new_id = f"МП-{num:04d}"
 
             cur.execute(
                 f"""INSERT INTO {SCHEMA}.orders

@@ -200,55 +200,20 @@ export default function ClientOverlay({ client, onClose, onUpdate }: {
 
           {/* Заметка */}
           <div className="px-5 py-4 border-b border-[#f5f5f5]">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-[#b5b5b5] mb-2">Заметка</p>
-            {editing ? (
-              <textarea
-                value={eComment}
-                onChange={e => setEComment(e.target.value)}
-                rows={3}
-                placeholder="Добавьте заметку о заказчике..."
-                className="w-full text-[12px] text-[#1a1a1a] bg-[#fafafa] border border-[#6366f1] rounded-lg px-3 py-2.5 outline-none resize-none placeholder:text-[#c5c5c5]"
-              />
-            ) : eComment ? (
-              <p className="text-[12px] text-[#6b6b6b] leading-relaxed bg-amber-50 border border-amber-100 rounded-lg px-3 py-2.5 whitespace-pre-wrap">
-                {eComment}
-              </p>
-            ) : (
-              <div className="flex items-center gap-2">
-                <input
-                  value={newComment}
-                  onChange={e => setNewComment(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && addComment()}
-                  placeholder="Добавить заметку..."
-                  className="flex-1 bg-[#fafafa] border border-[#ebebeb] rounded-[8px] px-3 py-2 text-[12px] outline-none focus:border-[#c0c0c0] transition-colors placeholder:text-[#c5c5c5]"
-                />
-                <button
-                  onClick={addComment}
-                  disabled={!newComment.trim()}
-                  className="px-3 py-2 bg-[#1a1a1a] text-white rounded-[8px] hover:bg-[#333] disabled:opacity-30 transition-colors"
-                >
-                  <Icon name="Send" size={12} />
-                </button>
-              </div>
-            )}
-            {!editing && eComment && (
-              <div className="mt-2 flex items-center gap-2">
-                <input
-                  value={newComment}
-                  onChange={e => setNewComment(e.target.value)}
-                  onKeyDown={e => e.key === "Enter" && addComment()}
-                  placeholder="Дополнить заметку..."
-                  className="flex-1 bg-[#fafafa] border border-[#ebebeb] rounded-[8px] px-3 py-1.5 text-[12px] outline-none focus:border-[#c0c0c0] transition-colors placeholder:text-[#c5c5c5]"
-                />
-                <button
-                  onClick={addComment}
-                  disabled={!newComment.trim()}
-                  className="px-2.5 py-1.5 bg-[#1a1a1a] text-white rounded-[8px] hover:bg-[#333] disabled:opacity-30 transition-colors"
-                >
-                  <Icon name="Plus" size={12} />
-                </button>
-              </div>
-            )}
+            <NoteBlock
+              comment={eComment}
+              newComment={newComment}
+              onNewCommentChange={setNewComment}
+              onAdd={addComment}
+              onEdit={(text) => {
+                setEComment(text);
+                clientsApi.update(client.id, { comment: text }).catch(console.error);
+              }}
+              onDelete={() => {
+                setEComment("");
+                clientsApi.update(client.id, { comment: "" }).catch(console.error);
+              }}
+            />
           </div>
 
           {/* Заказы */}
@@ -276,5 +241,120 @@ export default function ClientOverlay({ client, onClose, onUpdate }: {
         </div>
       </div>
     </>
+  );
+}
+
+/* ─── Блок заметки с редактированием и удалением ─── */
+function NoteBlock({ comment, newComment, onNewCommentChange, onAdd, onEdit, onDelete }: {
+  comment: string;
+  newComment: string;
+  onNewCommentChange: (v: string) => void;
+  onAdd: () => void;
+  onEdit: (text: string) => void;
+  onDelete: () => void;
+}) {
+  const [editMode, setEditMode] = useState(false);
+  const [editText, setEditText] = useState(comment);
+
+  const handleSaveEdit = () => {
+    onEdit(editText.trim());
+    setEditMode(false);
+  };
+
+  const handleDelete = () => {
+    onDelete();
+    setEditMode(false);
+    setEditText("");
+  };
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-[#b5b5b5]">Заметка</p>
+        {comment && !editMode && (
+          <div className="flex gap-1">
+            <button
+              onClick={() => { setEditText(comment); setEditMode(true); }}
+              className="w-6 h-6 flex items-center justify-center rounded text-[#c5c5c5] hover:text-[#6366f1] hover:bg-[#f0f0f0] transition-all"
+              title="Редактировать заметку"
+            >
+              <Icon name="Pencil" size={11} />
+            </button>
+            <button
+              onClick={handleDelete}
+              className="w-6 h-6 flex items-center justify-center rounded text-[#c5c5c5] hover:text-red-400 hover:bg-red-50 transition-all"
+              title="Удалить заметку"
+            >
+              <Icon name="Trash2" size={11} />
+            </button>
+          </div>
+        )}
+      </div>
+
+      {editMode ? (
+        <div className="space-y-2">
+          <textarea
+            value={editText}
+            onChange={e => setEditText(e.target.value)}
+            rows={3}
+            autoFocus
+            className="w-full text-[12px] text-[#1a1a1a] bg-[#fafafa] border border-[#6366f1] rounded-lg px-3 py-2.5 outline-none resize-none placeholder:text-[#c5c5c5]"
+          />
+          <div className="flex gap-2">
+            <button
+              onClick={handleSaveEdit}
+              className="flex-1 py-1.5 text-[12px] font-semibold bg-[#1a1a1a] text-white rounded-lg hover:bg-[#333] transition-colors"
+            >
+              Сохранить
+            </button>
+            <button
+              onClick={() => setEditMode(false)}
+              className="px-3 py-1.5 text-[12px] text-[#6b6b6b] border border-[#e5e5e5] rounded-lg hover:border-[#c5c5c5] transition-colors"
+            >
+              Отмена
+            </button>
+          </div>
+        </div>
+      ) : comment ? (
+        <>
+          <p className="text-[12px] text-[#6b6b6b] leading-relaxed bg-amber-50 border border-amber-100 rounded-lg px-3 py-2.5 whitespace-pre-wrap">
+            {comment}
+          </p>
+          <div className="mt-2 flex items-center gap-2">
+            <input
+              value={newComment}
+              onChange={e => onNewCommentChange(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && onAdd()}
+              placeholder="Дополнить заметку..."
+              className="flex-1 bg-[#fafafa] border border-[#ebebeb] rounded-[8px] px-3 py-1.5 text-[12px] outline-none focus:border-[#c0c0c0] transition-colors placeholder:text-[#c5c5c5]"
+            />
+            <button
+              onClick={onAdd}
+              disabled={!newComment.trim()}
+              className="px-2.5 py-1.5 bg-[#1a1a1a] text-white rounded-[8px] hover:bg-[#333] disabled:opacity-30 transition-colors"
+            >
+              <Icon name="Plus" size={12} />
+            </button>
+          </div>
+        </>
+      ) : (
+        <div className="flex items-center gap-2">
+          <input
+            value={newComment}
+            onChange={e => onNewCommentChange(e.target.value)}
+            onKeyDown={e => e.key === "Enter" && onAdd()}
+            placeholder="Добавить заметку..."
+            className="flex-1 bg-[#fafafa] border border-[#ebebeb] rounded-[8px] px-3 py-2 text-[12px] outline-none focus:border-[#c0c0c0] transition-colors placeholder:text-[#c5c5c5]"
+          />
+          <button
+            onClick={onAdd}
+            disabled={!newComment.trim()}
+            className="px-3 py-2 bg-[#1a1a1a] text-white rounded-[8px] hover:bg-[#333] disabled:opacity-30 transition-colors"
+          >
+            <Icon name="Send" size={12} />
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
