@@ -117,8 +117,10 @@ export const cuttingApi = {
     request<{ id: number }>("cutting", "POST", { action: "assign_shift" }, data),
   finishShift: (data: Record<string, unknown>) =>
     request<{ ok: boolean }>("cutting", "POST", { action: "finish_shift" }, data),
-  updateTask: (data: Record<string, unknown>) =>
+  updateTask:  (data: Record<string, unknown>) =>
     request<{ ok: boolean }>("cutting", "POST", { action: "update_task" }, data),
+  cancelTask:  (taskId: number) =>
+    request<{ ok: boolean }>("cutting", "POST", { action: "cancel_task" }, { taskId }),
 };
 
 // ── Catalog ──
@@ -223,6 +225,7 @@ export type DbBlank = {
   min_qty: number;
   cost_price?: number;
   sale_price?: number;
+  blank_type_id?: number;
 };
 
 export type DbMovement = {

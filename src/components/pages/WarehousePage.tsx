@@ -4,9 +4,7 @@ import {
   getLevelRaw, getLevelBlank,
   calcReserves, calcBlankReserves,
 } from "./warehouse/warehouse.types";
-import { warehouseApi, DbMaterial, DbBlank, DbMovement, DbStockItem } from "@/api/client";
-import { useTasks } from "@/store/tasksStore";
-import { BLANK_TYPES as CUTTING_BLANK_TYPES } from "./cutting/cutting.types";
+import { warehouseApi, cuttingApi, DbMaterial, DbBlank, DbMovement, DbStockItem } from "@/api/client";
 import WarehouseHeader from "./warehouse/WarehouseHeader";
 import WarehouseContent from "./warehouse/WarehouseContent";
 import WarehouseModalsGroup from "./warehouse/WarehouseModalsGroup";
@@ -19,7 +17,8 @@ function dbToBlank(b: DbBlank): Blank {
   return { id: String(b.id), name: b.name, size: b.size||"", materialId: String(b.material_id),
            qty: Number(b.qty), min: Number(b.min_qty),
            costPrice: Number(b.cost_price) || 0,
-           salePrice: Number(b.sale_price) || 0 };
+           salePrice: Number(b.sale_price) || 0,
+           blankTypeId: b.blank_type_id || undefined };
 }
 function dbToMovement(m: DbMovement): Movement {
   return { id: String(m.id), date: new Date(m.move_date).toLocaleDateString("ru-RU", {day:"numeric",month:"short"}),
@@ -64,7 +63,6 @@ export default function WarehousePage() {
   }, [reload]);
 
   const [search, setSearch]     = useState("");
-  const { addTask } = useTasks();
 
   const [showHistory, setShowHistory] = useState(false);
   const [matDetail,   setMatDetail]   = useState<RawMaterial | null>(null);
@@ -129,18 +127,12 @@ export default function WarehousePage() {
       note:       `Нарезка: ${blk.name} (${q} шт.)${cutDeadline ? ` · до ${cutDeadline}` : ""}`,
     }).then(() => reload()).catch(console.error);
 
-    const matchedBt = CUTTING_BLANK_TYPES.find(bt => bt.name === blk.name) ?? CUTTING_BLANK_TYPES[0];
-    addTask({
-      id: "task-" + Date.now(),
-      blankTypeId: matchedBt.id,
+    cuttingApi.createTask({
+      blankTypeId:  blk.blankTypeId ?? null,
       materialName: raw.name,
-      totalQty: q,
-      doneQty: 0,
-      inProgressQty: 0,
-      status: "pending",
-      createdAt: new Date().toLocaleDateString("ru-RU", { day: "numeric", month: "short" }),
-      deadline: cutDeadline || undefined,
-    });
+      totalQty:     q,
+      deadline:     cutDeadline || null,
+    }).catch(console.error);
 
     setCutQty(""); setCutRawPer(""); setCutDeadline("");
     setModal(null);

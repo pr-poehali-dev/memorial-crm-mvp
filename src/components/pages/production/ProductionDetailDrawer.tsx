@@ -1,4 +1,5 @@
 import Icon from "@/components/ui/icon";
+import { useNav } from "@/store/navStore";
 import { FlatItem, DEADLINE_BADGE, COL_NEXT_LABEL } from "./production.types";
 
 type Props = {
@@ -11,6 +12,7 @@ type Props = {
 export default function ProductionDetailDrawer({ item, onClose, onMoveNext }: Props) {
   const nextLabel = COL_NEXT_LABEL[item.colId];
   const dl = DEADLINE_BADGE[item.deadlineState];
+  const { openOrder } = useNav();
 
   return (
     <>
@@ -88,11 +90,11 @@ export default function ProductionDetailDrawer({ item, onClose, onMoveNext }: Pr
             </button>
           )}
           <button
-            onClick={onClose}
+            onClick={() => { onClose(); openOrder(item.orderId); }}
             className="w-full flex items-center justify-center gap-2 bg-[#f4f4f4] hover:bg-[#ebebeb] rounded-[12px] py-3 text-[14px] font-semibold text-[#4b4b4b] transition-colors"
           >
-            <Icon name="X" size={14} />
-            Закрыть
+            <Icon name="FileText" size={14} />
+            Открыть заказ {item.orderId}
           </button>
         </div>
       </div>

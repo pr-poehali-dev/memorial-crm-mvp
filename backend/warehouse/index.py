@@ -54,9 +54,11 @@ def handler(event: dict, context) -> dict:
                 )
             elif section == "blanks":
                 cur.execute(
-                    f"""SELECT b.*, m.name as material_name, m.unit as material_unit
+                    f"""SELECT b.*, m.name as material_name, m.unit as material_unit,
+                               bt.id as blank_type_id
                         FROM {SCHEMA}.blanks b
                         LEFT JOIN {SCHEMA}.materials m ON m.id=b.material_id
+                        LEFT JOIN {SCHEMA}.blank_types bt ON bt.name=b.name AND bt.company_id=b.company_id
                         WHERE b.company_id=%s ORDER BY b.name""",
                     (company_id,)
                 )

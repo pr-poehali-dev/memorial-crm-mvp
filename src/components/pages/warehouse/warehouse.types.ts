@@ -19,6 +19,7 @@ export type Blank = {
   min: number;
   costPrice: number;
   salePrice: number;
+  blankTypeId?: number;
 };
 
 export type MovementType = "in" | "cut" | "use" | "adjust";

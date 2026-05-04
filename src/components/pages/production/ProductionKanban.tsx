@@ -92,7 +92,7 @@ function ItemCard({ item, colColor, onClick }: { item: FlatItem; colColor: strin
   return (
     <div
       onClick={onClick}
-      className={`rounded-[14px] border-[1.5px] ${dc.border} ${dc.bg} p-4 cursor-pointer
+      className={`rounded-[14px] border-[1.5px] ${dc.border} bg-white p-4 cursor-pointer
         hover:shadow-md hover:-translate-y-0.5 transition-all duration-150 select-none`}
     >
       <div className="flex items-start justify-between gap-2 mb-1">

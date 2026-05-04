@@ -213,6 +213,15 @@ def handler(event: dict, context) -> dict:
                     conn.commit()
                 return {"statusCode": 200, "headers": CORS, "body": json.dumps({"ok": True})}
 
+            if action == "cancel_task":
+                task_id = body.get("taskId")
+                cur.execute(
+                    f"UPDATE {SCHEMA}.cutting_tasks SET status='cancelled', updated_at=NOW() WHERE id=%s AND company_id=%s",
+                    (task_id, company_id)
+                )
+                conn.commit()
+                return {"statusCode": 200, "headers": CORS, "body": json.dumps({"ok": True})}
+
         return {"statusCode": 405, "headers": CORS, "body": json.dumps({"error": "method not allowed"})}
 
     finally:

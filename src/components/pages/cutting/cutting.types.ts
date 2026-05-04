@@ -2,7 +2,7 @@
 export type WorkType = "cutting" | "engraving" | "polishing";
 
 /* ─── Задача на нарезку (создаётся со Склада) ─── */
-export type CuttingTaskStatus = "pending" | "active" | "done";
+export type CuttingTaskStatus = "pending" | "active" | "done" | "cancelled";
 
 export type CuttingTask = {
   id: string;
