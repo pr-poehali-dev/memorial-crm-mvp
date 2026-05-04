@@ -6,6 +6,7 @@ import {
   shiftTotalProduced, shiftTotalRaw,
 } from "./cutting/cutting.types";
 import { cuttingApi, DbShift, DbPlace, DbEmployee, DbBlankType, DbCuttingTask } from "@/api/client";
+import { useTasks } from "@/store/tasksStore";
 import CuttingShiftCards from "./cutting/CuttingShiftCards";
 import { ActiveColumn, DoneColumn } from "./cutting/CuttingShiftCards";
 import CuttingJournal from "./cutting/CuttingJournal";
@@ -62,16 +63,20 @@ function dbToTask(t: DbCuttingTask): CuttingTask {
 export default function CuttingPage() {
   const [tab,        setTab]       = useState<Tab>("today");
   const [shifts,     setShifts]    = useState<Shift[]>([]);
-  const [tasks,      setTasks]     = useState<CuttingTask[]>([]);
   const [places,     setPlaces]    = useState<Place[]>([]);
   const [employees,  setEmployees] = useState<Employee[]>([]);
   const [blankTypes, setBlankTypes] = useState<BlankType[]>([]);
+
+  /* Задачи из глобального TasksContext (туда пишет и Склад при создании) */
+  const { tasks, setTasks: setCtxTasks } = useTasks();
 
   const reloadShifts = useCallback(() =>
     cuttingApi.shifts().then(data => setShifts(data.map(dbToShift))).catch(console.error), []);
 
   const reloadTasks = useCallback(() =>
-    cuttingApi.tasks().then(data => setTasks(data.map(dbToTask))).catch(console.error), []);
+    cuttingApi.tasks().then(data => {
+      setCtxTasks(data.map(dbToTask));
+    }).catch(console.error), [setCtxTasks]);
 
   useEffect(() => {
     reloadShifts();

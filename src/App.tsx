@@ -14,7 +14,9 @@ const queryClient = new QueryClient();
 const App = () => {
   const [tasks, setTasks] = useState<CuttingTask[]>([]);
 
-  const addTask = (t: CuttingTask) => setTasks(prev => [t, ...prev]);
+  const addTask = (t: CuttingTask) =>
+    setTasks(prev => prev.some(x => x.id === t.id) ? prev : [t, ...prev]);
+
   const updateTask = (id: string, updater: TaskUpdater) =>
     setTasks(prev => prev.map(t => {
       if (t.id !== id) return t;
@@ -25,7 +27,7 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <TasksContext.Provider value={{ tasks, addTask, updateTask }}>
+        <TasksContext.Provider value={{ tasks, setTasks, addTask, updateTask }}>
           <Toaster />
           <Sonner />
           <BrowserRouter>

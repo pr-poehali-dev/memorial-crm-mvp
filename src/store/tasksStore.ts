@@ -5,12 +5,14 @@ export type TaskUpdater = Partial<CuttingTask> | ((prev: CuttingTask) => Partial
 
 export type TasksContextValue = {
   tasks: CuttingTask[];
+  setTasks: (tasks: CuttingTask[]) => void;
   addTask: (t: CuttingTask) => void;
   updateTask: (id: string, updater: TaskUpdater) => void;
 };
 
 export const TasksContext = createContext<TasksContextValue>({
   tasks: [],
+  setTasks: () => {},
   addTask: () => {},
   updateTask: () => {},
 });

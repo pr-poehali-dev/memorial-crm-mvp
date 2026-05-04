@@ -5,6 +5,8 @@ import {
   calcReserves, calcBlankReserves,
 } from "./warehouse/warehouse.types";
 import { warehouseApi, cuttingApi, DbMaterial, DbBlank, DbMovement, DbStockItem } from "@/api/client";
+import { useTasks } from "@/store/tasksStore";
+import { toast } from "sonner";
 import WarehouseHeader from "./warehouse/WarehouseHeader";
 import WarehouseContent from "./warehouse/WarehouseContent";
 import WarehouseModalsGroup from "./warehouse/WarehouseModalsGroup";
@@ -36,6 +38,7 @@ function dbToStock(s: DbStockItem): StockItem {
 }
 
 export default function WarehousePage() {
+  const { addTask } = useTasks();
   const [tab, setTab]             = useState<"raw" | "blanks" | "stock">("raw");
   const [rawMat, setRawMat]       = useState<RawMaterial[]>([]);
   const [blanks, setBlanks]       = useState<Blank[]>([]);
@@ -132,6 +135,25 @@ export default function WarehousePage() {
       materialName: raw.name,
       totalQty:     q,
       deadline:     cutDeadline || null,
+    }).then(res => {
+      const newTask = {
+        id:            String(res.id),
+        blankTypeId:   blk.blankTypeId ? String(blk.blankTypeId) : "",
+        blankName:     blk.name,
+        blankSize:     blk.size,
+        materialName:  raw.name,
+        totalQty:      q,
+        doneQty:       0,
+        inProgressQty: 0,
+        status:        "pending" as const,
+        createdAt:     new Date().toLocaleDateString("ru-RU"),
+        deadline:      cutDeadline || undefined,
+      };
+      addTask(newTask);
+      toast.success(`Задача создана: ${blk.name} — ${q} шт.`, {
+        description: "Появилась в разделе Заготовки → Задачи",
+        duration: 4000,
+      });
     }).catch(console.error);
 
     setCutQty(""); setCutRawPer(""); setCutDeadline("");
