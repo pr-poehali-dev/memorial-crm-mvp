@@ -94,13 +94,15 @@ export default function WarehousePage() {
   const handleIn = () => {
     const q = parseFloat(inQty);
     if (!q || q <= 0) return;
-    const raw   = rawMat.find(r => r.id === inRawId)!;
+    const rawId2 = inRawId || rawMat[0]?.id || "";
+    const raw    = rawMat.find(r => r.id === rawId2)!;
+    if (!raw) return;
     const price = parseFloat(inPrice) || raw.price;
     const total = +(q * price).toFixed(0);
     const note  = `Приход от поставщика${inReceiptId.trim() ? ` · ${inReceiptId.trim()}` : ""}`;
 
     warehouseApi.movement("in", {
-      materialId:   parseInt(inRawId),
+      materialId:   parseInt(rawId2),
       qty:          q,
       pricePerUnit: price,
       totalSum:     total,
@@ -117,14 +119,17 @@ export default function WarehousePage() {
     const perUnit = parseFloat(cutRawPer);
     if (!q || q <= 0 || !perUnit || perUnit <= 0) return;
 
-    const raw       = rawMat.find(r => r.id === cutRawId)!;
-    const blk       = blanks.find(b => b.id === cutBlankId)!;
+    const rawId = cutRawId  || rawMat[0]?.id  || "";
+    const blkId = cutBlankId || blanks[0]?.id || "";
+    const raw   = rawMat.find(r => r.id === rawId)!;
+    const blk   = blanks.find(b => b.id === blkId)!;
+    if (!raw || !blk) return;
     const totalUsed = +(perUnit * q).toFixed(2);
     if (raw.qty < totalUsed) return;
 
     warehouseApi.movement("cut", {
-      materialId: parseInt(cutRawId),
-      blankId:    parseInt(cutBlankId),
+      materialId: parseInt(rawId),
+      blankId:    parseInt(blkId),
       qty:        totalUsed,
       blankQty:   q,
       note:       `Нарезка: ${blk.name} (${q} шт.)${cutDeadline ? ` · до ${cutDeadline}` : ""}`,
@@ -163,11 +168,12 @@ export default function WarehousePage() {
   const handleUse = () => {
     const q = parseInt(useQty);
     if (!q || q <= 0) return;
-    const blk = blanks.find(b => b.id === useBlankId)!;
-    if (blk.qty < q) return;
+    const blkId2 = useBlankId || blanks[0]?.id || "";
+    const blk    = blanks.find(b => b.id === blkId2)!;
+    if (!blk || blk.qty < q) return;
 
     warehouseApi.useBlank({
-      blankId:  parseInt(useBlankId),
+      blankId:  parseInt(blkId2),
       qty:      q,
       note:     "Списание на заказ",
       orderRef: useOrder.trim() || undefined,
@@ -203,7 +209,15 @@ export default function WarehousePage() {
         search={search}
         onTabChange={setTab}
         onSearchChange={setSearch}
-        onModal={setModal}
+        onModal={(m) => {
+          if (m === "cut") {
+            if (!cutRawId && rawMat.length > 0) setCutRawId(rawMat[0].id);
+            if (!cutBlankId && blanks.length > 0) setCutBlankId(blanks[0].id);
+          }
+          if (m === "in" && !inRawId && rawMat.length > 0) setInRawId(rawMat[0].id);
+          if (m === "use" && !useBlankId && blanks.length > 0) setUseBlankId(blanks[0].id);
+          setModal(m);
+        }}
         onShowAddMat={() => setShowAddMat(true)}
       />
 

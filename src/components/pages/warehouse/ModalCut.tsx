@@ -28,6 +28,21 @@ export function ModalCut({
   const totalRaw = +(qty * perUnit).toFixed(2);
   const notEnough = raw ? totalRaw > raw.qty : false;
 
+  /* При смене сырья фильтруем связанные заготовки */
+  const relatedBlanks = blanks.filter(b => b.materialId === cutRawId);
+  const displayBlanks = relatedBlanks.length > 0 ? relatedBlanks : blanks;
+
+  const autoOk = blank ? calcRawPerUnit(blank.size) !== null : false;
+
+  /* Инициализация: если значения пустые — берём первые из списка */
+  useEffect(() => {
+    if (!cutRawId && rawMat.length > 0) setCutRawId(rawMat[0].id);
+  }, [rawMat, cutRawId, setCutRawId]);
+
+  useEffect(() => {
+    if (!cutBlankId && displayBlanks.length > 0) setCutBlankId(displayBlanks[0].id);
+  }, [cutBlankId, displayBlanks, setCutBlankId]);
+
   /* При смене заготовки пересчитать авторасход */
   useEffect(() => {
     if (!blank) return;
@@ -38,12 +53,6 @@ export function ModalCut({
       setCutRawPer("");
     }
   }, [cutBlankId]);
-
-  /* При смене сырья фильтруем связанные заготовки */
-  const relatedBlanks = blanks.filter(b => b.materialId === cutRawId);
-  const displayBlanks = relatedBlanks.length > 0 ? relatedBlanks : blanks;
-
-  const autoOk = blank ? calcRawPerUnit(blank.size) !== null : false;
 
   return (
     <Modal title="Нарезка заготовок" icon="Scissors" iconColor="#6366f1" onClose={onClose}>
