@@ -1,33 +1,14 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Icon from "@/components/ui/icon";
 import { LineItem, uid } from "./estimate.types";
-import { initRaw } from "./warehouse/warehouse.types";
+import { warehouseApi } from "@/api/client";
 
 type Props = {
   onClose: () => void;
   onAdd: (item: LineItem) => void;
 };
 
-/* Берём реальные материалы со склада + добавляем расценки */
-const MAT_PRICE: Record<string, { priceM2: number; costM2: number }> = {
-  "Габбро-диабаз":        { priceM2: 9800, costM2: 4200 },
-  "Шонгуй":               { priceM2: 8200, costM2: 3800 },
-  "Дымовский гранит":     { priceM2: 9500, costM2: 5100 },
-  "Гранатовый амфиболит": { priceM2: 12000, costM2: 6500 },
-  "Балтик грин":          { priceM2: 10500, costM2: 5800 },
-  "Серый гранит":         { priceM2: 7800,  costM2: 3600 },
-  "Курдай":               { priceM2: 9200,  costM2: 4800 },
-  "Мрамор":               { priceM2: 11000, costM2: 6800 },
-  "Калгуваара":           { priceM2: 9800,  costM2: 5200 },
-};
-
-const MATERIALS = initRaw.map(r => ({
-  id:      r.id,
-  label:   r.name,
-  priceM2: MAT_PRICE[r.name]?.priceM2 ?? r.price * 2,
-  costM2:  MAT_PRICE[r.name]?.costM2  ?? r.price,
-  stock:   r.qty,
-}));
+type Material = { id: string; label: string; priceM2: number; costM2: number; stock: number };
 
 const SHAPES = [
   { id: "straight", label: "Прямая",    coef: 1.0  },
@@ -62,7 +43,8 @@ const MARGIN_PRESETS = [
 ];
 
 export default function StoneCalculator({ onClose, onAdd }: Props) {
-  const [material,  setMaterial]  = useState(MATERIALS[0].id);
+  const [materials, setMaterials] = useState<Material[]>([]);
+  const [material,  setMaterial]  = useState("");
   const [height,    setHeight]    = useState(100);
   const [width,     setWidth]     = useState(50);
   const [thickness, setThickness] = useState(8);
@@ -73,7 +55,21 @@ export default function StoneCalculator({ onClose, onAdd }: Props) {
   const [marginPreset, setMarginPreset] = useState(MARGIN_PRESETS[1].id);
   const [manualMargin, setManualMargin] = useState(45);
 
-  const mat   = MATERIALS.find(m => m.id === material)!;
+  useEffect(() => {
+    warehouseApi.materials().then(rows => {
+      const mats = rows.map(r => ({
+        id:      String(r.id),
+        label:   r.name,
+        priceM2: r.price * 2,
+        costM2:  r.price,
+        stock:   Number(r.qty),
+      }));
+      setMaterials(mats);
+      if (mats.length > 0) setMaterial(mats[0].id);
+    }).catch(console.error);
+  }, []);
+
+  const mat   = materials.find(m => m.id === material) ?? { id: "", label: "", priceM2: 0, costM2: 0, stock: 0 };;
   const shp   = SHAPES.find(s => s.id === shape)!;
   const pol   = POLISHING.find(p => p.id === polishing)!;
   const engr  = ENGRAVING.find(e => e.id === engraving)!;
@@ -162,8 +158,12 @@ export default function StoneCalculator({ onClose, onAdd }: Props) {
           <div className="w-[340px] shrink-0 border-r border-[#f0f0f0] overflow-y-auto px-5 py-5 flex flex-col gap-4">
 
             <Section label="Материал">
-              <select value={material} onChange={e => setMaterial(e.target.value)} className={selectCls}>
-                {MATERIALS.map(m => <option key={m.id} value={m.id}>{m.label}</option>)}
+              <select value={material} onChange={e => setMaterial(e.target.value)} className={selectCls}
+                disabled={materials.length === 0}>
+                {materials.length === 0
+                  ? <option>Загрузка...</option>
+                  : materials.map(m => <option key={m.id} value={m.id}>{m.label}</option>)
+                }
               </select>
             </Section>
 
