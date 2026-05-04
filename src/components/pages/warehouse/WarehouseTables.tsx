@@ -44,6 +44,11 @@ export function RawTable({
   const getReserve = (id: string): MaterialReserve | undefined =>
     reserves.find(r => r.materialId === id);
 
+  const totalQtyR      = filteredRaw.reduce((a, r) => a + r.qty, 0);
+  const totalReservedR = filteredRaw.reduce((a, r) => a + (getReserve(r.id)?.totalReserved ?? 0), 0);
+  const totalAvailableR = +(filteredRaw.reduce((a, r) => a + getAvailable(r, getReserve(r.id)?.totalReserved ?? 0), 0)).toFixed(2);
+  const totalCostR     = filteredRaw.reduce((a, r) => a + r.qty * r.price, 0);
+
   return (
     <div className="bg-white border border-[#ebebeb] rounded-xl overflow-hidden">
       <table className="w-full">
@@ -218,6 +223,26 @@ export function RawTable({
             );
           })}
         </tbody>
+        <tfoot>
+          <tr className="border-t-2 border-[#e8e8e8] bg-[#fafafa]">
+            <td colSpan={2} className="px-4 py-3 text-[11px] font-bold text-[#9b9b9b] uppercase tracking-wide">Итого</td>
+            <td className="px-4 py-3 font-mono text-[14px] font-bold text-[#1a1a1a]">
+              {totalQtyR} <span className="text-[11px] font-normal text-[#9b9b9b]">м²</span>
+            </td>
+            <td className="px-4 py-3 font-mono text-[13px] font-semibold text-[#1a1a1a]">
+              {+(totalReservedR).toFixed(2)} <span className="text-[11px] font-normal text-[#9b9b9b]">м²</span>
+            </td>
+            <td className="px-4 py-3 font-mono text-[14px] font-bold" style={{ color: totalAvailableR < 0 ? "#ef4444" : "#16a34a" }}>
+              {totalAvailableR} <span className="text-[11px] font-normal text-[#9b9b9b]">м²</span>
+            </td>
+            <td className="px-4 py-3" />
+            <td className="px-4 py-3" />
+            <td className="px-4 py-3 font-mono text-[13px] font-bold text-[#6366f1]">
+              {totalCostR.toLocaleString("ru")} ₽
+            </td>
+            <td colSpan={2} className="px-4 py-3" />
+          </tr>
+        </tfoot>
       </table>
     </div>
   );

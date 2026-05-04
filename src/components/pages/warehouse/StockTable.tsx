@@ -40,8 +40,11 @@ export default function StockTable({ items, onAdd, onUpdateQty, onRemove }: Prop
     return matchSearch && matchCat;
   });
 
-  const totalQty = items.reduce((s, i) => s + i.qty, 0);
-  const totalVal = items.reduce((s, i) => s + i.qty * i.price, 0);
+  const totalQty    = items.reduce((s, i) => s + i.qty, 0);
+  const totalVal    = items.reduce((s, i) => s + i.qty * i.price, 0);
+  const filtTotalQty = filtered.reduce((s, i) => s + i.qty, 0);
+  const filtTotalVal = filtered.reduce((s, i) => s + i.qty * i.price, 0);
+  const filtZeroQty  = filtered.filter(i => i.qty === 0).length;
   const cats     = [...new Set(items.map(i => i.category))];
 
   const handleAdd = () => {
@@ -273,6 +276,26 @@ export default function StockTable({ items, onAdd, onUpdateQty, onRemove }: Prop
               );
             })}
           </tbody>
+          <tfoot>
+            <tr className="border-t-2 border-[#e8e8e8] bg-[#fafafa]">
+              <td className="px-4 py-3 text-[11px] font-bold text-[#9b9b9b] uppercase tracking-wide">Итого</td>
+              <td className="px-4 py-3">
+                {filtZeroQty > 0 && (
+                  <span className="text-[11px] bg-red-100 text-red-600 px-2 py-0.5 rounded font-semibold whitespace-nowrap">
+                    {filtZeroQty} нет в наличии
+                  </span>
+                )}
+              </td>
+              <td className="px-4 py-3 font-mono text-[14px] font-bold text-[#1a1a1a]">
+                {filtTotalQty} <span className="text-[11px] font-normal text-[#9b9b9b]">шт.</span>
+              </td>
+              <td className="px-4 py-3" />
+              <td className="px-4 py-3 font-mono text-[13px] font-bold text-[#6366f1]">
+                {filtTotalVal.toLocaleString("ru")} ₽
+              </td>
+              <td colSpan={2} className="px-4 py-3" />
+            </tr>
+          </tfoot>
         </table>
       </div>
     </div>
