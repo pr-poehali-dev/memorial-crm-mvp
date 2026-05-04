@@ -1,9 +1,7 @@
 import Icon from "@/components/ui/icon";
-import { BLANK_TYPES } from "./cutting.types";
-import { useTasks } from "@/store/tasksStore";
+import { CuttingTask } from "./cutting.types";
 
-export default function CuttingTaskBlock() {
-  const { tasks } = useTasks();
+export default function CuttingTaskBlock({ tasks }: { tasks: CuttingTask[] }) {
   const activeTasks = tasks.filter(t => t.status !== "done");
   const doneTasks   = tasks.filter(t => t.status === "done");
   const all = [...activeTasks, ...doneTasks];
@@ -21,7 +19,6 @@ export default function CuttingTaskBlock() {
       )}
 
       {all.map(task => {
-        const bt        = BLANK_TYPES.find(b => b.id === task.blankTypeId);
         const remaining = task.totalQty - task.doneQty - task.inProgressQty;
         const pct       = task.totalQty > 0 ? Math.round((task.doneQty / task.totalQty) * 100) : 0;
         const isDone    = task.status === "done";
@@ -40,10 +37,10 @@ export default function CuttingTaskBlock() {
             <div className="flex items-start justify-between gap-2 mb-3">
               <div className="flex-1 min-w-0">
                 <p className={`text-[14px] font-semibold leading-tight ${isDone ? "text-[#9b9b9b]" : "text-[#1a1a1a]"}`}>
-                  {bt?.name ?? "Заготовка"}
+                  {task.blankName ?? "Заготовка"}
                 </p>
                 <p className="text-[11px] text-[#9b9b9b] mt-0.5">
-                  {task.materialName} · {bt?.size}
+                  {task.materialName}{task.blankSize ? ` · ${task.blankSize}` : ""}
                 </p>
               </div>
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 ${

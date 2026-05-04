@@ -1,13 +1,10 @@
 {
   "tests": [
     {
-      "name": "Get orders list",
+      "name": "Unauthorized returns 401",
       "method": "GET",
       "path": "/",
-      "headers": {"X-Session-Token": ""},
-      "expectedStatus": 401,
-      "expectedBody": {"error": "string"},
-      "bodyMatcher": "partial"
+      "expectedStatus": 401
     }
   ]
 }

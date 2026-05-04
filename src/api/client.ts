@@ -55,8 +55,9 @@ export const authApi = {
 
 // ── Orders ──
 export const ordersApi = {
-  list: () => request<DbOrder[]>("orders", "GET"),
-  get:  (id: string) => request<DbOrder>("orders", "GET", { id }),
+  list:  () => request<DbOrder[]>("orders", "GET"),
+  get:   (id: string) => request<DbOrder>("orders", "GET", { id }),
+  stats: (period: "week" | "month" | "year") => request<DbOrderStats>("orders", "GET", { section: "stats", period }),
   create: (data: Partial<DbOrder>) => request<{ id: string }>("orders", "POST", {}, data),
   update: (id: string, data: Partial<DbOrder>) => request<{ ok: boolean }>("orders", "PUT", { id }, data),
 };
@@ -297,6 +298,23 @@ export type DbBlankType = {
   size: string;
   material: string;
   raw_per_unit: number;
+};
+
+export type DbOrderStats = {
+  chart: { label: string; revenue: number; orders_count: number }[];
+  totals: {
+    total_orders: number;
+    total_revenue: number;
+    total_debt: number;
+    avg_check: number;
+    overdue_count: number;
+    partial_count: number;
+    unpaid_count: number;
+  };
+  topClients: { name: string; total: number; orders: number }[];
+  stones: { name: string; count: number; pct: number }[];
+  deficit: { name: string; free: number; min: number; unit: string }[];
+  inProduction: number;
 };
 
 export type DbCatalogItem = {

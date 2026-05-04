@@ -7,6 +7,8 @@ export type CuttingTaskStatus = "pending" | "active" | "done";
 export type CuttingTask = {
   id: string;
   blankTypeId: string;
+  blankName?: string;
+  blankSize?: string;
   materialName: string;
   totalQty: number;
   doneQty: number;
@@ -175,5 +177,9 @@ export const EFF_LABEL: Record<string, string> = {
 
 export function emptyResult(): ShiftResult {
   const bt = BLANK_TYPES[0];
+  return { blankTypeId: bt.id, produced: 1, rawAuto: true, rawUsed: bt.rawPerUnit };
+}
+
+export function emptyResultFromBt(bt: BlankType): ShiftResult {
   return { blankTypeId: bt.id, produced: 1, rawAuto: true, rawUsed: bt.rawPerUnit };
 }

@@ -28,7 +28,7 @@ def get_company_id(token: str) -> int | None:
     return None
 
 def handler(event: dict, context) -> dict:
-    """Заказы: GET / (список), GET /?id=МП-0041, POST / (создать), PUT /?id=... (обновить)"""
+    """Заказы: GET / (список), GET /?id=..., GET /?section=stats, POST / (создать), PUT /?id=... (обновить)"""
     if event.get("httpMethod") == "OPTIONS":
         return {"statusCode": 200, "headers": CORS, "body": ""}
 
@@ -40,14 +40,108 @@ def handler(event: dict, context) -> dict:
     method = event.get("httpMethod", "GET")
     params = event.get("queryStringParameters") or {}
     order_id = params.get("id")
+    section  = params.get("section", "")
 
     conn = get_db()
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
     try:
         if method == "GET":
+
+            # --- Аналитика ---
+            if section == "stats":
+                period = params.get("period", "month")  # week | month | year
+
+                if period == "week":
+                    interval = "7 days"
+                    trunc    = "day"
+                    label_fmt = "dy"
+                elif period == "year":
+                    interval = "7 years"
+                    trunc    = "year"
+                    label_fmt = "YYYY"
+                else:  # month
+                    interval = "7 months"
+                    trunc    = "month"
+                    label_fmt = "Mon"
+
+                # Выручка и заказы по периодам
+                cur.execute(f"""
+                    SELECT
+                        to_char(date_trunc('{trunc}', order_date), '{label_fmt}') as label,
+                        SUM(amount) as revenue,
+                        COUNT(*) as orders_count
+                    FROM {SCHEMA}.orders
+                    WHERE company_id=%s AND order_date >= CURRENT_DATE - INTERVAL '{interval}'
+                    GROUP BY date_trunc('{trunc}', order_date)
+                    ORDER BY date_trunc('{trunc}', order_date)
+                """, (company_id,))
+                chart_rows = cur.fetchall()
+
+                # Итоговые метрики
+                cur.execute(f"""
+                    SELECT
+                        COUNT(*) as total_orders,
+                        COALESCE(SUM(amount), 0) as total_revenue,
+                        COALESCE(SUM(amount - paid), 0) as total_debt,
+                        COALESCE(AVG(amount), 0) as avg_check,
+                        COUNT(*) FILTER (WHERE deadline < CURRENT_DATE AND status NOT IN ('Выдан')) as overdue_count,
+                        COUNT(*) FILTER (WHERE paid < amount AND paid > 0) as partial_count,
+                        COUNT(*) FILTER (WHERE paid = 0 AND amount > 0) as unpaid_count
+                    FROM {SCHEMA}.orders
+                    WHERE company_id=%s
+                """, (company_id,))
+                totals = dict(cur.fetchone())
+
+                # Топ клиенты
+                cur.execute(f"""
+                    SELECT client_name as name, SUM(amount) as total, COUNT(*) as orders
+                    FROM {SCHEMA}.orders
+                    WHERE company_id=%s
+                    GROUP BY client_name ORDER BY total DESC LIMIT 5
+                """, (company_id,))
+                top_clients = [dict(r) for r in cur.fetchall()]
+
+                # Топ материалы
+                cur.execute(f"""
+                    SELECT stone as name, COUNT(*) as count
+                    FROM {SCHEMA}.orders
+                    WHERE company_id=%s AND stone IS NOT NULL AND stone != ''
+                    GROUP BY stone ORDER BY count DESC LIMIT 6
+                """, (company_id,))
+                stone_rows = cur.fetchall()
+                total_stones = sum(r["count"] for r in stone_rows) or 1
+                stones = [{"name": r["name"], "count": r["count"],
+                           "pct": round(r["count"] / total_stones * 100)} for r in stone_rows]
+
+                # Дефицит материалов
+                cur.execute(f"""
+                    SELECT name, CAST(qty AS float) as free, CAST(min_qty AS float) as min, unit
+                    FROM {SCHEMA}.materials
+                    WHERE company_id=%s AND qty < min_qty AND active=TRUE
+                    ORDER BY (qty - min_qty) ASC LIMIT 5
+                """, (company_id,))
+                deficit = [dict(r) for r in cur.fetchall()]
+
+                # Производство сейчас
+                cur.execute(f"""
+                    SELECT COUNT(*) as in_production
+                    FROM {SCHEMA}.orders
+                    WHERE company_id=%s AND status IN ('Производство', 'Гравировка', 'Полировка')
+                """, (company_id,))
+                in_prod = cur.fetchone()["in_production"]
+
+                result = {
+                    "chart": [dict(r) for r in chart_rows],
+                    "totals": totals,
+                    "topClients": top_clients,
+                    "stones": stones,
+                    "deficit": deficit,
+                    "inProduction": int(in_prod),
+                }
+                return {"statusCode": 200, "headers": CORS, "body": json.dumps(result, default=str)}
+
             if order_id:
-                # Один заказ с позициями и комментариями
                 cur.execute(
                     f"""SELECT o.*,
                         COALESCE(
@@ -74,35 +168,34 @@ def handler(event: dict, context) -> dict:
                 if not row:
                     return {"statusCode": 404, "headers": CORS, "body": json.dumps({"error": "not found"})}
                 return {"statusCode": 200, "headers": CORS, "body": json.dumps(dict(row), default=str)}
-            else:
-                # Список заказов
-                cur.execute(
-                    f"""SELECT o.id, o.client_name, o.phone, o.stone, o.size,
-                        o.status, o.status_color, o.amount, o.paid, o.order_date,
-                        o.deadline, o.manager, o.comment, o.current_stage,
-                        CASE
-                          WHEN o.deadline < CURRENT_DATE AND o.status NOT IN ('Выдан') THEN 'overdue'
-                          WHEN o.deadline <= CURRENT_DATE + 7 AND o.status NOT IN ('Выдан') THEN 'soon'
-                          WHEN o.status = 'Выдан' THEN 'done'
-                          ELSE 'ok'
-                        END as deadline_state,
-                        CASE
-                          WHEN o.paid >= o.amount THEN 'paid'
-                          WHEN o.paid > 0 THEN 'partial'
-                          ELSE 'unpaid'
-                        END as pay_status
-                        FROM {SCHEMA}.orders o
-                        WHERE o.company_id=%s
-                        ORDER BY o.order_date DESC, o.id DESC""",
-                    (company_id,)
-                )
-                rows = cur.fetchall()
-                return {"statusCode": 200, "headers": CORS,
-                        "body": json.dumps([dict(r) for r in rows], default=str)}
+
+            # Список заказов
+            cur.execute(
+                f"""SELECT o.id, o.client_name, o.phone, o.stone, o.size,
+                    o.status, o.status_color, o.amount, o.paid, o.order_date,
+                    o.deadline, o.manager, o.comment, o.current_stage,
+                    CASE
+                      WHEN o.deadline < CURRENT_DATE AND o.status NOT IN ('Выдан') THEN 'overdue'
+                      WHEN o.deadline <= CURRENT_DATE + 7 AND o.status NOT IN ('Выдан') THEN 'soon'
+                      WHEN o.status = 'Выдан' THEN 'done'
+                      ELSE 'ok'
+                    END as deadline_state,
+                    CASE
+                      WHEN o.paid >= o.amount THEN 'paid'
+                      WHEN o.paid > 0 THEN 'partial'
+                      ELSE 'unpaid'
+                    END as pay_status
+                    FROM {SCHEMA}.orders o
+                    WHERE o.company_id=%s
+                    ORDER BY o.order_date DESC, o.id DESC""",
+                (company_id,)
+            )
+            rows = cur.fetchall()
+            return {"statusCode": 200, "headers": CORS,
+                    "body": json.dumps([dict(r) for r in rows], default=str)}
 
         if method == "POST":
             body = json.loads(event.get("body") or "{}")
-            # Генерация ID заказа
             cur.execute(
                 f"SELECT id FROM {SCHEMA}.orders WHERE company_id=%s ORDER BY created_at DESC LIMIT 1",
                 (company_id,)
@@ -135,8 +228,7 @@ def handler(event: dict, context) -> dict:
                  body.get("currentStage", 0))
             )
             conn.commit()
-            return {"statusCode": 201, "headers": CORS,
-                    "body": json.dumps({"id": new_id})}
+            return {"statusCode": 201, "headers": CORS, "body": json.dumps({"id": new_id})}
 
         if method == "PUT":
             if not order_id:

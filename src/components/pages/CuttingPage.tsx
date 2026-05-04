@@ -1,18 +1,16 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Icon from "@/components/ui/icon";
 import {
-  Shift, ShiftResult, WorkType,
-  PLACES, EMPLOYEES, BLANK_TYPES,
-  today, yesterday, emptyResult,
+  Shift, ShiftResult, WorkType, Place, Employee, BlankType, CuttingTask,
+  today, yesterday, emptyResultFromBt,
   shiftTotalProduced, shiftTotalRaw,
 } from "./cutting/cutting.types";
-import { cuttingApi, DbShift, DbPlace, DbEmployee, DbBlankType } from "@/api/client";
+import { cuttingApi, DbShift, DbPlace, DbEmployee, DbBlankType, DbCuttingTask } from "@/api/client";
 import CuttingShiftCards from "./cutting/CuttingShiftCards";
 import { ActiveColumn, DoneColumn } from "./cutting/CuttingShiftCards";
 import CuttingJournal from "./cutting/CuttingJournal";
 import CuttingTaskBlock from "./cutting/CuttingTaskBlock";
 import { AssignModal, FinishModal } from "./cutting/CuttingModals";
-import { useTasks } from "@/store/tasksStore";
 
 type Tab = "today" | "yesterday" | "journal";
 
@@ -22,10 +20,10 @@ function dbToShift(s: DbShift): Shift {
     placeId: String(s.place_id),
     employeeId: String(s.employee_id),
     workType: s.work_type as WorkType,
-    date: s.shift_date?.substring(0,10) || today,
-    status: s.status as "active"|"done",
-    startedAt: s.started_at?.substring(0,5) || "08:00",
-    finishedAt: s.finished_at?.substring(0,5),
+    date: s.shift_date?.substring(0, 10) || today,
+    status: s.status as "active" | "done",
+    startedAt: s.started_at?.substring(0, 5) || "08:00",
+    finishedAt: s.finished_at?.substring(0, 5),
     taskId: s.task_id ? String(s.task_id) : undefined,
     taskQtyAssigned: s.task_qty_assigned || undefined,
     results: (s.results || []).map(r => ({
@@ -38,94 +36,118 @@ function dbToShift(s: DbShift): Shift {
   };
 }
 
+function dbToPlace(p: DbPlace): Place {
+  return { id: String(p.id), name: p.name, machine: p.machine, workTypes: p.work_types as WorkType[] };
+}
+function dbToEmployee(e: DbEmployee): Employee {
+  return { id: String(e.id), name: e.name };
+}
+function dbToBlankType(b: DbBlankType): BlankType {
+  return { id: String(b.id), name: b.name, size: b.size, material: b.material, rawPerUnit: Number(b.raw_per_unit) };
+}
+function dbToTask(t: DbCuttingTask): CuttingTask {
+  return {
+    id: String(t.id),
+    blankTypeId: t.blank_type_id ? String(t.blank_type_id) : "",
+    materialName: t.material_name || "",
+    totalQty: t.total_qty,
+    doneQty: t.done_qty,
+    inProgressQty: t.in_progress_qty,
+    status: t.status as CuttingTask["status"],
+    createdAt: new Date(t.created_at).toLocaleDateString("ru-RU"),
+    deadline: t.deadline ? new Date(t.deadline).toLocaleDateString("ru-RU") : undefined,
+  };
+}
+
 export default function CuttingPage() {
-  const [tab,    setTab]    = useState<Tab>("today");
-  const [shifts, setShifts] = useState<Shift[]>([]);
+  const [tab,        setTab]       = useState<Tab>("today");
+  const [shifts,     setShifts]    = useState<Shift[]>([]);
+  const [tasks,      setTasks]     = useState<CuttingTask[]>([]);
+  const [places,     setPlaces]    = useState<Place[]>([]);
+  const [employees,  setEmployees] = useState<Employee[]>([]);
+  const [blankTypes, setBlankTypes] = useState<BlankType[]>([]);
+
+  const reloadShifts = useCallback(() =>
+    cuttingApi.shifts().then(data => setShifts(data.map(dbToShift))).catch(console.error), []);
+
+  const reloadTasks = useCallback(() =>
+    cuttingApi.tasks().then(data => setTasks(data.map(dbToTask))).catch(console.error), []);
 
   useEffect(() => {
-    cuttingApi.shifts().then(data => setShifts(data.map(dbToShift))).catch(console.error);
-  }, []);
-  const { updateTask, tasks } = useTasks();
+    reloadShifts();
+    reloadTasks();
+    cuttingApi.places().then(d => setPlaces(d.map(dbToPlace))).catch(console.error);
+    cuttingApi.employees().then(d => setEmployees(d.map(dbToEmployee))).catch(console.error);
+    cuttingApi.blankTypes().then(d => setBlankTypes(d.map(dbToBlankType))).catch(console.error);
+  }, [reloadShifts, reloadTasks]);
 
   /* Модалки */
   const [assignModal,   setAssignModal]   = useState(false);
   const [finishShiftId, setFinishShiftId] = useState<string | null>(null);
 
   /* Форма назначения */
-  const [fPlace,    setFPlace]    = useState(PLACES[0].id);
-  const [fEmployee, setFEmployee] = useState(EMPLOYEES[0].id);
+  const [fPlace,    setFPlace]    = useState("");
+  const [fEmployee, setFEmployee] = useState("");
   const [fWorkType, setFWorkType] = useState<WorkType>("cutting");
   const [fDate,     setFDate]     = useState(today);
   const [fTaskId,   setFTaskId]   = useState("");
   const [fTaskQty,  setFTaskQty]  = useState("");
 
-  /* Форма завершения */
-  const [fResults, setFResults] = useState<ShiftResult[]>([emptyResult()]);
+  useEffect(() => {
+    if (places.length > 0 && !fPlace) setFPlace(places[0].id);
+  }, [places, fPlace]);
+  useEffect(() => {
+    if (employees.length > 0 && !fEmployee) setFEmployee(employees[0].id);
+  }, [employees, fEmployee]);
 
-  /* ── Назначить смену ── */
+  /* Форма завершения */
+  const firstBt = blankTypes[0];
+  const [fResults, setFResults] = useState<ShiftResult[]>([]);
+  useEffect(() => {
+    if (firstBt && fResults.length === 0) setFResults([emptyResultFromBt(firstBt)]);
+  }, [firstBt, fResults.length]);
+
+  /* ── Назначить смену → API ── */
   const handleAssign = () => {
     const taskQtyNum = parseInt(fTaskQty) || 0;
-    const newShift: Shift = {
-      id: "s" + Date.now(),
-      placeId: fPlace,
-      employeeId: fEmployee,
-      workType: fWorkType,
-      date: fDate,
-      status: "active",
-      startedAt: new Date().toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" }),
-      results: [],
-      taskId: fTaskId || undefined,
+    cuttingApi.assignShift({
+      placeId:         parseInt(fPlace),
+      employeeId:      parseInt(fEmployee),
+      workType:        fWorkType,
+      date:            fDate,
+      taskId:          fTaskId ? parseInt(fTaskId) : undefined,
       taskQtyAssigned: fTaskId && taskQtyNum > 0 ? taskQtyNum : undefined,
-    };
-    setShifts(prev => [newShift, ...prev]);
-
-    /* Обновляем задачу: увеличиваем inProgressQty */
-    if (fTaskId && taskQtyNum > 0) {
-      updateTask(fTaskId, prev => ({
-        inProgressQty: prev.inProgressQty + taskQtyNum,
-        status: "active" as const,
-      }));
-    }
+    }).then(() => {
+      reloadShifts();
+      reloadTasks();
+    }).catch(console.error);
 
     setAssignModal(false);
-    setFPlace(PLACES[0].id);
-    setFEmployee(EMPLOYEES[0].id);
     setFWorkType("cutting");
     setFDate(today);
     setFTaskId("");
     setFTaskQty("");
   };
 
-  /* ── Завершить смену ── */
+  /* ── Завершить смену → API ── */
   const handleFinish = () => {
     if (!finishShiftId) return;
-    const shift = shifts.find(s => s.id === finishShiftId);
-
-    setShifts(prev => prev.map(s => s.id === finishShiftId ? {
-      ...s,
-      status: "done",
-      finishedAt: new Date().toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" }),
-      results: fResults,
-    } : s));
-
-    /* Обновляем прогресс задачи */
-    if (shift?.taskId) {
-      const produced = fResults.reduce((a, r) => a + r.produced, 0);
-      const assigned = shift.taskQtyAssigned ?? 0;
-      updateTask(shift.taskId, prev => {
-        const newDone       = prev.doneQty + produced;
-        const newInProgress = Math.max(0, prev.inProgressQty - assigned);
-        const isDone        = newDone >= prev.totalQty;
-        return {
-          doneQty:       newDone,
-          inProgressQty: newInProgress,
-          status:        isDone ? "done" as const : "active" as const,
-        };
-      });
-    }
+    cuttingApi.finishShift({
+      shiftId: parseInt(finishShiftId),
+      results: fResults.map(r => ({
+        blankTypeId: parseInt(r.blankTypeId),
+        produced:    r.produced,
+        rawAuto:     r.rawAuto,
+        rawUsed:     r.rawUsed,
+        orderId:     r.orderId,
+      })),
+    }).then(() => {
+      reloadShifts();
+      reloadTasks();
+    }).catch(console.error);
 
     setFinishShiftId(null);
-    setFResults([emptyResult()]);
+    setFResults(firstBt ? [emptyResultFromBt(firstBt)] : []);
   };
 
   const updateResult = (idx: number, patch: Partial<ShiftResult>) => {
@@ -133,8 +155,8 @@ export default function CuttingPage() {
       if (i !== idx) return r;
       const merged = { ...r, ...patch };
       if (("blankTypeId" in patch || "produced" in patch) && merged.rawAuto) {
-        const bt = BLANK_TYPES.find(b => b.id === merged.blankTypeId)!;
-        merged.rawUsed = +(bt.rawPerUnit * merged.produced).toFixed(2);
+        const bt = blankTypes.find(b => b.id === merged.blankTypeId);
+        if (bt) merged.rawUsed = +(bt.rawPerUnit * merged.produced).toFixed(2);
       }
       return merged;
     }));
@@ -146,18 +168,17 @@ export default function CuttingPage() {
   const yesterdayDone = shifts.filter(s => s.status === "done" && s.date === yesterday);
   const allDone       = shifts.filter(s => s.status === "done");
 
-  const totalTodayP  = todayDone.reduce((a, s)  => a + shiftTotalProduced(s), 0);
-  const totalTodayR  = todayDone.reduce((a, s)  => a + shiftTotalRaw(s), 0);
+  const totalTodayP = todayDone.reduce((a, s) => a + shiftTotalProduced(s), 0);
+  const totalTodayR = todayDone.reduce((a, s) => a + shiftTotalRaw(s), 0);
 
   const finishShift = finishShiftId ? shifts.find(s => s.id === finishShiftId) ?? null : null;
 
-  /* ── Статы для вчера ── */
   const ydP = yesterdayDone.reduce((a, s) => a + shiftTotalProduced(s), 0);
   const ydR = yesterdayDone.reduce((a, s) => a + shiftTotalRaw(s), 0);
 
   const TABS: { key: Tab; label: string }[] = [
-    { key: "today",     label: "Сегодня"    },
-    { key: "yesterday", label: "Вчера"      },
+    { key: "today",     label: "Сегодня" },
+    { key: "yesterday", label: "Вчера" },
     { key: "journal",   label: "Журнал смен" },
   ];
 
@@ -166,8 +187,6 @@ export default function CuttingPage() {
 
       {/* ── Sticky шапка ── */}
       <div className="shrink-0 bg-[#fafafa] border-b border-[#ebebeb] px-7 pt-5 pb-0">
-
-        {/* Строка 1: заголовок + кнопка */}
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-[20px] font-semibold text-[#1a1a1a] tracking-tight">Заготовки</h1>
           <button
@@ -179,7 +198,6 @@ export default function CuttingPage() {
           </button>
         </div>
 
-        {/* Строка 2: компактные метрики */}
         <div className="flex items-center gap-4 mb-4">
           <div className="flex items-center gap-2 bg-[#f4f4f4] rounded-lg px-3 py-1.5">
             <span className="w-2 h-2 rounded-full bg-[#22c55e] shrink-0" />
@@ -195,7 +213,6 @@ export default function CuttingPage() {
           </div>
         </div>
 
-        {/* Вкладки */}
         <div className="flex gap-0">
           {TABS.map(t => (
             <button
@@ -220,11 +237,10 @@ export default function CuttingPage() {
       {/* ── Тело ── */}
       <div className="flex-1 overflow-hidden flex flex-col">
 
-        {/* ════ Сегодня ════ */}
+        {/* Сегодня */}
         {tab === "today" && (
           <div className="flex-1 overflow-hidden grid grid-cols-3 divide-x divide-[#f0f0f0]">
 
-            {/* ── Колонка 1: ЗАДАЧИ ── */}
             <div className="flex flex-col overflow-hidden">
               <div className="shrink-0 px-5 py-3 border-b border-[#f0f0f0] flex items-center gap-2">
                 <div className="w-5 h-5 rounded-md bg-[#ede9fe] flex items-center justify-center shrink-0">
@@ -238,11 +254,10 @@ export default function CuttingPage() {
                 )}
               </div>
               <div className="flex-1 overflow-y-auto px-5 py-4">
-                <CuttingTaskBlock />
+                <CuttingTaskBlock tasks={tasks} />
               </div>
             </div>
 
-            {/* ── Колонка 2: АКТИВНЫЕ ── */}
             <div className="flex flex-col overflow-hidden">
               <div className="shrink-0 px-5 py-3 border-b border-[#f0f0f0] flex items-center gap-2">
                 <div className="w-5 h-5 rounded-md bg-[#dcfce7] flex items-center justify-center shrink-0">
@@ -258,12 +273,14 @@ export default function CuttingPage() {
               <div className="flex-1 overflow-y-auto px-5 py-4">
                 <ActiveColumn
                   shifts={activeShifts}
-                  onFinishClick={(id) => { setFinishShiftId(id); setFResults([emptyResult()]); }}
+                  onFinishClick={(id) => {
+                    setFinishShiftId(id);
+                    setFResults(firstBt ? [emptyResultFromBt(firstBt)] : []);
+                  }}
                 />
               </div>
             </div>
 
-            {/* ── Колонка 3: ЗАВЕРШЕНО ── */}
             <div className="flex flex-col overflow-hidden">
               <div className="shrink-0 px-5 py-3 border-b border-[#f0f0f0] flex items-center gap-2">
                 <div className="w-5 h-5 rounded-md bg-[#f4f4f4] flex items-center justify-center shrink-0">
@@ -284,14 +301,14 @@ export default function CuttingPage() {
           </div>
         )}
 
-        {/* ════ Вчера ════ */}
+        {/* Вчера */}
         {tab === "yesterday" && (
           <div className="flex-1 overflow-y-auto px-7 py-5 space-y-4">
             <div className="grid grid-cols-3 gap-3">
               {[
-                { label: "Смен",          value: String(yesterdayDone.length), sub: null },
-                { label: "Изделий",       value: `${ydP}`,                     sub: "шт." },
-                { label: "Расход сырья",  value: `${ydR.toFixed(1)}`,          sub: "м²"  },
+                { label: "Смен",         value: String(yesterdayDone.length), sub: null },
+                { label: "Изделий",      value: `${ydP}`,                     sub: "шт." },
+                { label: "Расход сырья", value: `${ydR.toFixed(1)}`,          sub: "м²" },
               ].map(s => (
                 <div key={s.label} className="bg-[#f4f4f4] rounded-xl px-4 py-3 flex flex-col gap-0.5">
                   <div className="flex items-baseline gap-1">
@@ -318,7 +335,7 @@ export default function CuttingPage() {
           </div>
         )}
 
-        {/* ════ Журнал ════ */}
+        {/* Журнал */}
         {tab === "journal" && (
           <div className="flex-1 overflow-y-auto px-7 py-5">
             <CuttingJournal doneShifts={allDone} />
@@ -336,6 +353,9 @@ export default function CuttingPage() {
           today={today}
           fTaskId={fTaskId}
           fTaskQty={fTaskQty}
+          places={places}
+          employees={employees}
+          tasks={tasks}
           onChangePlace={setFPlace}
           onChangeEmployee={setFEmployee}
           onChangeWorkType={setFWorkType}
@@ -350,8 +370,9 @@ export default function CuttingPage() {
         <FinishModal
           shift={finishShift}
           fResults={fResults}
+          blankTypes={blankTypes}
           onUpdateResult={updateResult}
-          onAddResult={() => setFResults(prev => [...prev, emptyResult()])}
+          onAddResult={() => setFResults(prev => [...prev, firstBt ? emptyResultFromBt(firstBt) : prev[0]])}
           onRemoveResult={(idx) => setFResults(prev => prev.filter((_, i) => i !== idx))}
           onFinish={handleFinish}
           onClose={() => setFinishShiftId(null)}

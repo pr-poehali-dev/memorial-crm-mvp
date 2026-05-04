@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -7,13 +6,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-import { TasksContext, initTasks, TaskUpdater } from "./store/tasksStore";
+import { TasksContext, TaskUpdater } from "./store/tasksStore";
 import { CuttingTask } from "./components/pages/cutting/cutting.types";
 
 const queryClient = new QueryClient();
 
 const App = () => {
-  const [tasks, setTasks] = useState<CuttingTask[]>(initTasks);
+  const [tasks, setTasks] = useState<CuttingTask[]>([]);
 
   const addTask = (t: CuttingTask) => setTasks(prev => [t, ...prev]);
   const updateTask = (id: string, updater: TaskUpdater) =>
@@ -32,7 +31,6 @@ const App = () => {
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
