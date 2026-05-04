@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Icon from "@/components/ui/icon";
-import { OrderItem, Deceased, MANAGERS, ESTIMATORS, uid } from "./newOrder.types";
+import { OrderItem, Deceased, uid } from "./newOrder.types";
+import { settingsApi, warehouseApi } from "@/api/client";
 import NewOrderForm from "./NewOrderForm";
 import NewOrderSidebar from "./NewOrderSidebar";
 
@@ -30,8 +31,29 @@ export default function NewOrderPage({ onBack }: { onBack: () => void }) {
   ]);
 
   // Ответственные
-  const [manager, setManager]     = useState(MANAGERS[0]);
-  const [estimator, setEstimator] = useState(ESTIMATORS[0]);
+  const [managers,   setManagers]   = useState<string[]>([]);
+  const [estimators, setEstimators] = useState<string[]>([]);
+  const [stoneTypes, setStoneTypes] = useState<string[]>([]);
+  const [catalogItems, setCatalogItems] = useState<string[]>([]);
+  const [manager,    setManager]    = useState("");
+  const [estimator,  setEstimator]  = useState("");
+
+  useEffect(() => {
+    settingsApi.employees().then(emps => {
+      const mgrs = emps.filter(e => e.active && ["manager","estimator"].includes(e.role ?? "")).map(e => e.name);
+      const ests = emps.filter(e => e.active && e.role === "estimator").map(e => e.name);
+      setManagers(mgrs);
+      setEstimators(ests.length ? ests : mgrs);
+      if (mgrs.length) setManager(mgrs[0]);
+      if (ests.length) setEstimator(ests[0]);
+    }).catch(console.error);
+    warehouseApi.materials().then(mats => {
+      setStoneTypes(mats.map(m => m.name));
+    }).catch(console.error);
+    settingsApi.estimateTemplates().then(tmpl => {
+      setCatalogItems(tmpl.filter(t => t.active).map(t => t.name));
+    }).catch(console.error);
+  }, []);
 
   // UI state
   const [activeTab, setActiveTab] = useState<"client" | "deceased" | "items" | "meta">("client");
@@ -123,6 +145,8 @@ export default function NewOrderPage({ onBack }: { onBack: () => void }) {
             onStone={setStone}
             onSize={setSize}
             onDeadline={setDeadline}
+            stoneTypes={stoneTypes}
+            catalogItems={catalogItems}
           />
 
           <NewOrderSidebar
@@ -136,6 +160,8 @@ export default function NewOrderPage({ onBack }: { onBack: () => void }) {
             needsCalcCount={needsCalcCount}
             manager={manager}
             estimator={estimator}
+            managers={managers}
+            estimators={estimators}
             onManagerChange={setManager}
             onEstimatorChange={setEstimator}
           />

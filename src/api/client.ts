@@ -65,10 +65,23 @@ export const ordersApi = {
 
 // ── Clients ──
 export const clientsApi = {
-  list: () => request<DbClient[]>("clients", "GET"),
-  get:  (id: string) => request<DbClient>("clients", "GET", { id }),
+  list:   () => request<DbClient[]>("clients", "GET"),
+  get:    (id: string) => request<DbClient>("clients", "GET", { id }),
   create: (data: Partial<DbClient>) => request<{ id: number }>("clients", "POST", {}, data),
   update: (id: string, data: Partial<DbClient>) => request<{ ok: boolean }>("clients", "PUT", { id }, data),
+};
+
+// ── Settings (employees, stages, estimate_templates) ──
+export const settingsApi = {
+  employees:         () => request<DbEmployee[]>("clients", "GET", { section: "employees" }),
+  stages:            () => request<DbStage[]>("clients", "GET", { section: "stages" }),
+  estimateTemplates: () => request<DbEstimateTemplate[]>("clients", "GET", { section: "estimate_templates" }),
+  createEmployee:    (data: Record<string, unknown>) => request<{ id: number }>("clients", "POST", { section: "employees" }, data),
+  updateEmployee:    (id: number, data: Record<string, unknown>) => request<{ ok: boolean }>("clients", "PUT", { section: "employees", id: String(id) }, data),
+  createStage:       (data: Record<string, unknown>) => request<{ id: number }>("clients", "POST", { section: "stages" }, data),
+  updateStage:       (id: number, data: Record<string, unknown>) => request<{ ok: boolean }>("clients", "PUT", { section: "stages", id: String(id) }, data),
+  createTemplate:    (data: Record<string, unknown>) => request<{ id: number }>("clients", "POST", { section: "estimate_templates" }, data),
+  updateTemplate:    (id: number, data: Record<string, unknown>) => request<{ ok: boolean }>("clients", "PUT", { section: "estimate_templates", id: String(id) }, data),
 };
 
 // ── Warehouse ──
@@ -333,6 +346,24 @@ export type DbOrderStats = {
   stones: { name: string; count: number; pct: number }[];
   deficit: { name: string; free: number; min: number; unit: string }[];
   inProduction: number;
+};
+
+export type DbStage = {
+  id: number;
+  label: string;
+  color: string;
+  days: number;
+  sort_order: number;
+  active: boolean;
+};
+
+export type DbEstimateTemplate = {
+  id: number;
+  name: string;
+  price: number;
+  unit: string;
+  active: boolean;
+  sort_order: number;
 };
 
 export type DbCatalogItem = {

@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Icon from "@/components/ui/icon";
+import { settingsApi, DbEmployee, DbStage, DbEstimateTemplate } from "@/api/client";
 
 type Tab = "company" | "managers" | "stages" | "estimates" | "notifications";
 
@@ -11,44 +12,42 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: "notifications", label: "Уведомления",        icon: "Bell" },
 ];
 
-type Manager = { id: string; name: string; role: string; phone: string; active: boolean; color: string };
-const INIT_MANAGERS: Manager[] = [
-  { id: "m1", name: "Олег Краснов",    role: "Менеджер",    phone: "+7 916 100-11-22", active: true,  color: "#6366f1" },
-  { id: "m2", name: "Анна Морозова",   role: "Менеджер",    phone: "+7 925 200-33-44", active: true,  color: "#22c55e" },
-  { id: "m3", name: "Игорь Верещагин", role: "Производство", phone: "+7 903 300-55-66", active: true,  color: "#f59e0b" },
-  { id: "m4", name: "Дмитрий Соколов", role: "Сметчик",     phone: "+7 965 400-77-88", active: false, color: "#ec4899" },
-];
-
-type Stage = { id: string; label: string; color: string; days: number; active: boolean };
-const INIT_STAGES: Stage[] = [
-  { id: "s1", label: "Эскиз",      color: "#6366f1", days: 2, active: true },
-  { id: "s2", label: "Распил",     color: "#f59e0b", days: 3, active: true },
-  { id: "s3", label: "Гравировка", color: "#ec4899", days: 4, active: true },
-  { id: "s4", label: "Полировка",  color: "#14b8a6", days: 2, active: true },
-  { id: "s5", label: "Готов",      color: "#22c55e", days: 0, active: true },
-  { id: "s6", label: "Выдан",      color: "#9b9b9b", days: 0, active: true },
-];
-
-type EstimateItem = { id: string; name: string; price: number; unit: string; active: boolean };
-const INIT_ESTIMATE: EstimateItem[] = [
-  { id: "e1", name: "Изготовление памятника (базовый)", price: 22000, unit: "шт.", active: true },
-  { id: "e2", name: "Гравировка надписи",               price: 6500,  unit: "шт.", active: true },
-  { id: "e3", name: "Портретное фото",                  price: 5000,  unit: "шт.", active: true },
-  { id: "e4", name: "Доставка базовая",                 price: 2500,  unit: "км",  active: true },
-  { id: "e5", name: "Установка на кладбище",            price: 5000,  unit: "шт.", active: true },
-  { id: "e6", name: "Цветная гравировка",               price: 8000,  unit: "шт.", active: false },
-];
+const AVATAR_COLORS = ["#6366f1","#22c55e","#f59e0b","#ec4899","#14b8a6","#ef4444","#8b5cf6"];
 
 export default function SettingsPage() {
   const [tab, setTab] = useState<Tab>("company");
-  const [managers, setManagers] = useState(INIT_MANAGERS);
-  const [stages, setStages] = useState(INIT_STAGES);
-  const [estimates, setEstimates] = useState(INIT_ESTIMATE);
+
+  const [employees, setEmployees] = useState<DbEmployee[]>([]);
+  const [stages,    setStages]    = useState<DbStage[]>([]);
+  const [templates, setTemplates] = useState<DbEstimateTemplate[]>([]);
   const [saved, setSaved] = useState(false);
+
+  const reload = useCallback(() => {
+    settingsApi.employees().then(setEmployees).catch(console.error);
+    settingsApi.stages().then(setStages).catch(console.error);
+    settingsApi.estimateTemplates().then(setTemplates).catch(console.error);
+  }, []);
+
+  useEffect(() => { reload(); }, [reload]);
 
   const handleSave = () => {
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
+  };
+
+  const toggleEmployee = (emp: DbEmployee) => {
+    settingsApi.updateEmployee(emp.id, { active: !emp.active })
+      .then(reload).catch(console.error);
+  };
+
+  const toggleStage = (s: DbStage) => {
+    settingsApi.updateStage(s.id, { active: !s.active })
+      .then(reload).catch(console.error);
+  };
+
+  const toggleTemplate = (t: DbEstimateTemplate) => {
+    settingsApi.updateTemplate(t.id, { active: !t.active })
+      .then(reload).catch(console.error);
   };
 
   return (
@@ -76,7 +75,7 @@ export default function SettingsPage() {
         {/* Content */}
         <div className="flex-1 min-w-0 space-y-4">
 
-          {/* ── COMPANY ── */}
+          {/* COMPANY */}
           {tab === "company" && (
             <>
               <Card title="Реквизиты компании">
@@ -97,33 +96,37 @@ export default function SettingsPage() {
             </>
           )}
 
-          {/* ── MANAGERS ── */}
+          {/* MANAGERS */}
           {tab === "managers" && (
             <>
               <Card title="Сотрудники">
-                <div className="divide-y divide-[#f5f5f5]">
-                  {managers.map((m) => (
-                    <div key={m.id} className="flex items-center gap-4 px-5 py-3.5">
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-bold text-white shrink-0"
-                        style={{ backgroundColor: m.color }}>
-                        {m.name[0]}
+                {employees.length === 0 ? (
+                  <p className="px-5 py-8 text-center text-[13px] text-[#c5c5c5]">Загрузка...</p>
+                ) : (
+                  <div className="divide-y divide-[#f5f5f5]">
+                    {employees.map((m, idx) => (
+                      <div key={m.id} className="flex items-center gap-4 px-5 py-3.5">
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-[13px] font-bold text-white shrink-0"
+                          style={{ backgroundColor: AVATAR_COLORS[idx % AVATAR_COLORS.length] }}>
+                          {m.name[0]}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[13px] font-semibold text-[#1a1a1a]">{m.name}</p>
+                          <p className="text-[11px] text-[#9b9b9b]">{m.role}{m.phone ? ` · ${m.phone}` : ""}</p>
+                        </div>
+                        <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md
+                          ${m.active ? "bg-green-50 text-green-600" : "bg-[#f5f5f5] text-[#9b9b9b]"}`}>
+                          {m.active ? "Активен" : "Неактивен"}
+                        </span>
+                        <div className="flex gap-1.5">
+                          <IconBtn icon="Pencil" title="Редактировать" />
+                          <IconBtn icon={m.active ? "UserX" : "UserCheck"} title={m.active ? "Деактивировать" : "Активировать"}
+                            onClick={() => toggleEmployee(m)} />
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[13px] font-semibold text-[#1a1a1a]">{m.name}</p>
-                        <p className="text-[11px] text-[#9b9b9b]">{m.role} · {m.phone}</p>
-                      </div>
-                      <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md
-                        ${m.active ? "bg-green-50 text-green-600" : "bg-[#f5f5f5] text-[#9b9b9b]"}`}>
-                        {m.active ? "Активен" : "Неактивен"}
-                      </span>
-                      <div className="flex gap-1.5">
-                        <IconBtn icon="Pencil" title="Редактировать" />
-                        <IconBtn icon={m.active ? "UserX" : "UserCheck"} title={m.active ? "Деактивировать" : "Активировать"}
-                          onClick={() => setManagers(ms => ms.map(x => x.id === m.id ? { ...x, active: !x.active } : x))} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </Card>
               <button className="flex items-center gap-2 text-[13px] text-[#6b6b6b] border border-dashed border-[#e0e0e0] hover:border-[#c5c5c5] hover:text-[#1a1a1a] px-4 py-2.5 rounded-[8px] transition-colors">
                 <Icon name="Plus" size={13} />Добавить сотрудника
@@ -131,31 +134,36 @@ export default function SettingsPage() {
             </>
           )}
 
-          {/* ── STAGES ── */}
+          {/* STAGES */}
           {tab === "stages" && (
             <>
               <Card title="Этапы производства"
                 hint="Порядок этапов определяет движение заказа по канбан-доске">
-                <div className="divide-y divide-[#f5f5f5]">
-                  {stages.map((s, i) => (
-                    <div key={s.id} className={`flex items-center gap-4 px-5 py-3 ${!s.active ? "opacity-50" : ""}`}>
-                      <span className="text-[12px] font-bold text-[#d5d5d5] w-5 shrink-0">{i + 1}</span>
-                      <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
-                      <span className="text-[13px] font-semibold text-[#1a1a1a] flex-1">{s.label}</span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[11px] text-[#9b9b9b]">норм.</span>
-                        <input defaultValue={s.days || "—"}
-                          className="w-10 text-center text-[12px] font-mono bg-[#f5f5f5] border border-transparent hover:border-[#e0e0e0] focus:border-[#1a1a1a] rounded-md py-1 outline-none transition-colors" />
-                        <span className="text-[11px] text-[#9b9b9b]">дн.</span>
+                {stages.length === 0 ? (
+                  <p className="px-5 py-8 text-center text-[13px] text-[#c5c5c5]">Загрузка...</p>
+                ) : (
+                  <div className="divide-y divide-[#f5f5f5]">
+                    {stages.map((s, i) => (
+                      <div key={s.id} className={`flex items-center gap-4 px-5 py-3 ${!s.active ? "opacity-50" : ""}`}>
+                        <span className="text-[12px] font-bold text-[#d5d5d5] w-5 shrink-0">{i + 1}</span>
+                        <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
+                        <span className="text-[13px] font-semibold text-[#1a1a1a] flex-1">{s.label}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] text-[#9b9b9b]">норм.</span>
+                          <span className="w-10 text-center text-[12px] font-mono bg-[#f5f5f5] rounded-md py-1 px-1">
+                            {s.days || "—"}
+                          </span>
+                          <span className="text-[11px] text-[#9b9b9b]">дн.</span>
+                        </div>
+                        <div className="flex gap-1.5 ml-2">
+                          <IconBtn icon="GripVertical" title="Переместить" />
+                          <IconBtn icon={s.active ? "EyeOff" : "Eye"} title={s.active ? "Скрыть" : "Показать"}
+                            onClick={() => toggleStage(s)} />
+                        </div>
                       </div>
-                      <div className="flex gap-1.5 ml-2">
-                        <IconBtn icon="GripVertical" title="Переместить" />
-                        <IconBtn icon={s.active ? "EyeOff" : "Eye"} title={s.active ? "Скрыть" : "Показать"}
-                          onClick={() => setStages(ss => ss.map(x => x.id === s.id ? { ...x, active: !x.active } : x))} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </Card>
               <button className="flex items-center gap-2 text-[13px] text-[#6b6b6b] border border-dashed border-[#e0e0e0] hover:border-[#c5c5c5] hover:text-[#1a1a1a] px-4 py-2.5 rounded-[8px] transition-colors">
                 <Icon name="Plus" size={13} />Добавить этап
@@ -164,30 +172,33 @@ export default function SettingsPage() {
             </>
           )}
 
-          {/* ── ESTIMATES ── */}
+          {/* ESTIMATES */}
           {tab === "estimates" && (
             <>
               <Card title="Шаблон сметы"
                 hint="Позиции используются при создании нового заказа и расчёте стоимости">
-                <div className="divide-y divide-[#f5f5f5]">
-                  {estimates.map((e) => (
-                    <div key={e.id} className={`flex items-center gap-4 px-5 py-3.5 ${!e.active ? "opacity-50" : ""}`}>
-                      <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${e.active ? "bg-[#22c55e]" : "bg-[#d5d5d5]"}`} />
-                      <span className="text-[13px] text-[#1a1a1a] flex-1">{e.name}</span>
-                      <div className="flex items-center gap-1.5">
-                        <input defaultValue={e.price.toLocaleString("ru")}
-                          className="w-24 text-right text-[12px] font-mono bg-[#f5f5f5] border border-transparent hover:border-[#e0e0e0] focus:border-[#1a1a1a] rounded-md px-2 py-1 outline-none transition-colors" />
-                        <span className="text-[11px] text-[#9b9b9b]">₽</span>
+                {templates.length === 0 ? (
+                  <p className="px-5 py-8 text-center text-[13px] text-[#c5c5c5]">Загрузка...</p>
+                ) : (
+                  <div className="divide-y divide-[#f5f5f5]">
+                    {templates.map((e) => (
+                      <div key={e.id} className={`flex items-center gap-4 px-5 py-3.5 ${!e.active ? "opacity-50" : ""}`}>
+                        <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${e.active ? "bg-[#22c55e]" : "bg-[#d5d5d5]"}`} />
+                        <span className="text-[13px] text-[#1a1a1a] flex-1">{e.name}</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[12px] font-mono text-[#1a1a1a]">{Number(e.price).toLocaleString("ru")}</span>
+                          <span className="text-[11px] text-[#9b9b9b]">₽</span>
+                        </div>
+                        <span className="text-[11px] text-[#b5b5b5] w-8 text-center">{e.unit}</span>
+                        <div className="flex gap-1.5">
+                          <IconBtn icon={e.active ? "EyeOff" : "Eye"} title={e.active ? "Отключить" : "Включить"}
+                            onClick={() => toggleTemplate(e)} />
+                          <IconBtn icon="Trash2" title="Удалить" danger />
+                        </div>
                       </div>
-                      <span className="text-[11px] text-[#b5b5b5] w-8 text-center">{e.unit}</span>
-                      <div className="flex gap-1.5">
-                        <IconBtn icon={e.active ? "EyeOff" : "Eye"} title={e.active ? "Отключить" : "Включить"}
-                          onClick={() => setEstimates(es => es.map(x => x.id === e.id ? { ...x, active: !x.active } : x))} />
-                        <IconBtn icon="Trash2" title="Удалить" danger />
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </Card>
               <button className="flex items-center gap-2 text-[13px] text-[#6b6b6b] border border-dashed border-[#e0e0e0] hover:border-[#c5c5c5] hover:text-[#1a1a1a] px-4 py-2.5 rounded-[8px] transition-colors">
                 <Icon name="Plus" size={13} />Добавить позицию
@@ -196,7 +207,7 @@ export default function SettingsPage() {
             </>
           )}
 
-          {/* ── NOTIFICATIONS ── */}
+          {/* NOTIFICATIONS */}
           {tab === "notifications" && (
             <>
               <Card title="Уведомления в системе">

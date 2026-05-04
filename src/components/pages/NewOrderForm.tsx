@@ -1,7 +1,7 @@
 import Icon from "@/components/ui/icon";
 import {
   OrderItem, Deceased, ItemStatus,
-  ITEM_STATUS_META, CATALOG_ITEMS, STONE_TYPES,
+  ITEM_STATUS_META,
 } from "./newOrder.types";
 
 type ActiveTab = "client" | "deceased" | "items" | "meta";
@@ -37,6 +37,9 @@ type Props = {
   onStone: (v: string) => void;
   onSize: (v: string) => void;
   onDeadline: (v: string) => void;
+  // справочники из БД
+  stoneTypes: string[];
+  catalogItems: string[];
 };
 
 export default function NewOrderForm({
@@ -46,6 +49,7 @@ export default function NewOrderForm({
   deceased, onAddDeceased, onRemoveDeceased, onUpdateDeceased,
   items, total, needsCalcCount, onAddItem, onRemoveItem, onUpdateItem,
   stone, size, deadline, onStone, onSize, onDeadline,
+  stoneTypes, catalogItems,
 }: Props) {
 
   const TABS = [
@@ -176,8 +180,8 @@ export default function NewOrderForm({
                         onChange={e => onUpdateItem(item.id, "name", e.target.value)}
                         className="w-full text-[13px] text-[#1a1a1a] font-medium bg-transparent border-b border-transparent hover:border-[#e0e0e0] focus:border-[#1a1a1a] outline-none transition-colors pb-0.5 cursor-pointer">
                         <option value="">— выбрать из каталога —</option>
-                        {CATALOG_ITEMS.map(c => <option key={c} value={c}>{c}</option>)}
-                        {item.name && !CATALOG_ITEMS.includes(item.name) && (
+                        {catalogItems.map(c => <option key={c} value={c}>{c}</option>)}
+                        {item.name && !catalogItems.includes(item.name) && (
                           <option value={item.name}>{item.name}</option>
                         )}
                       </select>
@@ -268,7 +272,7 @@ export default function NewOrderForm({
               <select value={stone} onChange={e => onStone(e.target.value)}
                 className="w-full bg-[#fafafa] border border-[#ebebeb] rounded-lg px-3 py-2.5 text-[13px] text-[#1a1a1a] outline-none focus:border-[#c0c0c0] transition-colors cursor-pointer">
                 <option value="">— выбрать —</option>
-                {STONE_TYPES.map(s => <option key={s} value={s}>{s}</option>)}
+                {stoneTypes.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
             </div>
             <FormField label="Размер (см)"       value={size}     onChange={onSize}     placeholder="100×50×8" />

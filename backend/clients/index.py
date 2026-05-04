@@ -1,4 +1,4 @@
-"""CRUD клиентов"""
+"""CRUD клиентов, сотрудников, этапов и шаблонов смет"""
 import json, os, hashlib
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -28,7 +28,7 @@ def get_company_id(token: str) -> int | None:
     return None
 
 def handler(event: dict, context) -> dict:
-    """Клиенты: GET / (список), GET /?id=1 (один с заказами), POST / (создать), PUT /?id=1 (обновить)"""
+    """Клиенты + справочники: GET /?section=clients|employees|stages|estimate_templates"""
     if event.get("httpMethod") == "OPTIONS":
         return {"statusCode": 200, "headers": CORS, "body": ""}
 
@@ -39,13 +39,42 @@ def handler(event: dict, context) -> dict:
 
     method = event.get("httpMethod", "GET")
     params = event.get("queryStringParameters") or {}
+    section   = params.get("section", "clients")
     client_id = params.get("id")
+    action    = params.get("action", "")
 
     conn = get_db()
     cur = conn.cursor(cursor_factory=RealDictCursor)
 
     try:
+        # ── GET ──
         if method == "GET":
+
+            if section == "employees":
+                cur.execute(
+                    f"SELECT * FROM {SCHEMA}.employees WHERE company_id=%s ORDER BY name",
+                    (company_id,)
+                )
+                return {"statusCode": 200, "headers": CORS,
+                        "body": json.dumps([dict(r) for r in cur.fetchall()], default=str)}
+
+            if section == "stages":
+                cur.execute(
+                    f"SELECT * FROM {SCHEMA}.order_stages WHERE company_id=%s ORDER BY sort_order",
+                    (company_id,)
+                )
+                return {"statusCode": 200, "headers": CORS,
+                        "body": json.dumps([dict(r) for r in cur.fetchall()], default=str)}
+
+            if section == "estimate_templates":
+                cur.execute(
+                    f"SELECT * FROM {SCHEMA}.estimate_templates WHERE company_id=%s ORDER BY sort_order",
+                    (company_id,)
+                )
+                return {"statusCode": 200, "headers": CORS,
+                        "body": json.dumps([dict(r) for r in cur.fetchall()], default=str)}
+
+            # Клиенты
             if client_id:
                 cur.execute(
                     f"""SELECT c.*,
@@ -89,12 +118,56 @@ def handler(event: dict, context) -> dict:
                         ORDER BY c.created_at DESC""",
                     (company_id,)
                 )
-                rows = cur.fetchall()
                 return {"statusCode": 200, "headers": CORS,
-                        "body": json.dumps([dict(r) for r in rows], default=str)}
+                        "body": json.dumps([dict(r) for r in cur.fetchall()], default=str)}
 
+        # ── POST ──
         if method == "POST":
             body = json.loads(event.get("body") or "{}")
+
+            if section == "employees":
+                cur.execute(
+                    f"""INSERT INTO {SCHEMA}.employees (company_id, name, role, phone, active)
+                        VALUES (%s,%s,%s,%s,%s) RETURNING id""",
+                    (company_id, body["name"], body.get("role",""), body.get("phone"), body.get("active", True))
+                )
+                new_id = cur.fetchone()["id"]
+                conn.commit()
+                return {"statusCode": 201, "headers": CORS, "body": json.dumps({"id": new_id})}
+
+            if section == "stages":
+                cur.execute(
+                    f"SELECT COALESCE(MAX(sort_order),0)+1 as next FROM {SCHEMA}.order_stages WHERE company_id=%s",
+                    (company_id,)
+                )
+                next_order = cur.fetchone()["next"]
+                cur.execute(
+                    f"""INSERT INTO {SCHEMA}.order_stages (company_id, label, color, days, sort_order, active)
+                        VALUES (%s,%s,%s,%s,%s,%s) RETURNING id""",
+                    (company_id, body["label"], body.get("color","#6366f1"),
+                     body.get("days", 0), next_order, body.get("active", True))
+                )
+                new_id = cur.fetchone()["id"]
+                conn.commit()
+                return {"statusCode": 201, "headers": CORS, "body": json.dumps({"id": new_id})}
+
+            if section == "estimate_templates":
+                cur.execute(
+                    f"SELECT COALESCE(MAX(sort_order),0)+1 as next FROM {SCHEMA}.estimate_templates WHERE company_id=%s",
+                    (company_id,)
+                )
+                next_order = cur.fetchone()["next"]
+                cur.execute(
+                    f"""INSERT INTO {SCHEMA}.estimate_templates (company_id, name, price, unit, sort_order, active)
+                        VALUES (%s,%s,%s,%s,%s,%s) RETURNING id""",
+                    (company_id, body["name"], body.get("price", 0),
+                     body.get("unit","шт."), next_order, body.get("active", True))
+                )
+                new_id = cur.fetchone()["id"]
+                conn.commit()
+                return {"statusCode": 201, "headers": CORS, "body": json.dumps({"id": new_id})}
+
+            # Клиент
             cur.execute(
                 f"""INSERT INTO {SCHEMA}.clients
                     (company_id, name, phone, city, address, active, comment, manager, since_label)
@@ -108,10 +181,59 @@ def handler(event: dict, context) -> dict:
             conn.commit()
             return {"statusCode": 201, "headers": CORS, "body": json.dumps({"id": new_id})}
 
+        # ── PUT ──
         if method == "PUT":
+            body = json.loads(event.get("body") or "{}")
+            item_id = params.get("id")
+
+            if section == "employees" and item_id:
+                fields, vals = [], []
+                for key, col in {"name":"name","role":"role","phone":"phone","active":"active"}.items():
+                    if key in body:
+                        fields.append(f"{col}=%s")
+                        vals.append(body[key])
+                if fields:
+                    vals += [item_id, company_id]
+                    cur.execute(
+                        f"UPDATE {SCHEMA}.employees SET {', '.join(fields)} WHERE id=%s AND company_id=%s",
+                        vals
+                    )
+                    conn.commit()
+                return {"statusCode": 200, "headers": CORS, "body": json.dumps({"ok": True})}
+
+            if section == "stages" and item_id:
+                fields, vals = [], []
+                for key, col in {"label":"label","color":"color","days":"days","active":"active"}.items():
+                    if key in body:
+                        fields.append(f"{col}=%s")
+                        vals.append(body[key])
+                if fields:
+                    vals += [item_id, company_id]
+                    cur.execute(
+                        f"UPDATE {SCHEMA}.order_stages SET {', '.join(fields)} WHERE id=%s AND company_id=%s",
+                        vals
+                    )
+                    conn.commit()
+                return {"statusCode": 200, "headers": CORS, "body": json.dumps({"ok": True})}
+
+            if section == "estimate_templates" and item_id:
+                fields, vals = [], []
+                for key, col in {"name":"name","price":"price","unit":"unit","active":"active"}.items():
+                    if key in body:
+                        fields.append(f"{col}=%s")
+                        vals.append(body[key])
+                if fields:
+                    vals += [item_id, company_id]
+                    cur.execute(
+                        f"UPDATE {SCHEMA}.estimate_templates SET {', '.join(fields)} WHERE id=%s AND company_id=%s",
+                        vals
+                    )
+                    conn.commit()
+                return {"statusCode": 200, "headers": CORS, "body": json.dumps({"ok": True})}
+
+            # Клиент
             if not client_id:
                 return {"statusCode": 400, "headers": CORS, "body": json.dumps({"error": "id required"})}
-            body = json.loads(event.get("body") or "{}")
             fields, vals = [], []
             for key, col in {"name":"name","phone":"phone","city":"city","address":"address",
                              "active":"active","comment":"comment","manager":"manager"}.items():
@@ -126,6 +248,20 @@ def handler(event: dict, context) -> dict:
                 f"UPDATE {SCHEMA}.clients SET {', '.join(fields)} WHERE id=%s AND company_id=%s",
                 vals
             )
+            conn.commit()
+            return {"statusCode": 200, "headers": CORS, "body": json.dumps({"ok": True})}
+
+        # ── DELETE ──
+        if method == "DELETE":
+            item_id = params.get("id")
+            if not item_id:
+                return {"statusCode": 400, "headers": CORS, "body": json.dumps({"error": "id required"})}
+            if section == "employees":
+                cur.execute(f"UPDATE {SCHEMA}.employees SET active=FALSE WHERE id=%s AND company_id=%s", (item_id, company_id))
+            elif section == "stages":
+                cur.execute(f"UPDATE {SCHEMA}.order_stages SET active=FALSE WHERE id=%s AND company_id=%s", (item_id, company_id))
+            elif section == "estimate_templates":
+                cur.execute(f"UPDATE {SCHEMA}.estimate_templates SET active=FALSE WHERE id=%s AND company_id=%s", (item_id, company_id))
             conn.commit()
             return {"statusCode": 200, "headers": CORS, "body": json.dumps({"ok": True})}
 

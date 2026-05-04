@@ -27,26 +27,4 @@ export const ITEM_STATUS_META: Record<ItemStatus, { label: string; color: string
   by_manager: { label: "Внесено менеджером", color: "#6366f1", bg: "#eef2ff", border: "#c7d2fe", icon: "Pencil",     hint: "Предварительная цена" },
 };
 
-export const CATALOG_ITEMS = [
-  "Изготовление памятника (базовый)",
-  "Гравировка надписи",
-  "Портретное фото",
-  "Цветная гравировка",
-  "Доставка и установка",
-  "Бронзовые буквы",
-  "Эпитафия (текст)",
-  "Орнамент / декор",
-];
-
-export const MANAGERS   = ["Олег Краснов", "Анна Морозова", "Игорь Верещагин"];
-export const ESTIMATORS = ["Дмитрий Соколов", "Анна Морозова"];
-export const STONE_TYPES = [
-  "Гранит чёрный (габбро)",
-  "Гранит серый",
-  "Гранит красный",
-  "Мрамор белый",
-  "Мрамор серый",
-  "Гранит габбро (полированный)",
-];
-
 export function uid() { return Math.random().toString(36).slice(2, 8); }

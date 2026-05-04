@@ -1,5 +1,5 @@
 import Icon from "@/components/ui/icon";
-import { Deceased, OrderItem, MANAGERS, ESTIMATORS } from "./newOrder.types";
+import { Deceased, OrderItem } from "./newOrder.types";
 
 type Props = {
   clientName: string;
@@ -12,6 +12,8 @@ type Props = {
   needsCalcCount: number;
   manager: string;
   estimator: string;
+  managers: string[];
+  estimators: string[];
   onManagerChange: (v: string) => void;
   onEstimatorChange: (v: string) => void;
 };
@@ -19,6 +21,7 @@ type Props = {
 export default function NewOrderSidebar({
   clientName, clientPhone, deceased, items, stone, deadline,
   total, needsCalcCount, manager, estimator,
+  managers, estimators,
   onManagerChange, onEstimatorChange,
 }: Props) {
   const checklist = [
@@ -69,14 +72,14 @@ export default function NewOrderSidebar({
             <label className="text-[11px] text-[#9b9b9b] block mb-1.5">Менеджер (создаёт)</label>
             <select value={manager} onChange={e => onManagerChange(e.target.value)}
               className="w-full bg-[#fafafa] border border-[#ebebeb] rounded-lg px-3 py-2 text-[12px] font-semibold text-[#1a1a1a] outline-none focus:border-[#c0c0c0] transition-colors cursor-pointer">
-              {MANAGERS.map(m => <option key={m} value={m}>{m}</option>)}
+              {managers.map(m => <option key={m} value={m}>{m}</option>)}
             </select>
           </div>
           <div>
             <label className="text-[11px] text-[#9b9b9b] block mb-1.5">Сметчик (проверяет)</label>
             <select value={estimator} onChange={e => onEstimatorChange(e.target.value)}
               className="w-full bg-[#fafafa] border border-[#ebebeb] rounded-lg px-3 py-2 text-[12px] font-semibold text-[#1a1a1a] outline-none focus:border-[#c0c0c0] transition-colors cursor-pointer">
-              {ESTIMATORS.map(e => <option key={e} value={e}>{e}</option>)}
+              {estimators.map(e => <option key={e} value={e}>{e}</option>)}
             </select>
           </div>
         </div>

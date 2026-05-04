@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import Icon from "@/components/ui/icon";
-import { miniStats, FilterKey, Order } from "./orders/orders.types";
+import { FilterKey, Order } from "./orders/orders.types";
 import OrdersTable from "./orders/OrdersTable";
 import OrdersSidePanel from "./orders/OrdersSidePanel";
 import OrdersControlBoard from "./orders/OrdersControlBoard";
@@ -61,6 +61,15 @@ export default function OrdersPage({ onOpenOrder, onNewOrder }: { onOpenOrder?: 
 
   const overdueCount = orders.filter(o => o.deadlineState === "overdue").length;
   const unpaidCount  = orders.filter(o => o.payStatus !== "paid").length;
+  const inworkCount  = orders.filter(o => ["Эскиз","Производство","Гравировка","Полировка","Доставка"].includes(o.status)).length;
+  const totalDebt    = orders.filter(o => o.payStatus !== "paid").reduce((s, o) => s + (o.amount - o.paid), 0);
+
+  const miniStats = [
+    { label: "Всего заказов", value: String(orders.length),                icon: "FileText",      color: "#6b6b6b" },
+    { label: "В работе",      value: String(inworkCount),                  icon: "Hammer",        color: "#f59e0b" },
+    { label: "Просрочено",    value: String(overdueCount),                 icon: "AlertTriangle", color: "#ef4444" },
+    { label: "Долг клиентов", value: totalDebt.toLocaleString("ru") + " ₽", icon: "CreditCard",    color: "#6366f1" },
+  ];
 
   return (
     <div className="flex h-full min-h-0">
