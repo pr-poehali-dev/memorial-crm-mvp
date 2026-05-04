@@ -18,23 +18,7 @@ function StatCard({ icon, color, label, value, sub, alert }: {
   );
 }
 
-function ActionBtn({ icon, title, onClick, accent }: {
-  icon: string; title: string; onClick?: () => void; accent?: boolean;
-}) {
-  return (
-    <button
-      title={title}
-      onClick={onClick}
-      className={`w-7 h-7 flex items-center justify-center rounded-[6px] border transition-all
-        ${accent
-          ? "bg-[#1a1a1a] border-[#1a1a1a] text-white hover:bg-[#333]"
-          : "bg-white border-[#e5e5e5] text-[#6b6b6b] hover:text-[#1a1a1a] hover:border-[#c0c0c0]"
-        }`}
-    >
-      <Icon name={icon as never} size={12} />
-    </button>
-  );
-}
+
 
 type Props = {
   clients: Client[];
@@ -62,8 +46,8 @@ export default function ClientsTable({
       {/* Заголовок */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-[21px] font-semibold text-[#1a1a1a] tracking-tight">Клиенты</h1>
-          <p className="text-[13px] text-[#9b9b9b] mt-0.5">{clients.length} клиентов</p>
+          <h1 className="text-[21px] font-semibold text-[#1a1a1a] tracking-tight">Заказчики</h1>
+          <p className="text-[13px] text-[#9b9b9b] mt-0.5">{clients.length} заказчиков</p>
         </div>
         <button className="flex items-center gap-2 bg-[#1a1a1a] text-white text-[13px] px-4 py-2 rounded-[8px] hover:bg-[#333] transition-colors">
           <Icon name="Plus" size={14} />Добавить
@@ -72,13 +56,13 @@ export default function ClientsTable({
 
       {/* Метрики */}
       <div className="grid grid-cols-3 gap-4">
-        <StatCard icon="Users"      color="#6b6b6b" label="Всего клиентов"         value={String(clients.length)} />
+        <StatCard icon="Users"      color="#6b6b6b" label="Всего заказчиков"       value={String(clients.length)} />
         <StatCard icon="UserCheck"  color="#6366f1" label="С активными заказами"   value={String(activeCount)} />
         <StatCard
           icon="CreditCard" color="#ef4444"
           label="Общий долг"
           value={totalDebt > 0 ? `${(totalDebt / 1000).toFixed(0)} тыс. ₽` : "—"}
-          sub={totalDebt > 0 ? `${debtClients} клиентов` : "Долгов нет"}
+          sub={totalDebt > 0 ? `${debtClients} заказчиков` : "Долгов нет"}
           alert={totalDebt > 0}
         />
       </div>
@@ -113,17 +97,17 @@ export default function ClientsTable({
         <table className="w-full">
           <thead>
             <tr className="border-b border-[#f0f0f0]">
-              {["Клиент", "Телефон", "Заказов", "Долг", "Статус", ""].map(h => (
+              {["Заказчик", "Телефон", "Заказов", "Долг", "Статус"].map(h => (
                 <th key={h} className="px-4 py-3 text-left text-[10px] font-semibold text-[#b5b5b5] uppercase tracking-wide whitespace-nowrap">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {loading && (
-              <tr><td colSpan={6} className="px-4 py-10 text-center text-[13px] text-[#b5b5b5]">Загрузка...</td></tr>
+              <tr><td colSpan={5} className="px-4 py-10 text-center text-[13px] text-[#b5b5b5]">Загрузка...</td></tr>
             )}
             {!loading && filtered.length === 0 && (
-              <tr><td colSpan={6} className="px-4 py-10 text-center text-[13px] text-[#b5b5b5]">Клиенты не найдены</td></tr>
+              <tr><td colSpan={5} className="px-4 py-10 text-center text-[13px] text-[#b5b5b5]">Заказчики не найдены</td></tr>
             )}
             {filtered.map((c, i) => {
               const debt   = c.total - c.paid;
@@ -178,14 +162,7 @@ export default function ClientsTable({
                     </span>
                   </td>
 
-                  {/* Действия */}
-                  <td className="px-3 py-3.5" onClick={e => e.stopPropagation()}>
-                    <div className="flex items-center gap-1">
-                      <ActionBtn icon="Eye"    title="Открыть"       onClick={() => onSelect(c)} accent />
-                      <ActionBtn icon="Pencil" title="Редактировать" />
-                      <ActionBtn icon="Plus"   title="Новый заказ" />
-                    </div>
-                  </td>
+
                 </tr>
               );
             })}

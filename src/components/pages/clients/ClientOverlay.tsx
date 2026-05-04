@@ -2,43 +2,23 @@ import { useState, useEffect } from "react";
 import Icon from "@/components/ui/icon";
 import { useNav } from "@/store/navStore";
 import { Client } from "../ClientsPage";
+import { clientsApi } from "@/api/client";
 
-const CLIENT_ORDERS: Record<string, {
-  id: string; status: string; statusColor: string; amount: number; paid: number; date: string;
-}[]> = {
-  "CL-001": [
-    { id: "МП-0041", status: "Производство", statusColor: "#f59e0b", amount: 38500, paid: 15000, date: "12.04.2026" },
-    { id: "МП-0028", status: "Выдан",        statusColor: "#9b9b9b", amount: 31000, paid: 31000, date: "10.01.2026" },
-    { id: "МП-0015", status: "Выдан",        statusColor: "#9b9b9b", amount: 25000, paid: 25000, date: "05.08.2025" },
-  ],
-  "CL-002": [
-    { id: "МП-0040", status: "Эскиз",        statusColor: "#6366f1", amount: 22000, paid: 0,     date: "10.04.2026" },
-  ],
-  "CL-006": [
-    { id: "МП-0039", status: "Производство", statusColor: "#f59e0b", amount: 44000, paid: 25000, date: "25.03.2026" },
-    { id: "МП-0031", status: "Выдан",        statusColor: "#9b9b9b", amount: 24000, paid: 24000, date: "10.02.2026" },
-  ],
-  "CL-007": [
-    { id: "МП-0042", status: "Эскиз",        statusColor: "#6366f1", amount: 35000, paid: 15000, date: "15.04.2026" },
-  ],
-};
-
-const CLIENT_COMMENTS: Record<string, { author: string; date: string; text: string }[]> = {
-  "CL-001": [
-    { author: "Олег К.", date: "12 апр.", text: "Клиент уточнил размер надписи, согласовали шрифт." },
-    { author: "Анна М.", date: "10 янв.", text: "Второй заказ. Доволен качеством первого." },
-  ],
-  "CL-006": [
-    { author: "Игорь В.", date: "25 мар.", text: "Обсудили дизайн. Клиент выбрал звезду МВД." },
-  ],
-};
-
-export default function ClientOverlay({ client, onClose }: { client: Client; onClose: () => void }) {
+export default function ClientOverlay({ client, onClose, onUpdate }: {
+  client: Client;
+  onClose: () => void;
+  onUpdate?: (updated: Partial<Client>) => void;
+}) {
   const { openOrder } = useNav();
-  const orders   = CLIENT_ORDERS[client.id] ?? [];
-  const comments = CLIENT_COMMENTS[client.id] ?? [];
-  const [newComment, setNewComment]   = useState("");
-  const [allComments, setAllComments] = useState(comments);
+  const [newComment, setNewComment] = useState("");
+
+  /* Редактируемые поля */
+  const [editing, setEditing]   = useState(false);
+  const [eName,    setEName]    = useState(client.name);
+  const [ePhone,   setEPhone]   = useState(client.phone);
+  const [eCity,    setECity]    = useState(client.city);
+  const [eComment, setEComment] = useState(client.comment);
+  const [saving,   setSaving]   = useState(false);
 
   const debt    = client.total - client.paid;
   const paidPct = client.total > 0 ? Math.round((client.paid / client.total) * 100) : 0;
@@ -49,22 +29,35 @@ export default function ClientOverlay({ client, onClose }: { client: Client; onC
     return () => document.removeEventListener("keydown", handler);
   }, [onClose]);
 
+  const handleSave = () => {
+    setSaving(true);
+    clientsApi.update(client.id, {
+      name:    eName.trim(),
+      phone:   ePhone.trim(),
+      city:    eCity.trim(),
+      comment: eComment.trim(),
+    }).then(() => {
+      onUpdate?.({ name: eName.trim(), phone: ePhone.trim(), city: eCity.trim(), comment: eComment.trim() });
+      setEditing(false);
+    }).catch(console.error)
+      .finally(() => setSaving(false));
+  };
+
   const addComment = () => {
     if (!newComment.trim()) return;
-    setAllComments(p => [...p, { author: "Олег К.", date: "сейчас", text: newComment.trim() }]);
+    setEComment(prev => {
+      const updated = prev ? `${prev}\n${newComment.trim()}` : newComment.trim();
+      clientsApi.update(client.id, { comment: updated }).catch(console.error);
+      return updated;
+    });
     setNewComment("");
   };
 
   return (
     <>
-      {/* Затемнение */}
-      <div
-        className="fixed inset-0 z-40 bg-black/15 backdrop-blur-[1px] animate-fade-in"
-        onClick={onClose}
-      />
+      <div className="fixed inset-0 z-40 bg-black/15 backdrop-blur-[1px]" onClick={onClose} />
 
-      {/* Панель справа */}
-      <div className="fixed right-0 top-0 bottom-0 z-50 w-[380px] bg-white border-l border-[#ebebeb] shadow-2xl flex flex-col animate-slide-in-right overflow-hidden">
+      <div className="fixed right-0 top-0 bottom-0 z-50 w-[380px] bg-white border-l border-[#ebebeb] shadow-2xl flex flex-col overflow-hidden">
 
         {/* Шапка */}
         <div className="shrink-0 px-5 py-4 border-b border-[#f0f0f0]">
@@ -72,12 +65,20 @@ export default function ClientOverlay({ client, onClose }: { client: Client; onC
             <div className="flex items-center gap-3 flex-1 min-w-0">
               <div className={`w-10 h-10 rounded-full flex items-center justify-center text-[15px] font-bold shrink-0
                 ${client.active ? "bg-[#f0f0f0] text-[#6b6b6b]" : "bg-[#f8f8f8] text-[#b5b5b5]"}`}>
-                {client.name[0]}
+                {(eName || client.name)[0]}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[15px] font-semibold text-[#1a1a1a] leading-tight">{client.name}</p>
+                {editing ? (
+                  <input
+                    value={eName}
+                    onChange={e => setEName(e.target.value)}
+                    className="w-full text-[15px] font-semibold text-[#1a1a1a] border-b border-[#6366f1] outline-none bg-transparent pb-0.5"
+                    placeholder="ФИО заказчика"
+                  />
+                ) : (
+                  <p className="text-[15px] font-semibold text-[#1a1a1a] leading-tight truncate">{client.name}</p>
+                )}
                 <div className="flex items-center gap-2 mt-0.5">
-                  <span className="text-[12px] text-[#6b6b6b]">{client.city}</span>
                   <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full
                     ${client.active ? "bg-green-100 text-green-600" : "bg-[#f0f0f0] text-[#9b9b9b]"}`}>
                     <span className={`w-1 h-1 rounded-full ${client.active ? "bg-green-500" : "bg-[#c0c0c0]"}`} />
@@ -86,26 +87,76 @@ export default function ClientOverlay({ client, onClose }: { client: Client; onC
                 </div>
               </div>
             </div>
-            <button onClick={onClose} className="shrink-0 text-[#b5b5b5] hover:text-[#1a1a1a] transition-colors p-1">
-              <Icon name="X" size={15} />
-            </button>
+            <div className="flex items-center gap-1 shrink-0">
+              {!editing ? (
+                <button
+                  onClick={() => setEditing(true)}
+                  className="w-7 h-7 flex items-center justify-center rounded-lg text-[#b5b5b5] hover:text-[#6366f1] hover:bg-[#f0f0f0] transition-colors"
+                  title="Редактировать"
+                >
+                  <Icon name="Pencil" size={13} />
+                </button>
+              ) : (
+                <>
+                  <button
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold bg-[#1a1a1a] text-white rounded-lg hover:bg-[#333] disabled:opacity-50 transition-colors"
+                  >
+                    {saving ? "..." : "Сохранить"}
+                  </button>
+                  <button
+                    onClick={() => { setEditing(false); setEName(client.name); setEPhone(client.phone); setECity(client.city); setEComment(client.comment); }}
+                    className="w-7 h-7 flex items-center justify-center rounded-lg text-[#b5b5b5] hover:text-[#1a1a1a] hover:bg-[#f0f0f0] transition-colors"
+                  >
+                    <Icon name="X" size={13} />
+                  </button>
+                </>
+              )}
+              <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded-lg text-[#b5b5b5] hover:text-[#1a1a1a] hover:bg-[#f0f0f0] transition-colors">
+                <Icon name="X" size={15} />
+              </button>
+            </div>
           </div>
 
           {/* Контакты */}
           <div className="flex items-center gap-4 mt-3 pt-3 border-t border-[#f5f5f5]">
-            <div className="flex items-center gap-1.5 text-[12px] text-[#6b6b6b]">
-              <Icon name="Phone" size={12} className="text-[#b5b5b5]" />
-              {client.phone}
-            </div>
-            <div className="flex items-center gap-1.5 text-[12px] text-[#6b6b6b]">
-              <Icon name="User" size={12} className="text-[#b5b5b5]" />
-              {client.manager}
-            </div>
-            {client.since && (
-              <div className="flex items-center gap-1.5 text-[12px] text-[#6b6b6b]">
-                <Icon name="Calendar" size={12} className="text-[#b5b5b5]" />
-                с {client.since}
+            {editing ? (
+              <div className="flex gap-2 flex-1">
+                <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                  <Icon name="Phone" size={12} className="text-[#b5b5b5] shrink-0" />
+                  <input
+                    value={ePhone}
+                    onChange={e => setEPhone(e.target.value)}
+                    className="flex-1 text-[12px] text-[#1a1a1a] border-b border-[#6366f1] outline-none bg-transparent"
+                    placeholder="Телефон"
+                  />
+                </div>
+                <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                  <Icon name="MapPin" size={12} className="text-[#b5b5b5] shrink-0" />
+                  <input
+                    value={eCity}
+                    onChange={e => setECity(e.target.value)}
+                    className="flex-1 text-[12px] text-[#1a1a1a] border-b border-[#6366f1] outline-none bg-transparent"
+                    placeholder="Город"
+                  />
+                </div>
               </div>
+            ) : (
+              <>
+                <div className="flex items-center gap-1.5 text-[12px] text-[#6b6b6b]">
+                  <Icon name="Phone" size={12} className="text-[#b5b5b5]" />
+                  {client.phone || <span className="text-[#c0c0c0]">не указан</span>}
+                </div>
+                <div className="flex items-center gap-1.5 text-[12px] text-[#6b6b6b]">
+                  <Icon name="MapPin" size={12} className="text-[#b5b5b5]" />
+                  {client.city || <span className="text-[#c0c0c0]">не указан</span>}
+                </div>
+                <div className="flex items-center gap-1.5 text-[12px] text-[#6b6b6b]">
+                  <Icon name="User" size={12} className="text-[#b5b5b5]" />
+                  {client.manager}
+                </div>
+              </>
             )}
           </div>
         </div>
@@ -140,114 +191,83 @@ export default function ClientOverlay({ client, onClose }: { client: Client; onC
                   <span>{paidPct}%</span>
                 </div>
                 <div className="h-1.5 bg-[#f0f0f0] rounded-full overflow-hidden">
-                  <div
-                    className="h-full rounded-full transition-all"
-                    style={{ width: `${paidPct}%`, backgroundColor: paidPct >= 100 ? "#16a34a" : "#6366f1" }}
-                  />
+                  <div className="h-full rounded-full transition-all"
+                    style={{ width: `${paidPct}%`, backgroundColor: paidPct >= 100 ? "#16a34a" : "#6366f1" }} />
                 </div>
               </div>
             )}
           </div>
 
-          {/* Заказы */}
+          {/* Заметка */}
           <div className="px-5 py-4 border-b border-[#f5f5f5]">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-[#b5b5b5] mb-2">Заметка</p>
+            {editing ? (
+              <textarea
+                value={eComment}
+                onChange={e => setEComment(e.target.value)}
+                rows={3}
+                placeholder="Добавьте заметку о заказчике..."
+                className="w-full text-[12px] text-[#1a1a1a] bg-[#fafafa] border border-[#6366f1] rounded-lg px-3 py-2.5 outline-none resize-none placeholder:text-[#c5c5c5]"
+              />
+            ) : eComment ? (
+              <p className="text-[12px] text-[#6b6b6b] leading-relaxed bg-amber-50 border border-amber-100 rounded-lg px-3 py-2.5 whitespace-pre-wrap">
+                {eComment}
+              </p>
+            ) : (
+              <div className="flex items-center gap-2">
+                <input
+                  value={newComment}
+                  onChange={e => setNewComment(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && addComment()}
+                  placeholder="Добавить заметку..."
+                  className="flex-1 bg-[#fafafa] border border-[#ebebeb] rounded-[8px] px-3 py-2 text-[12px] outline-none focus:border-[#c0c0c0] transition-colors placeholder:text-[#c5c5c5]"
+                />
+                <button
+                  onClick={addComment}
+                  disabled={!newComment.trim()}
+                  className="px-3 py-2 bg-[#1a1a1a] text-white rounded-[8px] hover:bg-[#333] disabled:opacity-30 transition-colors"
+                >
+                  <Icon name="Send" size={12} />
+                </button>
+              </div>
+            )}
+            {!editing && eComment && (
+              <div className="mt-2 flex items-center gap-2">
+                <input
+                  value={newComment}
+                  onChange={e => setNewComment(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && addComment()}
+                  placeholder="Дополнить заметку..."
+                  className="flex-1 bg-[#fafafa] border border-[#ebebeb] rounded-[8px] px-3 py-1.5 text-[12px] outline-none focus:border-[#c0c0c0] transition-colors placeholder:text-[#c5c5c5]"
+                />
+                <button
+                  onClick={addComment}
+                  disabled={!newComment.trim()}
+                  className="px-2.5 py-1.5 bg-[#1a1a1a] text-white rounded-[8px] hover:bg-[#333] disabled:opacity-30 transition-colors"
+                >
+                  <Icon name="Plus" size={12} />
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Заказы */}
+          <div className="px-5 py-4">
             <div className="flex items-center justify-between mb-3">
               <p className="text-[10px] font-bold uppercase tracking-widest text-[#b5b5b5]">Заказы</p>
-              <span className="text-[11px] text-[#9b9b9b]">{orders.length} шт.</span>
             </div>
-            {orders.length === 0 ? (
+            {client.orders === 0 ? (
               <p className="text-[12px] text-[#c0c0c0] py-1">Заказов нет</p>
             ) : (
-              <div className="space-y-1.5">
-                {orders.map(o => {
-                  const d = o.amount - o.paid;
-                  return (
-                    <div
-                      key={o.id}
-                      onClick={() => { openOrder(o.id); onClose(); }}
-                      className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-[10px] border border-[#f0f0f0] hover:border-[#d5d5d5] hover:bg-[#fafafa] cursor-pointer transition-all"
-                    >
-                      <div className="flex items-center gap-2.5 min-w-0">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <span className="font-mono text-[11px] font-bold text-[#9b9b9b]">{o.id}</span>
-                            <span
-                              className="inline-flex items-center gap-1 text-[10px] font-semibold"
-                              style={{ color: o.statusColor }}
-                            >
-                              <span className="w-1 h-1 rounded-full" style={{ backgroundColor: o.statusColor }} />
-                              {o.status}
-                            </span>
-                          </div>
-                          <p className="text-[11px] text-[#b5b5b5] mt-0.5">{o.date}</p>
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <p className="text-[13px] font-bold text-[#1a1a1a]">{o.amount.toLocaleString("ru")} ₽</p>
-                        {d > 0
-                          ? <p className="text-[10px] text-red-500 font-semibold">долг {d.toLocaleString("ru")} ₽</p>
-                          : <p className="text-[10px] text-[#16a34a]">оплачен</p>
-                        }
-                      </div>
-                      <Icon name="ChevronRight" size={13} className="text-[#c0c0c0] shrink-0" />
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Комментарий клиента */}
-          {client.comment && (
-            <div className="px-5 py-4 border-b border-[#f5f5f5]">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-[#b5b5b5] mb-2">Заметка</p>
-              <p className="text-[12px] text-[#6b6b6b] leading-relaxed bg-amber-50 border border-amber-100 rounded-lg px-3 py-2.5">
-                {client.comment}
+              <p className="text-[12px] text-[#9b9b9b] py-1">
+                {client.orders} заказов на сумму {client.total.toLocaleString("ru")} ₽
               </p>
-            </div>
-          )}
-
-          {/* Комментарии сотрудников */}
-          <div className="px-5 py-4">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-[#b5b5b5] mb-3">История общения</p>
-            {allComments.length > 0 && (
-              <div className="space-y-3 mb-3">
-                {allComments.map((c, i) => (
-                  <div key={i} className="flex gap-2.5">
-                    <div className="w-6 h-6 rounded-full bg-[#f0f0f0] flex items-center justify-center text-[10px] font-bold text-[#6b6b6b] shrink-0">
-                      {c.author.split(" ").map(w => w[0]).join("")}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline gap-1.5">
-                        <span className="text-[11px] font-semibold text-[#1a1a1a]">{c.author}</span>
-                        <span className="text-[10px] text-[#b5b5b5]">{c.date}</span>
-                      </div>
-                      <p className="text-[12px] text-[#4b4b4b] leading-relaxed mt-0.5">{c.text}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
             )}
-            <div className="flex gap-2">
-              <input
-                value={newComment}
-                onChange={e => setNewComment(e.target.value)}
-                onKeyDown={e => e.key === "Enter" && addComment()}
-                placeholder="Добавить заметку..."
-                className="flex-1 bg-[#fafafa] border border-[#ebebeb] rounded-[8px] px-3 py-2 text-[12px] outline-none focus:border-[#c0c0c0] transition-colors placeholder:text-[#c5c5c5]"
-              />
-              <button
-                onClick={addComment}
-                disabled={!newComment.trim()}
-                className="px-3 py-2 bg-[#1a1a1a] text-white rounded-[8px] hover:bg-[#333] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-              >
-                <Icon name="Send" size={12} />
-              </button>
-            </div>
           </div>
+
         </div>
 
-        {/* Кнопка — закреплена внизу */}
+        {/* Кнопка */}
         <div className="shrink-0 px-5 py-4 border-t border-[#f0f0f0]">
           <button className="w-full flex items-center justify-center gap-2 bg-[#1a1a1a] text-white text-[13px] font-semibold py-2.5 rounded-[9px] hover:bg-[#333] transition-colors">
             <Icon name="Plus" size={14} />

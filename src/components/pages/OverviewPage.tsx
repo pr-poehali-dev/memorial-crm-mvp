@@ -22,7 +22,7 @@ const stats = [
   {
     label: "Готово к выдаче",
     value: "5",
-    sub: "ожидают клиентов",
+    sub: "ожидают заказчиков",
     icon: "CheckCircle",
     trend: "3 дня",
     trendUp: false,
@@ -80,7 +80,7 @@ const chartMax = Math.max(...chartData.map((d) => d.value));
 
 const quickActions = [
   { label: "Создать заказ", icon: "Plus", primary: true },
-  { label: "Добавить клиента", icon: "UserPlus", primary: false },
+  { label: "Добавить заказчика", icon: "UserPlus", primary: false },
   { label: "Калькулятор сметы", icon: "Calculator", primary: false },
 ];
 
@@ -223,7 +223,7 @@ export default function OverviewPage() {
           <table className="w-full">
             <thead>
               <tr className="border-b border-[#f5f5f5]">
-                {["Номер", "Клиент", "Материал", "Размер", "Статус", "Сумма", "Менеджер"].map((h) => (
+                {["Номер", "Заказчик", "Материал", "Размер", "Статус", "Сумма", "Менеджер"].map((h) => (
                   <th key={h} className="px-4 py-2.5 text-left text-[10px] font-semibold text-[#b5b5b5] uppercase tracking-wide">{h}</th>
                 ))}
               </tr>

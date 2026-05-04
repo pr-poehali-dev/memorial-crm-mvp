@@ -34,7 +34,7 @@ const NAV_GROUPS: NavGroup[] = [
     activeBg: "#dbeafe",
     items: [
       { id: "orders",   label: "Заказы",      icon: "FileText",   sub: "Учёт и статусы" },
-      { id: "clients",  label: "Клиенты",     icon: "Users",      sub: "База покупателей" },
+      { id: "clients",  label: "Заказчики",    icon: "Users",      sub: "База заказчиков" },
       { id: "estimate", label: "Калькулятор", icon: "Calculator", sub: "Расчёт стоимости" },
       { id: "catalog",  label: "Каталог",     icon: "BookOpen",   sub: "Изделия и цены" },
     ],
