@@ -1,7 +1,6 @@
 import Icon from "@/components/ui/icon";
 import {
   Column, FlatItem, DEADLINE_CARD, DEADLINE_BADGE,
-  MACHINE_PLACE, ITEM_STATUS_LABEL, flattenItems,
 } from "./production.types";
 
 type Props = {
@@ -16,8 +15,9 @@ export default function ProductionKanban({ columns, visibleKeys, onItemClick, on
     <div className="flex-1 overflow-x-auto overflow-y-auto">
       <div className="flex gap-4 px-7 py-5 items-start min-h-full min-w-max">
         {columns.map(col => {
-          const items = flattenItems([col]).filter(i => visibleKeys.has(i.itemId));
-          const overdueCnt = flattenItems([col]).filter(i => i.deadlineState === "overdue").length;
+          const items      = col.cards.map(card => toFlat(card, col)).filter(i => visibleKeys.has(i.itemId));
+          const allFlat    = col.cards.map(card => toFlat(card, col));
+          const overdueCnt = allFlat.filter(i => i.deadlineState === "overdue").length;
           return (
             <div key={col.id} className="w-[280px] shrink-0 flex flex-col gap-3">
               <div
@@ -30,7 +30,7 @@ export default function ProductionKanban({ columns, visibleKeys, onItemClick, on
                   className="text-[12px] font-bold rounded-lg px-2 py-0.5"
                   style={{ backgroundColor: col.color + "20", color: col.color }}
                 >
-                  {flattenItems([col]).length}
+                  {allFlat.length}
                 </span>
                 {overdueCnt > 0 && (
                   <span className="text-[10px] font-bold bg-red-100 text-red-500 rounded-md px-1.5 py-0.5">
@@ -47,12 +47,13 @@ export default function ProductionKanban({ columns, visibleKeys, onItemClick, on
               </div>
               {items.length === 0 ? (
                 <div className="border-2 border-dashed border-[#e4e4e4] rounded-[14px] py-10 text-center text-[13px] text-[#c8c8c8]">
-                  нет изделий
+                  нет заказов
                 </div>
               ) : items.map(item => (
                 <ItemCard
                   key={item.itemId}
                   item={item}
+                  colColor={col.color}
                   onClick={() => onItemClick(item)}
                 />
               ))}
@@ -64,14 +65,30 @@ export default function ProductionKanban({ columns, visibleKeys, onItemClick, on
   );
 }
 
-function ItemCard({ item, onClick }: { item: FlatItem; onClick: () => void }) {
-  const dc  = DEADLINE_CARD[item.deadlineState];
-  const dl  = DEADLINE_BADGE[item.deadlineState];
-  const st  = ITEM_STATUS_LABEL[item.itemStatus];
-  const machine = item.machineId ? MACHINE_PLACE[item.machineId] : null;
-  const doneCount  = item.allItems.filter(i => i.status === "done").length;
-  const totalCount = item.allItems.length;
-  const isMulti    = totalCount > 1;
+function toFlat(card: Column["cards"][0], col: Column): FlatItem {
+  return {
+    itemId:        card.id,
+    orderId:       card.id,
+    colId:         col.id,
+    colLabel:      col.label,
+    colColor:      col.color,
+    client:        card.client,
+    stone:         card.stone,
+    size:          card.size,
+    deadline:      card.deadline,
+    deadlineState: card.deadlineState,
+    manager:       card.manager,
+    urgent:        card.urgent,
+    phone:         card.phone,
+    payment:       card.payment,
+    problem:       card.comment,
+    allItems:      [],
+  };
+}
+
+function ItemCard({ item, colColor, onClick }: { item: FlatItem; colColor: string; onClick: () => void }) {
+  const dc = DEADLINE_CARD[item.deadlineState];
+  const dl = DEADLINE_BADGE[item.deadlineState];
   return (
     <div
       onClick={onClick}
@@ -82,12 +99,14 @@ function ItemCard({ item, onClick }: { item: FlatItem; onClick: () => void }) {
         <div>
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-[16px] font-black text-[#1a1a1a] tracking-tight">{item.orderId}</span>
-            <span
-              className="text-[13px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-lg"
-              style={{ backgroundColor: item.colColor + "18", color: item.colColor }}
-            >
-              {item.itemType}
-            </span>
+            {item.stone && (
+              <span
+                className="text-[11px] font-semibold px-2 py-0.5 rounded-lg truncate max-w-[120px]"
+                style={{ backgroundColor: colColor + "18", color: colColor }}
+              >
+                {item.stone}
+              </span>
+            )}
           </div>
           <p className="text-[12px] text-[#8a8a8a] mt-0.5">{item.client}</p>
         </div>
@@ -100,25 +119,12 @@ function ItemCard({ item, onClick }: { item: FlatItem; onClick: () => void }) {
           )}
         </div>
       </div>
-      <div className="mt-3 mb-3">
-        <div className="flex items-center justify-between mb-1">
-          <span className="text-[10px] text-[#a0a0a0] font-medium uppercase tracking-wide">Прогресс</span>
-          <span className="text-[11px] font-bold" style={{ color: item.colColor }}>{item.itemProgress}%</span>
-        </div>
-        <div className="h-1.5 bg-[#ebebeb] rounded-full overflow-hidden">
-          <div
-            className="h-full rounded-full transition-all duration-500"
-            style={{ width: `${item.itemProgress}%`, backgroundColor: item.colColor }}
-          />
-        </div>
-      </div>
-      <div className="space-y-1.5">
-        {machine && (
-          <div className="flex items-center gap-2 text-[12px] text-[#5a5a5a]">
-            <Icon name="MapPin" size={11} className="text-[#b0b0b0] shrink-0" />
-            <span>{machine}</span>
-          </div>
-        )}
+
+      {item.size && (
+        <p className="text-[11px] text-[#9b9b9b] mt-1 mb-2">{item.size}</p>
+      )}
+
+      <div className="space-y-1.5 mt-2">
         <div className="flex items-center gap-2 text-[12px] text-[#5a5a5a]">
           <Icon name="User" size={11} className="text-[#b0b0b0] shrink-0" />
           <span>{item.manager}</span>
@@ -133,26 +139,13 @@ function ItemCard({ item, onClick }: { item: FlatItem; onClick: () => void }) {
             <span className="text-[12px] text-[#5a5a5a]">{item.deadline}</span>
           )}
         </div>
-      </div>
-      {isMulti && (
-        <div className="mt-3 pt-3 border-t border-[#ebebeb] flex items-center justify-between">
-          <span className="text-[11px] text-[#a0a0a0]">
-            {doneCount} из {totalCount} изделий готово
-          </span>
-          <div className="flex gap-1">
-            {item.allItems.map(i => (
-              <span
-                key={i.id}
-                className={`w-2 h-2 rounded-full ${
-                  i.status === "done"          ? "bg-green-400"
-                  : i.status === "in_progress" ? "bg-amber-400"
-                  : "bg-gray-200"
-                }`}
-              />
-            ))}
+        {item.payment && (
+          <div className="flex items-center gap-2 text-[12px] text-[#5a5a5a]">
+            <Icon name="CreditCard" size={11} className="text-[#b0b0b0] shrink-0" />
+            <span>{item.payment}</span>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }

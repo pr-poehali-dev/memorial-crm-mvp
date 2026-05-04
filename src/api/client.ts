@@ -57,7 +57,8 @@ export const authApi = {
 export const ordersApi = {
   list:  () => request<DbOrder[]>("orders", "GET"),
   get:   (id: string) => request<DbOrder>("orders", "GET", { id }),
-  stats: (period: "week" | "month" | "year") => request<DbOrderStats>("orders", "GET", { section: "stats", period }),
+  stats:      (period: "week" | "month" | "year") => request<DbOrderStats>("orders", "GET", { section: "stats", period }),
+  production: () => request<DbProductionOrder[]>("orders", "GET", { section: "production" }),
   create: (data: Partial<DbOrder>) => request<{ id: string }>("orders", "POST", {}, data),
   update: (id: string, data: Partial<DbOrder>) => request<{ ok: boolean }>("orders", "PUT", { id }, data),
 };
@@ -298,6 +299,23 @@ export type DbBlankType = {
   size: string;
   material: string;
   raw_per_unit: number;
+};
+
+export type DbProductionOrder = {
+  id: string;
+  client_name: string;
+  phone?: string;
+  stone?: string;
+  size?: string;
+  status: string;
+  current_stage: number;
+  deadline?: string;
+  manager?: string;
+  amount: number;
+  paid: number;
+  comment?: string;
+  deadline_state: "overdue" | "soon" | "ok";
+  payment_label: string;
 };
 
 export type DbOrderStats = {

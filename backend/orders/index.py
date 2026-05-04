@@ -141,6 +141,31 @@ def handler(event: dict, context) -> dict:
                 }
                 return {"statusCode": 200, "headers": CORS, "body": json.dumps(result, default=str)}
 
+            # Производство (канбан)
+            if section == "production":
+                cur.execute(
+                    f"""SELECT o.id, o.client_name, o.phone, o.stone, o.size,
+                        o.status, o.current_stage, o.deadline, o.manager,
+                        o.amount, o.paid, o.comment,
+                        CASE
+                          WHEN o.deadline < CURRENT_DATE AND o.status NOT IN ('Готов','Выдан','Доставка') THEN 'overdue'
+                          WHEN o.deadline <= CURRENT_DATE + 7 AND o.status NOT IN ('Готов','Выдан','Доставка') THEN 'soon'
+                          ELSE 'ok'
+                        END as deadline_state,
+                        CASE
+                          WHEN o.paid >= o.amount THEN 'Оплачено'
+                          WHEN o.paid > 0 THEN 'Предоплата ' || ROUND(o.paid/NULLIF(o.amount,0)*100)::text || '%%'
+                          ELSE 'Не оплачено'
+                        END as payment_label
+                        FROM {SCHEMA}.orders o
+                        WHERE o.company_id=%s AND o.status NOT IN ('Выдан')
+                        ORDER BY o.deadline ASC, o.id""",
+                    (company_id,)
+                )
+                rows = cur.fetchall()
+                return {"statusCode": 200, "headers": CORS,
+                        "body": json.dumps([dict(r) for r in rows], default=str)}
+
             if order_id:
                 cur.execute(
                     f"""SELECT o.*,
