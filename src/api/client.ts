@@ -202,6 +202,8 @@ export type DbBlank = {
   size?: string;
   qty: number;
   min_qty: number;
+  cost_price?: number;
+  sale_price?: number;
 };
 
 export type DbMovement = {

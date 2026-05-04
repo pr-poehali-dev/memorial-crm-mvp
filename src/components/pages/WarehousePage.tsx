@@ -17,7 +17,9 @@ function dbToRaw(m: DbMaterial): RawMaterial {
 }
 function dbToBlank(b: DbBlank): Blank {
   return { id: String(b.id), name: b.name, size: b.size||"", materialId: String(b.material_id),
-           qty: Number(b.qty), min: Number(b.min_qty) };
+           qty: Number(b.qty), min: Number(b.min_qty),
+           costPrice: Number(b.cost_price) || 0,
+           salePrice: Number(b.sale_price) || 0 };
 }
 function dbToMovement(m: DbMovement): Movement {
   return { id: String(m.id), date: new Date(m.move_date).toLocaleDateString("ru-RU", {day:"numeric",month:"short"}),
