@@ -28,7 +28,7 @@ def get_company_id(token: str) -> int | None:
     return None
 
 def handler(event: dict, context) -> dict:
-    """Склад. GET /?section=materials|blanks|movements|stock. POST /?action=in|cut|use|adjust|add_material|add_blank"""
+    """Склад. GET /?section=materials|blanks|movements|stock. POST /?action=in|cut|use|adjust|add_material|add_blank|add_stock|update_stock_qty|remove_stock|use_blank"""
     if event.get("httpMethod") == "OPTIONS":
         return {"statusCode": 200, "headers": CORS, "body": ""}
 
@@ -100,15 +100,14 @@ def handler(event: dict, context) -> dict:
                 return {"statusCode": 201, "headers": CORS, "body": json.dumps({"id": new_id})}
 
             if action in ("in", "cut", "use", "adjust"):
-                mat_id = body.get("materialId")
+                mat_id   = body.get("materialId")
                 blank_id = body.get("blankId")
-                qty = float(body.get("qty", 0))
+                qty      = float(body.get("qty", 0))
 
-                # Обновляем количество материала
                 if action == "in" and mat_id:
                     cur.execute(
-                        f"UPDATE {SCHEMA}.materials SET qty=qty+%s, updated_at=NOW() WHERE id=%s AND company_id=%s",
-                        (qty, mat_id, company_id)
+                        f"UPDATE {SCHEMA}.materials SET qty=qty+%s, price=%s, updated_at=NOW() WHERE id=%s AND company_id=%s",
+                        (qty, body.get("pricePerUnit", 0) or 0, mat_id, company_id)
                     )
                 elif action == "use" and mat_id:
                     cur.execute(
@@ -125,7 +124,6 @@ def handler(event: dict, context) -> dict:
                         (body.get("blankQty", 1), blank_id, company_id)
                     )
 
-                # Получаем текущий остаток
                 remain = None
                 if mat_id:
                     cur.execute(f"SELECT qty FROM {SCHEMA}.materials WHERE id=%s", (mat_id,))
@@ -133,7 +131,6 @@ def handler(event: dict, context) -> dict:
                     if row:
                         remain = float(row["qty"])
 
-                # Записываем движение
                 cur.execute(
                     f"""INSERT INTO {SCHEMA}.warehouse_movements
                         (company_id, move_date, move_type, material_id, blank_id,
@@ -144,6 +141,26 @@ def handler(event: dict, context) -> dict:
                      body.get("pricePerUnit"), body.get("totalSum"),
                      body.get("note",""), body.get("receiptId"),
                      body.get("orderRef"), remain)
+                )
+                conn.commit()
+                return {"statusCode": 201, "headers": CORS, "body": json.dumps({"ok": True})}
+
+            if action == "use_blank":
+                blank_id = body.get("blankId")
+                qty      = int(body.get("qty", 0))
+                if not blank_id or qty <= 0:
+                    return {"statusCode": 400, "headers": CORS, "body": json.dumps({"error": "invalid params"})}
+                cur.execute(
+                    f"UPDATE {SCHEMA}.blanks SET qty=GREATEST(0,qty-%s), updated_at=NOW() WHERE id=%s AND company_id=%s",
+                    (qty, blank_id, company_id)
+                )
+                cur.execute(
+                    f"""INSERT INTO {SCHEMA}.warehouse_movements
+                        (company_id, move_date, move_type, blank_id, qty, note, order_ref)
+                        VALUES (%s, CURRENT_DATE, 'use', %s, %s, %s, %s)""",
+                    (company_id, blank_id, qty,
+                     body.get("note", "Списание на заказ"),
+                     body.get("orderRef"))
                 )
                 conn.commit()
                 return {"statusCode": 201, "headers": CORS, "body": json.dumps({"ok": True})}
@@ -162,9 +179,22 @@ def handler(event: dict, context) -> dict:
                 return {"statusCode": 201, "headers": CORS, "body": json.dumps({"id": new_id})}
 
             if action == "update_stock_qty":
+                item_id = body.get("id")
+                delta   = int(body.get("delta", 0))
                 cur.execute(
-                    f"UPDATE {SCHEMA}.stock_items SET qty=%s WHERE id=%s AND company_id=%s",
-                    (body.get("qty",0), body.get("id"), company_id)
+                    f"UPDATE {SCHEMA}.stock_items SET qty=GREATEST(0,qty+%s) WHERE id=%s AND company_id=%s RETURNING qty",
+                    (delta, item_id, company_id)
+                )
+                row = cur.fetchone()
+                conn.commit()
+                new_qty = int(row["qty"]) if row else 0
+                return {"statusCode": 200, "headers": CORS, "body": json.dumps({"ok": True, "qty": new_qty})}
+
+            if action == "remove_stock":
+                item_id = body.get("id")
+                cur.execute(
+                    f"DELETE FROM {SCHEMA}.stock_items WHERE id=%s AND company_id=%s",
+                    (item_id, company_id)
                 )
                 conn.commit()
                 return {"statusCode": 200, "headers": CORS, "body": json.dumps({"ok": True})}

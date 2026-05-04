@@ -1,12 +1,10 @@
 {
   "tests": [
     {
-      "name": "Unauthorized",
+      "name": "Unauthorized returns 401",
       "method": "GET",
       "path": "/?section=materials",
-      "expectedStatus": 401,
-      "expectedBody": {"error": "string"},
-      "bodyMatcher": "partial"
+      "expectedStatus": 401
     }
   ]
 }

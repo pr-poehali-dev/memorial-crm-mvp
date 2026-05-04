@@ -1,8 +1,8 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import {
   RawMaterial, Blank, Movement, ModalType, StockItem,
   getLevelRaw, getLevelBlank,
-  calcRawPerUnit, calcReserves, calcBlankReserves,
+  calcReserves, calcBlankReserves,
 } from "./warehouse/warehouse.types";
 import { warehouseApi, DbMaterial, DbBlank, DbMovement, DbStockItem } from "@/api/client";
 import { useTasks } from "@/store/tasksStore";
@@ -36,8 +36,6 @@ function dbToStock(s: DbStockItem): StockItem {
            note: s.note };
 }
 
-const nowDate = () => new Date().toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
-
 export default function WarehousePage() {
   const [tab, setTab]             = useState<"raw" | "blanks" | "stock">("raw");
   const [rawMat, setRawMat]       = useState<RawMaterial[]>([]);
@@ -47,8 +45,8 @@ export default function WarehousePage() {
   const [modal, setModal]         = useState<ModalType>(null);
   const [loadingData, setLoadingData] = useState(true);
 
-  useEffect(() => {
-    Promise.all([
+  const reload = useCallback(() => {
+    return Promise.all([
       warehouseApi.materials(),
       warehouseApi.blanks(),
       warehouseApi.movements(),
@@ -58,8 +56,12 @@ export default function WarehousePage() {
       setBlanks(bls.map(dbToBlank));
       setMovements(movs.map(dbToMovement));
       setStock(stk.map(dbToStock));
-    }).catch(console.error).finally(() => setLoadingData(false));
+    });
   }, []);
+
+  useEffect(() => {
+    reload().catch(console.error).finally(() => setLoadingData(false));
+  }, [reload]);
 
   const [search, setSearch]     = useState("");
   const { addTask } = useTasks();
@@ -91,27 +93,19 @@ export default function WarehousePage() {
   const handleIn = () => {
     const q = parseFloat(inQty);
     if (!q || q <= 0) return;
-    const raw    = rawMat.find(r => r.id === inRawId)!;
-    const price  = parseFloat(inPrice) || raw.price;
-    const total  = +(q * price).toFixed(0);
-    const newQty = +(raw.qty + q).toFixed(2);
-    const note   = `Приход от поставщика${inReceiptId.trim() ? ` · ${inReceiptId.trim()}` : ""}`;
+    const raw   = rawMat.find(r => r.id === inRawId)!;
+    const price = parseFloat(inPrice) || raw.price;
+    const total = +(q * price).toFixed(0);
+    const note  = `Приход от поставщика${inReceiptId.trim() ? ` · ${inReceiptId.trim()}` : ""}`;
 
-    setRawMat(prev => prev.map(r =>
-      r.id === inRawId ? { ...r, qty: newQty, price: price } : r
-    ));
-    setMovements(prev => [{
-      id: Date.now().toString(),
-      date: nowDate(),
-      type: "in",
-      materialId: inRawId,
-      qty: q,
+    warehouseApi.movement("in", {
+      materialId:   parseInt(inRawId),
+      qty:          q,
       pricePerUnit: price,
-      totalSum: total,
+      totalSum:     total,
       note,
-      receiptId: inReceiptId.trim() || undefined,
-      remainAfter: newQty,
-    }, ...prev]);
+      receiptId:    inReceiptId.trim() || undefined,
+    }).then(() => reload()).catch(console.error);
 
     setInQty(""); setInReceiptId(""); setInPrice("");
     setModal(null);
@@ -127,24 +121,13 @@ export default function WarehousePage() {
     const totalUsed = +(perUnit * q).toFixed(2);
     if (raw.qty < totalUsed) return;
 
-    const newRawQty = +(raw.qty - totalUsed).toFixed(2);
-
-    setRawMat(prev => prev.map(r =>
-      r.id === cutRawId ? { ...r, qty: newRawQty } : r
-    ));
-    setBlanks(prev => prev.map(b =>
-      b.id === cutBlankId ? { ...b, qty: b.qty + q } : b
-    ));
-    setMovements(prev => [{
-      id: Date.now().toString(),
-      date: nowDate(),
-      type: "cut",
-      materialId: cutRawId,
-      blankId: cutBlankId,
-      qty: totalUsed,
-      note: `Нарезка: ${blk.name} (${q} шт.)${cutDeadline ? ` · до ${cutDeadline}` : ""}`,
-      remainAfter: newRawQty,
-    }, ...prev]);
+    warehouseApi.movement("cut", {
+      materialId: parseInt(cutRawId),
+      blankId:    parseInt(cutBlankId),
+      qty:        totalUsed,
+      blankQty:   q,
+      note:       `Нарезка: ${blk.name} (${q} шт.)${cutDeadline ? ` · до ${cutDeadline}` : ""}`,
+    }).then(() => reload()).catch(console.error);
 
     const matchedBt = CUTTING_BLANK_TYPES.find(bt => bt.name === blk.name) ?? CUTTING_BLANK_TYPES[0];
     addTask({
@@ -155,7 +138,7 @@ export default function WarehousePage() {
       doneQty: 0,
       inProgressQty: 0,
       status: "pending",
-      createdAt: nowDate(),
+      createdAt: new Date().toLocaleDateString("ru-RU", { day: "numeric", month: "short" }),
       deadline: cutDeadline || undefined,
     });
 
@@ -164,23 +147,17 @@ export default function WarehousePage() {
   };
 
   const handleUse = () => {
-    const q   = parseInt(useQty);
+    const q = parseInt(useQty);
     if (!q || q <= 0) return;
     const blk = blanks.find(b => b.id === useBlankId)!;
     if (blk.qty < q) return;
 
-    setBlanks(prev => prev.map(b =>
-      b.id === useBlankId ? { ...b, qty: b.qty - q } : b
-    ));
-    setMovements(prev => [{
-      id: Date.now().toString(),
-      date: nowDate(),
-      type: "use",
-      blankId: useBlankId,
-      qty: q,
-      note: "Списание на заказ",
-      order: useOrder.trim() || undefined,
-    }, ...prev]);
+    warehouseApi.useBlank({
+      blankId:  parseInt(useBlankId),
+      qty:      q,
+      note:     "Списание на заказ",
+      orderRef: useOrder.trim() || undefined,
+    }).then(() => reload()).catch(console.error);
 
     setUseQty(""); setUseOrder("");
     setModal(null);
@@ -230,13 +207,24 @@ export default function WarehousePage() {
         getBlankReserved={getBlankReserved}
         onHistory={setMatDetail}
         onOpenAll={() => setShowHistory(true)}
-        onStockAdd={item => setStock(prev => [...prev, item])}
-        onStockUpdateQty={(id, delta) =>
-          setStock(prev => prev.map(it =>
-            it.id === id ? { ...it, qty: Math.max(0, it.qty + delta) } : it
-          ))
-        }
-        onStockRemove={id => setStock(prev => prev.filter(it => it.id !== id))}
+        onStockAdd={item => {
+          warehouseApi.addStock({
+            catalogId: item.catalogId || undefined,
+            name:      item.name,
+            category:  item.category,
+            qty:       item.qty,
+            price:     item.price,
+            note:      item.note,
+          }).then(() => reload()).catch(console.error);
+        }}
+        onStockUpdateQty={(id, delta) => {
+          warehouseApi.updateStockQty(parseInt(id), delta)
+            .then(() => reload()).catch(console.error);
+        }}
+        onStockRemove={id => {
+          warehouseApi.removeStock(parseInt(id))
+            .then(() => reload()).catch(console.error);
+        }}
       />
 
       <WarehouseModalsGroup
@@ -266,8 +254,14 @@ export default function WarehousePage() {
         onCloseMatDetail={() => setMatDetail(null)}
         onCloseAddMat={() => setShowAddMat(false)}
         onCloseHistory={() => setShowHistory(false)}
-        onAddMat={mat => setRawMat(prev => [...prev, mat])}
+        onAddMat={mat => { setRawMat(prev => [...prev, mat]); reload().catch(console.error); }}
       />
+
+      {loadingData && (
+        <div className="fixed inset-0 bg-white/60 flex items-center justify-center z-50 pointer-events-none">
+          <div className="text-[13px] text-[#9b9b9b]">Загрузка склада…</div>
+        </div>
+      )}
 
     </div>
   );

@@ -79,10 +79,14 @@ export const warehouseApi = {
     request<{ id: number }>("warehouse", "POST", { action: "add_material" }, data),
   movement: (action: "in"|"cut"|"use"|"adjust", data: Record<string, unknown>) =>
     request<{ ok: boolean }>("warehouse", "POST", { action }, data),
+  useBlank: (data: Record<string, unknown>) =>
+    request<{ ok: boolean }>("warehouse", "POST", { action: "use_blank" }, data),
   addStock: (data: Record<string, unknown>) =>
     request<{ id: number }>("warehouse", "POST", { action: "add_stock" }, data),
-  updateStockQty: (id: number, qty: number) =>
-    request<{ ok: boolean }>("warehouse", "POST", { action: "update_stock_qty" }, { id, qty }),
+  updateStockQty: (id: number, delta: number) =>
+    request<{ ok: boolean; qty: number }>("warehouse", "POST", { action: "update_stock_qty" }, { id, delta }),
+  removeStock: (id: number) =>
+    request<{ ok: boolean }>("warehouse", "POST", { action: "remove_stock" }, { id }),
 };
 
 // ── Cutting ──
