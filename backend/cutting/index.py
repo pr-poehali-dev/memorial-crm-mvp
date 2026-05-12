@@ -135,6 +135,16 @@ def handler(event: dict, context) -> dict:
                 shift_id = body.get("shiftId")
                 results  = body.get("results", [])
 
+                # Проверяем что смена ещё активна — защита от двойного завершения
+                cur.execute(
+                    f"SELECT status FROM {SCHEMA}.shifts WHERE id=%s AND company_id=%s",
+                    (shift_id, company_id)
+                )
+                shift_check = cur.fetchone()
+                if not shift_check or shift_check["status"] != "active":
+                    return {"statusCode": 409, "headers": CORS,
+                            "body": json.dumps({"error": "shift already finished or not found"})}
+
                 # Завершаем смену
                 cur.execute(
                     f"""UPDATE {SCHEMA}.shifts

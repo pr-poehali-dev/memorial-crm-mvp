@@ -95,6 +95,7 @@ export default function CuttingPage() {
   /* Модалки */
   const [assignModal,   setAssignModal]   = useState(false);
   const [finishShiftId, setFinishShiftId] = useState<string | null>(null);
+  const [finishLoading, setFinishLoading] = useState(false);
 
   /* Форма назначения */
   const [fPlace,    setFPlace]    = useState("");
@@ -141,7 +142,10 @@ export default function CuttingPage() {
 
   /* ── Завершить смену → API ── */
   const handleFinish = () => {
-    if (!finishShiftId) return;
+    if (!finishShiftId || finishLoading) return;
+    setFinishLoading(true);
+    /* Закрываем модал сразу — предотвращает двойное нажатие */
+    setFinishShiftId(null);
     cuttingApi.finishShift({
       shiftId: parseInt(finishShiftId),
       results: fResults.map(r => {
@@ -160,9 +164,9 @@ export default function CuttingPage() {
     }).then(() => {
       reloadShifts();
       reloadTasks();
-      setFinishShiftId(null);
       setFResults(firstBt ? [emptyResultFromBt(firstBt)] : []);
-    }).catch(console.error);
+    }).catch(console.error)
+      .finally(() => setFinishLoading(false));
   };
 
   const updateResult = (idx: number, patch: Partial<ShiftResult>) => {
@@ -410,6 +414,7 @@ export default function CuttingPage() {
           fResults={fResults}
           blankTypes={blankTypes}
           maxProduced={finishShift.taskQtyAssigned ?? undefined}
+          loading={finishLoading}
           onUpdateResult={updateResult}
           onAddResult={() => setFResults(prev => [...prev, firstBt ? emptyResultFromBt(firstBt) : prev[0]])}
           onRemoveResult={(idx) => setFResults(prev => prev.filter((_, i) => i !== idx))}

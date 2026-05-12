@@ -260,13 +260,14 @@ type FinishProps = {
   onRemoveResult: (idx: number) => void;
   onFinish: () => void;
   onClose: () => void;
-  maxProduced?: number; /* максимум = task_qty_assigned */
+  maxProduced?: number;
+  loading?: boolean;
 };
 
 export function FinishModal({
   shift, fResults, blankTypes,
   onUpdateResult, onAddResult, onRemoveResult,
-  onFinish, onClose, maxProduced,
+  onFinish, onClose, maxProduced, loading,
 }: FinishProps) {
   const place    = { name: shift.placeId,    machine: "" };
   const employee = { name: shift.employeeId };
@@ -456,10 +457,10 @@ export function FinishModal({
         <div className="px-6 pb-5 pt-4 border-t border-[#f0f0f0]">
           <button
             onClick={onFinish}
-            disabled={fResults.some(r => r.produced <= 0)}
+            disabled={loading || fResults.length === 0 || fResults.every(r => r.produced <= 0)}
             className="w-full bg-[#1a1a1a] text-white text-[14px] font-semibold py-3 rounded-[10px] hover:bg-[#333] active:scale-[0.98] transition-all disabled:opacity-40"
           >
-            Завершить смену
+            {loading ? "Сохранение..." : "Завершить смену"}
           </button>
         </div>
       </div>
