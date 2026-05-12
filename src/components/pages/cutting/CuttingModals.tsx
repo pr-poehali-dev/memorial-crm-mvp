@@ -37,7 +37,7 @@ export function AssignModal({
   onChangeTaskId, onChangeTaskQty,
   onAssign, onClose,
 }: AssignProps) {
-  const openTasks = tasks.filter(t => t.status !== "done");
+  const openTasks = tasks.filter(t => t.status !== "done" && t.status !== "cancelled");
   const selectedTask = openTasks.find(t => t.id === fTaskId);
   const remaining = selectedTask
     ? selectedTask.totalQty - selectedTask.doneQty - selectedTask.inProgressQty

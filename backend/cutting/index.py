@@ -181,15 +181,24 @@ def handler(event: dict, context) -> dict:
                             WHERE id=%s AND company_id=%s""",
                         (total_produced, assigned, shift_row["task_id"], company_id)
                     )
-                    # Проверяем выполнение
+                    # Проверяем выполнение — читаем актуальные значения после UPDATE
                     cur.execute(
-                        f"SELECT total_qty, done_qty+%s as new_done FROM {SCHEMA}.cutting_tasks WHERE id=%s",
-                        (total_produced, shift_row["task_id"])
+                        f"SELECT total_qty, done_qty FROM {SCHEMA}.cutting_tasks WHERE id=%s",
+                        (shift_row["task_id"],)
                     )
                     task = cur.fetchone()
-                    if task and task["new_done"] >= task["total_qty"]:
+                    if task and task["done_qty"] >= task["total_qty"]:
                         cur.execute(
-                            f"UPDATE {SCHEMA}.cutting_tasks SET status='done' WHERE id=%s",
+                            f"UPDATE {SCHEMA}.cutting_tasks SET status='done', updated_at=NOW() WHERE id=%s",
+                            (shift_row["task_id"],)
+                        )
+                    elif task:
+                        # Если in_progress_qty стал 0 — возвращаем в pending
+                        cur.execute(
+                            f"""UPDATE {SCHEMA}.cutting_tasks
+                                SET status=CASE WHEN in_progress_qty<=0 THEN 'pending' ELSE 'active' END,
+                                    updated_at=NOW()
+                                WHERE id=%s AND status='active'""",
                             (shift_row["task_id"],)
                         )
 
