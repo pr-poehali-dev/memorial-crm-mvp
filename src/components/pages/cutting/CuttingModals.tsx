@@ -338,8 +338,8 @@ export function FinishModal({
           {fResults.map((r, idx) => {
             const bt      = blankTypes.find(b => b.id === r.blankTypeId) ?? blankTypes[0];
             const autoRaw = bt ? +(bt.rawPerUnit * r.produced).toFixed(2) : 0;
-            /* max: если есть план из задачи — он; если нет — разумный лимит 50 */
-            const maxQty  = maxProduced ?? (plan > 0 ? plan : 50);
+            /* max: если план задан — он; если нет задачи — без ограничения (999) */
+            const maxQty  = maxProduced ?? (plan > 0 ? plan : 999);
 
             return (
               <div key={idx} className="bg-[#fafafa] border border-[#f0f0f0] rounded-xl p-4 space-y-3">
