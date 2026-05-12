@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
+import LoadingScreen from "@/components/ui/LoadingScreen";
 import {
   COL_CONFIG, COL_NEXT_STATUS,
   FilterKey, FlatItem, Column, Card,
@@ -122,11 +123,7 @@ export default function ProductionPage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <p className="text-[13px] text-[#b5b5b5]">Загрузка производства…</p>
-      </div>
-    );
+    return <LoadingScreen text="Загружаем производство" />;
   }
 
   return (

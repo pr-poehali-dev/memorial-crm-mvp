@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
+import LoadingScreen from "@/components/ui/LoadingScreen";
 import {
   RawMaterial, Blank, Movement, ModalType, StockItem,
   getLevelRaw, getLevelBlank,
@@ -195,6 +196,10 @@ export default function WarehousePage() {
   const totalRawVal = rawMat.reduce((s, r) => s + r.qty * r.price, 0);
   const criticalRaw = rawMat.filter(r => getLevelRaw(r, getReserved(r.id)) === "critical").length;
   const critBlanks  = blanks.filter(b => getLevelBlank(b) === "critical").length;
+
+  if (loadingData) {
+    return <LoadingScreen text="Загружаем склад" />;
+  }
 
   return (
     <div className="p-7 max-w-[1100px] mx-auto w-full space-y-5">

@@ -1,5 +1,6 @@
 import Icon from "@/components/ui/icon";
 import { Client } from "../ClientsPage";
+import LoadingScreen from "@/components/ui/LoadingScreen";
 
 function StatCard({ icon, color, label, value, sub, alert }: {
   icon: string; color: string; label: string; value: string; sub?: string; alert?: boolean;
@@ -104,7 +105,7 @@ export default function ClientsTable({
           </thead>
           <tbody>
             {loading && (
-              <tr><td colSpan={5} className="px-4 py-10 text-center text-[13px] text-[#b5b5b5]">Загрузка...</td></tr>
+              <tr><td colSpan={5}><LoadingScreen text="Загружаем клиентов" /></td></tr>
             )}
             {!loading && filtered.length === 0 && (
               <tr><td colSpan={5} className="px-4 py-10 text-center text-[13px] text-[#b5b5b5]">Заказчики не найдены</td></tr>

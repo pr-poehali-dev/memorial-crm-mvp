@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import Icon from "@/components/ui/icon";
+import LoadingScreen from "@/components/ui/LoadingScreen";
 import { settingsApi, DbEmployee, DbStage, DbEstimateTemplate } from "@/api/client";
 
 type Tab = "company" | "managers" | "stages" | "estimates" | "notifications";
@@ -101,7 +102,7 @@ export default function SettingsPage() {
             <>
               <Card title="Сотрудники">
                 {employees.length === 0 ? (
-                  <p className="px-5 py-8 text-center text-[13px] text-[#c5c5c5]">Загрузка...</p>
+                  <LoadingScreen text="Загружаем сотрудников" />
                 ) : (
                   <div className="divide-y divide-[#f5f5f5]">
                     {employees.map((m, idx) => (
@@ -140,7 +141,7 @@ export default function SettingsPage() {
               <Card title="Этапы производства"
                 hint="Порядок этапов определяет движение заказа по канбан-доске">
                 {stages.length === 0 ? (
-                  <p className="px-5 py-8 text-center text-[13px] text-[#c5c5c5]">Загрузка...</p>
+                  <LoadingScreen text="Загружаем этапы" />
                 ) : (
                   <div className="divide-y divide-[#f5f5f5]">
                     {stages.map((s, i) => (
@@ -178,7 +179,7 @@ export default function SettingsPage() {
               <Card title="Шаблон сметы"
                 hint="Позиции используются при создании нового заказа и расчёте стоимости">
                 {templates.length === 0 ? (
-                  <p className="px-5 py-8 text-center text-[13px] text-[#c5c5c5]">Загрузка...</p>
+                  <LoadingScreen text="Загружаем шаблоны" />
                 ) : (
                   <div className="divide-y divide-[#f5f5f5]">
                     {templates.map((e) => (

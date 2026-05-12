@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import Icon from "@/components/ui/icon";
+import LoadingScreen from "@/components/ui/LoadingScreen";
 import { ordersApi, DbOrderStats } from "@/api/client";
 
 type Period = "week" | "month" | "year";
@@ -85,7 +86,7 @@ export default function AnalyticsPage() {
       </div>
 
       {loading ? (
-        <div className="py-20 text-center text-[13px] text-[#b5b5b5]">Загрузка...</div>
+        <LoadingScreen text="Загружаем аналитику" />
       ) : (
         <>
           {/* Top metrics */}
