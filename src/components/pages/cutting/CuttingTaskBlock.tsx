@@ -33,8 +33,11 @@ export default function CuttingTaskBlock({ tasks, onReload, onAssignClick }: Pro
       )}
 
       {all.map(task => {
-        const remaining    = task.totalQty - task.doneQty - task.inProgressQty;
-        const pct          = task.totalQty > 0 ? Math.round((task.doneQty / task.totalQty) * 100) : 0;
+        const totalQty      = task.totalQty      ?? 0;
+        const doneQty       = task.doneQty       ?? 0;
+        const inProgressQty = task.inProgressQty ?? 0;
+        const remaining     = totalQty - doneQty - inProgressQty;
+        const pct           = totalQty > 0 ? Math.round((doneQty / totalQty) * 100) : 0;
         const isDone       = task.status === "done";
         const isActive     = task.status === "active";
         const isCancelled  = task.status === "cancelled";
@@ -86,9 +89,9 @@ export default function CuttingTaskBlock({ tasks, onReload, onAssignClick }: Pro
                 {/* Цифры */}
                 <div className="flex items-baseline gap-1.5 mb-2">
                   <span className={`text-[24px] font-bold leading-none ${isDone ? "text-[#9b9b9b]" : "text-[#1a1a1a]"}`}>
-                    {task.doneQty}
+                    {doneQty}
                   </span>
-                  <span className="text-[13px] text-[#9b9b9b]">/ {task.totalQty} шт.</span>
+                  <span className="text-[13px] text-[#9b9b9b]">/ {totalQty} шт.</span>
                 </div>
 
                 {/* Прогресс-бар */}
@@ -110,9 +113,9 @@ export default function CuttingTaskBlock({ tasks, onReload, onAssignClick }: Pro
                         Осталось: <b className="text-[#6366f1]">{remaining} шт.</b>
                       </span>
                     )}
-                    {task.inProgressQty > 0 && (
+                    {inProgressQty > 0 && (
                       <span className="text-[11px] text-[#6b6b6b]">
-                        В работе: <b className="text-[#f59e0b]">{task.inProgressQty} шт.</b>
+                        В работе: <b className="text-[#f59e0b]">{inProgressQty} шт.</b>
                       </span>
                     )}
                     {task.deadline && (

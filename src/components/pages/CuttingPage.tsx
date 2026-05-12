@@ -298,7 +298,22 @@ export default function CuttingPage() {
                   shifts={activeShifts}
                   onFinishClick={(id) => {
                     setFinishShiftId(id);
-                    setFResults(firstBt ? [emptyResultFromBt(firstBt)] : []);
+                    const shift = activeShifts.find(s => s.id === id);
+                    const plan  = shift?.taskQtyAssigned ?? 0;
+                    /* находим задачу привязанную к смене, чтобы взять blankTypeId */
+                    const linkedTask = shift?.taskId
+                      ? tasks.find(t => t.id === shift.taskId)
+                      : undefined;
+                    const bt = linkedTask?.blankTypeId
+                      ? blankTypes.find(b => b.id === linkedTask.blankTypeId) ?? firstBt
+                      : firstBt;
+                    if (bt) {
+                      const produced = plan > 0 ? plan : 1;
+                      const rawUsed  = +(bt.rawPerUnit * produced).toFixed(2);
+                      setFResults([{ blankTypeId: bt.id, produced, rawAuto: true, rawUsed }]);
+                    } else {
+                      setFResults([]);
+                    }
                   }}
                 />
               </div>

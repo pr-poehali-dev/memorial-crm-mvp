@@ -18,18 +18,30 @@ function SliderInput({
   onChange: (v: number) => void;
   suffix?: string;
 }) {
-  /* при min === max (1 шт.) — ползунок полностью заполнен */
-  const pct = max <= min ? 100 : Math.round(((value - min) / (max - min)) * 100);
+  /* если всего 1 вариант — показываем только бейдж, без ползунка */
+  if (max <= min) {
+    return (
+      <div>
+        {label && <label className={labelCls}>{label}</label>}
+        <div className="flex items-center gap-2">
+          <span className="text-[22px] font-bold text-[#1a1a1a]">{value}</span>
+          <span className="text-[13px] text-[#9b9b9b]">{suffix}</span>
+        </div>
+      </div>
+    );
+  }
+
+  const pct = Math.round(((value - min) / (max - min)) * 100);
 
   return (
     <div>
       {label && <label className={labelCls}>{label}</label>}
       <div className="flex items-center gap-3">
-        <div className="flex-1 relative">
+        <div className="flex-1">
           <input
             type="range"
             min={min}
-            max={Math.max(max, min)}
+            max={max}
             step={1}
             value={value}
             onChange={e => onChange(Number(e.target.value))}
@@ -38,8 +50,12 @@ function SliderInput({
               background: `linear-gradient(to right, #1a1a1a ${pct}%, #e8e8e8 ${pct}%)`,
             }}
           />
+          <div className="flex justify-between mt-0.5">
+            <span className="text-[10px] text-[#c5c5c5]">{min}</span>
+            <span className="text-[10px] text-[#c5c5c5]">{max}</span>
+          </div>
         </div>
-        <div className="flex items-center gap-1 w-[72px] shrink-0">
+        <div className="flex items-center gap-1 w-[68px] shrink-0">
           <input
             type="number"
             min={min}
@@ -54,12 +70,6 @@ function SliderInput({
           <span className="text-[11px] text-[#9b9b9b] shrink-0">{suffix}</span>
         </div>
       </div>
-      {max > min && (
-        <div className="flex justify-between mt-1">
-          <span className="text-[10px] text-[#c5c5c5]">{min}</span>
-          <span className="text-[10px] text-[#c5c5c5]">{max}</span>
-        </div>
-      )}
     </div>
   );
 }
@@ -313,6 +323,7 @@ export function FinishModal({
           {fResults.map((r, idx) => {
             const bt      = blankTypes.find(b => b.id === r.blankTypeId) ?? blankTypes[0];
             const autoRaw = bt ? +(bt.rawPerUnit * r.produced).toFixed(2) : 0;
+            /* если к смене привязана задача — ползунок до plan, иначе до 999 */
             const maxQty  = plan > 0 ? plan : 999;
 
             return (
