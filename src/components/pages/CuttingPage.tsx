@@ -409,6 +409,7 @@ export default function CuttingPage() {
           shift={finishShift}
           fResults={fResults}
           blankTypes={blankTypes}
+          maxProduced={finishShift.taskQtyAssigned ?? undefined}
           onUpdateResult={updateResult}
           onAddResult={() => setFResults(prev => [...prev, firstBt ? emptyResultFromBt(firstBt) : prev[0]])}
           onRemoveResult={(idx) => setFResults(prev => prev.filter((_, i) => i !== idx))}

@@ -143,26 +143,39 @@ def handler(event: dict, context) -> dict:
                     (shift_id, company_id)
                 )
 
+                # Получаем task_qty_assigned для защиты от превышения
+                cur.execute(
+                    f"SELECT task_qty_assigned FROM {SCHEMA}.shifts WHERE id=%s",
+                    (shift_id,)
+                )
+                shift_meta = cur.fetchone()
+                task_max = shift_meta["task_qty_assigned"] if shift_meta and shift_meta["task_qty_assigned"] else None
+
                 # Записываем результаты
+                total_produced_capped = 0
                 for i, r in enumerate(results):
+                    produced = int(r.get("produced", 0))
+                    # Ограничиваем produced планом смены
+                    if task_max is not None:
+                        produced = min(produced, task_max - total_produced_capped)
+                        produced = max(0, produced)
+                    total_produced_capped += produced
+
+                    raw_used = float(r.get("rawUsed", 0))
                     cur.execute(
                         f"""INSERT INTO {SCHEMA}.shift_results
                             (shift_id, blank_type_id, produced, raw_auto, raw_used, order_ref, sort_order)
                             VALUES (%s,%s,%s,%s,%s,%s,%s)""",
-                        (shift_id, r.get("blankTypeId"), r.get("produced",0),
-                         r.get("rawAuto",True), r.get("rawUsed",0),
+                        (shift_id, r.get("blankTypeId"), produced,
+                         r.get("rawAuto", True), raw_used,
                          r.get("orderId"), i)
                     )
-                    # Увеличиваем количество заготовок
-                    if r.get("blankTypeId") and r.get("produced",0) > 0:
+                    # Увеличиваем количество заготовок напрямую по blank_type_id
+                    if r.get("blankTypeId") and produced > 0:
                         cur.execute(
                             f"""UPDATE {SCHEMA}.blanks SET qty=qty+%s, updated_at=NOW()
-                                WHERE material_id=(
-                                  SELECT m.id FROM {SCHEMA}.materials m
-                                  JOIN {SCHEMA}.blank_types bt ON bt.material=m.name
-                                  WHERE bt.id=%s AND m.company_id=%s LIMIT 1
-                                ) AND company_id=%s""",
-                            (r["produced"], r["blankTypeId"], company_id, company_id)
+                                WHERE blank_type_id=%s AND company_id=%s""",
+                            (produced, r["blankTypeId"], company_id)
                         )
 
                 # Обновляем задачу
@@ -172,15 +185,16 @@ def handler(event: dict, context) -> dict:
                 )
                 shift_row = cur.fetchone()
                 if shift_row and shift_row["task_id"]:
-                    total_produced = sum(r.get("produced",0) for r in results)
                     assigned = shift_row["task_qty_assigned"] or 0
+                    # Используем уже ограниченное значение total_produced_capped
+                    add_done = total_produced_capped
                     cur.execute(
                         f"""UPDATE {SCHEMA}.cutting_tasks
-                            SET done_qty=done_qty+%s,
+                            SET done_qty=LEAST(total_qty, done_qty+%s),
                                 in_progress_qty=GREATEST(0,in_progress_qty-%s),
                                 updated_at=NOW()
                             WHERE id=%s AND company_id=%s""",
-                        (total_produced, assigned, shift_row["task_id"], company_id)
+                        (add_done, assigned, shift_row["task_id"], company_id)
                     )
                     # Проверяем выполнение — читаем актуальные значения после UPDATE
                     cur.execute(

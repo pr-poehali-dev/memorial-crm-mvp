@@ -175,12 +175,24 @@ export function AssignModal({
                 <label className={labelCls}>Выбрать задачу</label>
                 <select
                   value={fTaskId}
-                  onChange={e => { onChangeTaskId(e.target.value); onChangeTaskQty(""); }}
+                  onChange={e => {
+                    onChangeTaskId(e.target.value);
+                    /* по умолчанию берём все оставшиеся */
+                    if (e.target.value) {
+                      const t = openTasks.find(t => t.id === e.target.value);
+                      if (t) {
+                        const rem = (t.totalQty ?? 0) - (t.doneQty ?? 0) - (t.inProgressQty ?? 0);
+                        onChangeTaskQty(String(Math.max(1, rem)));
+                      }
+                    } else {
+                      onChangeTaskQty("");
+                    }
+                  }}
                   className={selectCls}
                 >
                   <option value="">— без задачи —</option>
                   {openTasks.map(t => {
-                    const rem = t.totalQty - t.doneQty - t.inProgressQty;
+                    const rem = (t.totalQty ?? 0) - (t.doneQty ?? 0) - (t.inProgressQty ?? 0);
                     return (
                       <option key={t.id} value={t.id}>
                         {t.blankName ?? "Заготовка"} · осталось {rem} шт.
@@ -191,20 +203,21 @@ export function AssignModal({
               </div>
 
               {fTaskId && selectedTask && remaining > 0 && (
-                <SliderInput
-                  label="Количество в работу"
-                  value={taskQtyNum}
-                  min={1}
-                  max={remaining}
-                  onChange={v => onChangeTaskQty(String(v))}
-                  suffix="шт."
-                />
-              )}
-
-              {fTaskId && selectedTask && !taskOverLimit && taskQtyNum > 0 && remaining > 0 && (
-                <p className="text-[11px] text-[#6366f1]">
-                  После назначения останется: {remaining - taskQtyNum} шт.
-                </p>
+                <>
+                  <SliderInput
+                    label="Количество в работу"
+                    value={taskQtyNum}
+                    min={1}
+                    max={remaining}
+                    onChange={v => onChangeTaskQty(String(v))}
+                    suffix="шт."
+                  />
+                  {!taskOverLimit && taskQtyNum > 0 && (
+                    <p className="text-[11px] text-[#6366f1]">
+                      После назначения останется: {remaining - taskQtyNum} шт.
+                    </p>
+                  )}
+                </>
               )}
               {taskOverLimit && (
                 <p className="text-[11px] text-red-500">Нельзя назначить больше {remaining} шт.</p>
@@ -247,12 +260,13 @@ type FinishProps = {
   onRemoveResult: (idx: number) => void;
   onFinish: () => void;
   onClose: () => void;
+  maxProduced?: number; /* максимум = task_qty_assigned */
 };
 
 export function FinishModal({
   shift, fResults, blankTypes,
   onUpdateResult, onAddResult, onRemoveResult,
-  onFinish, onClose,
+  onFinish, onClose, maxProduced,
 }: FinishProps) {
   const place    = { name: shift.placeId,    machine: "" };
   const employee = { name: shift.employeeId };
@@ -323,8 +337,8 @@ export function FinishModal({
           {fResults.map((r, idx) => {
             const bt      = blankTypes.find(b => b.id === r.blankTypeId) ?? blankTypes[0];
             const autoRaw = bt ? +(bt.rawPerUnit * r.produced).toFixed(2) : 0;
-            /* если к смене привязана задача — ползунок до plan, иначе до 999 */
-            const maxQty  = plan > 0 ? plan : 999;
+            /* max: если есть план из задачи — он; если нет — разумный лимит 50 */
+            const maxQty  = maxProduced ?? (plan > 0 ? plan : 50);
 
             return (
               <div key={idx} className="bg-[#fafafa] border border-[#f0f0f0] rounded-xl p-4 space-y-3">
