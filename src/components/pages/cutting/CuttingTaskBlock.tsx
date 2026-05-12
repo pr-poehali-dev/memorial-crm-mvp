@@ -2,7 +2,13 @@ import Icon from "@/components/ui/icon";
 import { CuttingTask } from "./cutting.types";
 import { cuttingApi } from "@/api/client";
 
-export default function CuttingTaskBlock({ tasks, onReload }: { tasks: CuttingTask[]; onReload: () => void }) {
+type Props = {
+  tasks: CuttingTask[];
+  onReload: () => void;
+  onAssignClick?: (taskId: string) => void;
+};
+
+export default function CuttingTaskBlock({ tasks, onReload, onAssignClick }: Props) {
   const activeTasks    = tasks.filter(t => t.status !== "done" && t.status !== "cancelled");
   const doneTasks      = tasks.filter(t => t.status === "done");
   const cancelledTasks = tasks.filter(t => t.status === "cancelled");
@@ -32,6 +38,7 @@ export default function CuttingTaskBlock({ tasks, onReload }: { tasks: CuttingTa
         const isDone       = task.status === "done";
         const isActive     = task.status === "active";
         const isCancelled  = task.status === "cancelled";
+        const canAssign    = !isDone && !isCancelled && remaining > 0 && onAssignClick;
 
         return (
           <div
@@ -47,7 +54,7 @@ export default function CuttingTaskBlock({ tasks, onReload }: { tasks: CuttingTa
             <div className="flex items-start justify-between gap-2 mb-3">
               <div className="flex-1 min-w-0">
                 <p className={`text-[14px] font-semibold leading-tight ${isDone || isCancelled ? "text-[#9b9b9b]" : "text-[#1a1a1a]"}`}>
-                  {task.blankName ?? "Заготовка"}
+                  {task.blankName || "Заготовка"}
                 </p>
                 <p className="text-[11px] text-[#9b9b9b] mt-0.5">
                   {task.materialName}{task.blankSize ? ` · ${task.blankSize}` : ""}
@@ -97,7 +104,7 @@ export default function CuttingTaskBlock({ tasks, onReload }: { tasks: CuttingTa
 
                 {/* Детали */}
                 {!isDone && (
-                  <div className="flex items-center gap-3 flex-wrap">
+                  <div className="flex items-center gap-3 flex-wrap mb-3">
                     {remaining > 0 && (
                       <span className="text-[11px] text-[#6b6b6b]">
                         Осталось: <b className="text-[#6366f1]">{remaining} шт.</b>
@@ -115,6 +122,17 @@ export default function CuttingTaskBlock({ tasks, onReload }: { tasks: CuttingTa
                       </span>
                     )}
                   </div>
+                )}
+
+                {/* Кнопка назначить смену */}
+                {canAssign && (
+                  <button
+                    onClick={() => onAssignClick(task.id)}
+                    className="w-full flex items-center justify-center gap-1.5 text-[11px] font-semibold text-[#6366f1] border border-[#c7d2fe] bg-white rounded-lg py-1.5 hover:bg-[#f5f3ff] transition-all"
+                  >
+                    <Icon name="CalendarPlus" size={12} />
+                    Назначить смену
+                  </button>
                 )}
               </>
             )}

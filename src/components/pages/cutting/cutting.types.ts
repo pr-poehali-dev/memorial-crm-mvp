@@ -87,12 +87,13 @@ export const WORK_LABELS: Record<WorkType, string> = {
   polishing: "Полировка",
 };
 
-export const today = new Date().toLocaleDateString("ru-RU").replace(/\//g, ".");
+/* ISO-даты для сравнения с данными из БД */
+const _now = new Date();
+export const today = _now.toISOString().substring(0, 10);
 
-/* вычисляем вчера */
-const _d   = new Date();
-_d.setDate(_d.getDate() - 1);
-export const yesterday = _d.toLocaleDateString("ru-RU").replace(/\//g, ".");
+const _yd = new Date();
+_yd.setDate(_yd.getDate() - 1);
+export const yesterday = _yd.toISOString().substring(0, 10);
 
 export const initShifts: Shift[] = [
   {

@@ -149,10 +149,9 @@ export function AssignModal({
           <div>
             <label className={labelCls}>Дата</label>
             <input
-              type="text"
+              type="date"
               value={fDate}
               onChange={e => onChangeDate(e.target.value)}
-              placeholder={today}
               className={inputCls}
             />
           </div>

@@ -50,6 +50,8 @@ function dbToTask(t: DbCuttingTask): CuttingTask {
   return {
     id: String(t.id),
     blankTypeId: t.blank_type_id ? String(t.blank_type_id) : "",
+    blankName: t.blank_name,
+    blankSize: t.blank_size,
     materialName: t.material_name || "",
     totalQty: t.total_qty,
     doneQty: t.done_qty,
@@ -125,13 +127,12 @@ export default function CuttingPage() {
     }).then(() => {
       reloadShifts();
       reloadTasks();
+      setAssignModal(false);
+      setFWorkType("cutting");
+      setFDate(today);
+      setFTaskId("");
+      setFTaskQty("");
     }).catch(console.error);
-
-    setAssignModal(false);
-    setFWorkType("cutting");
-    setFDate(today);
-    setFTaskId("");
-    setFTaskQty("");
   };
 
   /* ── Завершить смену → API ── */
@@ -259,7 +260,15 @@ export default function CuttingPage() {
                 )}
               </div>
               <div className="flex-1 overflow-y-auto px-5 py-4">
-                <CuttingTaskBlock tasks={tasks} onReload={reloadTasks} />
+                <CuttingTaskBlock
+                  tasks={tasks}
+                  onReload={reloadTasks}
+                  onAssignClick={(taskId) => {
+                    setFTaskId(taskId);
+                    setFTaskQty("");
+                    setAssignModal(true);
+                  }}
+                />
               </div>
             </div>
 
