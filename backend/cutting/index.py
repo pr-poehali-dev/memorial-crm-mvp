@@ -170,11 +170,12 @@ def handler(event: dict, context) -> dict:
                          r.get("rawAuto", True), raw_used,
                          r.get("orderId"), i)
                     )
-                    # Увеличиваем количество заготовок напрямую по blank_type_id
+                    # Увеличиваем количество заготовок по имени (blanks.name = blank_types.name)
                     if r.get("blankTypeId") and produced > 0:
                         cur.execute(
                             f"""UPDATE {SCHEMA}.blanks SET qty=qty+%s, updated_at=NOW()
-                                WHERE blank_type_id=%s AND company_id=%s""",
+                                WHERE name=(SELECT name FROM {SCHEMA}.blank_types WHERE id=%s LIMIT 1)
+                                AND company_id=%s""",
                             (produced, r["blankTypeId"], company_id)
                         )
 
