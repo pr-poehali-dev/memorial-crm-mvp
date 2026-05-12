@@ -1,6 +1,6 @@
 import Icon from "@/components/ui/icon";
 import {
-  Shift, PLACES, EMPLOYEES, BLANK_TYPES, WORK_LABELS,
+  Shift, WORK_LABELS,
   shiftTotalProduced, shiftTotalRaw,
 } from "./cutting.types";
 
@@ -8,9 +8,8 @@ import {
 function StoneBreakdown({ results }: { results: Shift["results"] }) {
   const byStone: Record<string, number> = {};
   results.forEach(r => {
-    const bt = BLANK_TYPES.find(b => b.id === r.blankTypeId);
-    if (!bt) return;
-    byStone[bt.material] = (byStone[bt.material] ?? 0) + r.rawUsed;
+    const mat = r.material ?? "—";
+    byStone[mat] = (byStone[mat] ?? 0) + r.rawUsed;
   });
   return (
     <div className="space-y-1.5">
@@ -28,29 +27,25 @@ function StoneBreakdown({ results }: { results: Shift["results"] }) {
 function BlankBreakdown({ results }: { results: Shift["results"] }) {
   return (
     <div className="space-y-1.5">
-      {results.map((r, i) => {
-        const bt = BLANK_TYPES.find(b => b.id === r.blankTypeId);
-        if (!bt) return null;
-        return (
-          <div key={i} className="flex items-baseline justify-between gap-2">
-            <div className="flex-1 min-w-0">
-              <span className="text-[12px] text-[#1a1a1a] font-medium truncate block">{bt.name}</span>
-              {r.orderId && (
-                <span className="text-[10px] text-[#9b9b9b] font-mono">{r.orderId}</span>
-              )}
-            </div>
-            <span className="text-[15px] font-bold text-[#1a1a1a] shrink-0">{r.produced} <span className="text-[11px] font-normal text-[#9b9b9b]">шт.</span></span>
+      {results.map((r, i) => (
+        <div key={i} className="flex items-baseline justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <span className="text-[12px] text-[#1a1a1a] font-medium truncate block">{r.blankName ?? r.blankTypeId}</span>
+            {r.orderId && (
+              <span className="text-[10px] text-[#9b9b9b] font-mono">{r.orderId}</span>
+            )}
           </div>
-        );
-      })}
+          <span className="text-[15px] font-bold text-[#1a1a1a] shrink-0">{r.produced} <span className="text-[11px] font-normal text-[#9b9b9b]">шт.</span></span>
+        </div>
+      ))}
     </div>
   );
 }
 
 /* ─── Карточка активной смены ─── */
 export function ActiveShiftCard({ s, onFinish }: { s: Shift; onFinish: () => void }) {
-  const place    = PLACES.find(p => p.id === s.placeId)    ?? { name: s.placeId,    machine: "" };
-  const employee = EMPLOYEES.find(e => e.id === s.employeeId) ?? { id: s.employeeId, name: s.employeeId };
+  const placeName    = s.placeName    ?? s.placeId;
+  const employeeName = s.employeeName ?? s.employeeId;
 
   return (
     <div className="bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl overflow-hidden">
@@ -60,8 +55,8 @@ export function ActiveShiftCard({ s, onFinish }: { s: Shift; onFinish: () => voi
           <Icon name="Play" size={14} style={{ color: "#16a34a" }} />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[13px] font-semibold text-[#1a1a1a] truncate">{place.name}</p>
-          <p className="text-[11px] text-[#4b6b4b] mt-px">{employee.name} · {WORK_LABELS[s.workType]}</p>
+          <p className="text-[13px] font-semibold text-[#1a1a1a] truncate">{placeName}</p>
+          <p className="text-[11px] text-[#4b6b4b] mt-px">{employeeName} · {WORK_LABELS[s.workType]}</p>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           <Icon name="Clock" size={11} className="text-[#22c55e]" />
@@ -98,8 +93,8 @@ export function ActiveShiftCard({ s, onFinish }: { s: Shift; onFinish: () => voi
 
 /* ─── Карточка завершённой смены ─── */
 function DoneCard({ s }: { s: Shift }) {
-  const place    = PLACES.find(p => p.id === s.placeId)       ?? { name: s.placeId,    machine: "" };
-  const employee = EMPLOYEES.find(e => e.id === s.employeeId) ?? { id: s.employeeId, name: s.employeeId };
+  const placeName    = s.placeName    ?? s.placeId;
+  const employeeName = s.employeeName ?? s.employeeId;
   const totalP   = shiftTotalProduced(s);
   const totalR   = shiftTotalRaw(s);
 
@@ -111,8 +106,8 @@ function DoneCard({ s }: { s: Shift }) {
           <Icon name="CheckCheck" size={12} className="text-[#9b9b9b]" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-[12px] font-semibold text-[#4b4b4b] truncate">{place.name}</p>
-          <p className="text-[11px] text-[#9b9b9b]">{employee.name} · {s.startedAt}–{s.finishedAt}</p>
+          <p className="text-[12px] font-semibold text-[#4b4b4b] truncate">{placeName}</p>
+          <p className="text-[11px] text-[#9b9b9b]">{employeeName} · {s.startedAt}{s.finishedAt ? `–${s.finishedAt}` : ""}</p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <span className="text-[13px] font-bold text-[#1a1a1a]">{totalP} шт.</span>
@@ -210,11 +205,15 @@ export default function CuttingShiftCards({ activeShifts, todayDone, onFinishCli
         <p className="text-[13px] text-[#b5b5b5]">Нет смен за этот день</p>
       </div>
     );
-    return (
-      <div className="space-y-2">
-        {todayDone.map(s => <DoneCard key={s.id} s={s} />)}
-      </div>
-    );
+    return <div className="space-y-2">{todayDone.map(s => <DoneCard key={s.id} s={s} />)}</div>;
   }
-  return null;
+
+  return (
+    <div className="space-y-2">
+      {activeShifts.map(s => (
+        <ActiveShiftCard key={s.id} s={s} onFinish={() => onFinishClick(s.id)} />
+      ))}
+      {todayDone.map(s => <DoneCard key={s.id} s={s} />)}
+    </div>
+  );
 }

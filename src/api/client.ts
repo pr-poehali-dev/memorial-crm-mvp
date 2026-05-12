@@ -291,6 +291,7 @@ export type DbShiftResult = {
   id: number;
   blank_type_id?: number;
   blank_name?: string;
+  material?: string;
   produced: number;
   raw_used: number;
   order_ref?: string;

@@ -6,6 +6,61 @@ import {
 } from "./cutting.types";
 
 /* ════════════════════════════════
+   Ползунок с числовым вводом
+════════════════════════════════ */
+function SliderInput({
+  label, value, min = 1, max, onChange, suffix = "шт.",
+}: {
+  label?: string;
+  value: number;
+  min?: number;
+  max: number;
+  onChange: (v: number) => void;
+  suffix?: string;
+}) {
+  const pct = max > 0 ? Math.round(((value - min) / (max - min)) * 100) : 0;
+  return (
+    <div>
+      {label && <label className={labelCls}>{label}</label>}
+      <div className="flex items-center gap-3">
+        <div className="flex-1 relative">
+          <input
+            type="range"
+            min={min}
+            max={max}
+            step={1}
+            value={value}
+            onChange={e => onChange(Number(e.target.value))}
+            className="w-full h-1.5 rounded-full appearance-none cursor-pointer"
+            style={{
+              background: `linear-gradient(to right, #1a1a1a ${pct}%, #e8e8e8 ${pct}%)`,
+            }}
+          />
+        </div>
+        <div className="flex items-center gap-1 w-[72px] shrink-0">
+          <input
+            type="number"
+            min={min}
+            max={max}
+            value={value}
+            onChange={e => {
+              const v = Math.min(max, Math.max(min, parseInt(e.target.value) || min));
+              onChange(v);
+            }}
+            className="w-full bg-white border border-[#e0e0e0] rounded-[8px] px-2 py-1.5 text-[13px] text-[#1a1a1a] text-center outline-none focus:border-[#b0b0b0] transition-colors"
+          />
+          <span className="text-[11px] text-[#9b9b9b] shrink-0">{suffix}</span>
+        </div>
+      </div>
+      <div className="flex justify-between mt-1">
+        <span className="text-[10px] text-[#c5c5c5]">{min}</span>
+        <span className="text-[10px] text-[#c5c5c5]">{max}</span>
+      </div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════
    Модалка: Назначить смену
 ════════════════════════════════ */
 type AssignProps = {
@@ -42,7 +97,7 @@ export function AssignModal({
   const remaining = selectedTask
     ? selectedTask.totalQty - selectedTask.doneQty - selectedTask.inProgressQty
     : 0;
-  const taskQtyNum = parseInt(fTaskQty) || 0;
+  const taskQtyNum = parseInt(fTaskQty) || (remaining > 0 ? remaining : 0);
   const taskOverLimit = selectedTask && taskQtyNum > remaining;
 
   return (
@@ -121,27 +176,24 @@ export function AssignModal({
                 </select>
               </div>
 
-              {fTaskId && selectedTask && (
-                <div>
-                  <label className={labelCls}>Количество в работу (шт.)</label>
-                  <input
-                    type="number" min="1" max={remaining} step="1"
-                    value={fTaskQty}
-                    onChange={e => onChangeTaskQty(e.target.value)}
-                    placeholder={`макс. ${remaining}`}
-                    className={inputCls}
-                  />
-                  {taskOverLimit && (
-                    <p className="mt-1 text-[11px] text-red-500">
-                      Нельзя назначить больше {remaining} шт.
-                    </p>
-                  )}
-                  {!taskOverLimit && taskQtyNum > 0 && (
-                    <p className="mt-1 text-[11px] text-[#6366f1]">
-                      После назначения останется: {remaining - taskQtyNum} шт.
-                    </p>
-                  )}
-                </div>
+              {fTaskId && selectedTask && remaining > 0 && (
+                <SliderInput
+                  label="Количество в работу"
+                  value={taskQtyNum}
+                  min={1}
+                  max={remaining}
+                  onChange={v => onChangeTaskQty(String(v))}
+                  suffix="шт."
+                />
+              )}
+
+              {fTaskId && selectedTask && !taskOverLimit && taskQtyNum > 0 && remaining > 0 && (
+                <p className="text-[11px] text-[#6366f1]">
+                  После назначения останется: {remaining - taskQtyNum} шт.
+                </p>
+              )}
+              {taskOverLimit && (
+                <p className="text-[11px] text-red-500">Нельзя назначить больше {remaining} шт.</p>
               )}
             </div>
           )}
@@ -257,6 +309,8 @@ export function FinishModal({
           {fResults.map((r, idx) => {
             const bt      = blankTypes.find(b => b.id === r.blankTypeId) ?? blankTypes[0];
             const autoRaw = bt ? +(bt.rawPerUnit * r.produced).toFixed(2) : 0;
+            const maxQty  = plan > 0 ? plan : 999;
+
             return (
               <div key={idx} className="bg-[#fafafa] border border-[#f0f0f0] rounded-xl p-4 space-y-3">
                 {fResults.length > 1 && (
@@ -281,47 +335,46 @@ export function FinishModal({
                   </select>
                 </div>
 
-                <div className="flex gap-3">
-                  <div className="flex-1">
-                    <label className={labelCls}>
-                      Количество (шт.)
-                      {plan > 0 && <span className="ml-1 text-[#9b9b9b] font-normal">план: {plan}</span>}
-                    </label>
-                    <input
-                      type="number" min="1" step="1"
-                      value={r.produced}
-                      onChange={e => onUpdateResult(idx, { produced: Math.max(1, parseInt(e.target.value) || 1) })}
-                      className={inputCls}
-                    />
+                {/* Ползунок количества */}
+                <SliderInput
+                  label={plan > 0 ? `Количество (план: ${plan} шт.)` : "Количество (шт.)"}
+                  value={r.produced}
+                  min={1}
+                  max={maxQty}
+                  onChange={v => onUpdateResult(idx, { produced: v })}
+                  suffix="шт."
+                />
+
+                {/* Расход сырья */}
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-[13px] font-medium text-[#4b4b4b]">Расход сырья (м²)</label>
+                    <button
+                      onClick={() => onUpdateResult(idx, { rawAuto: !r.rawAuto, rawUsed: r.rawAuto ? r.rawUsed : autoRaw })}
+                      className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border transition-all
+                        ${r.rawAuto
+                          ? "bg-[#1a1a1a] text-white border-[#1a1a1a]"
+                          : "bg-white text-[#6b6b6b] border-[#e0e0e0]"}`}
+                    >
+                      {r.rawAuto ? "авто" : "вручную"}
+                    </button>
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-1.5">
-                      <label className="text-[13px] font-medium text-[#4b4b4b]">Расход (м²)</label>
-                      <button
-                        onClick={() => onUpdateResult(idx, { rawAuto: !r.rawAuto, rawUsed: r.rawAuto ? r.rawUsed : autoRaw })}
-                        className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border transition-all
-                          ${r.rawAuto
-                            ? "bg-[#1a1a1a] text-white border-[#1a1a1a]"
-                            : "bg-white text-[#6b6b6b] border-[#e0e0e0]"}`}
-                      >
-                        {r.rawAuto ? "авто" : "вручную"}
-                      </button>
+                  {r.rawAuto ? (
+                    <div className="bg-[#f5f5f5] border border-[#e8e8e8] rounded-[10px] px-3 py-2.5 flex items-center justify-between">
+                      <span className="text-[12px] text-[#9b9b9b]">
+                        {bt?.rawPerUnit ?? 0} м²/шт. × {r.produced} шт.
+                      </span>
+                      <span className="text-[14px] font-bold text-[#f59e0b]">{autoRaw} м²</span>
                     </div>
+                  ) : (
                     <input
                       type="number" min="0" step="0.01"
                       value={r.rawUsed}
-                      readOnly={r.rawAuto}
-                      onChange={e => !r.rawAuto && onUpdateResult(idx, { rawUsed: parseFloat(e.target.value) || 0 })}
-                      className={inputCls + (r.rawAuto ? " bg-[#f5f5f5] text-[#9b9b9b] cursor-default" : "")}
+                      onChange={e => onUpdateResult(idx, { rawUsed: parseFloat(e.target.value) || 0 })}
+                      className={inputCls}
                     />
-                  </div>
+                  )}
                 </div>
-
-                {r.rawAuto && bt && (
-                  <p className="text-[11px] text-[#9b9b9b]">
-                    {bt.rawPerUnit} м²/шт. × {r.produced} шт. = <b className="text-[#f59e0b]">{autoRaw} м²</b>
-                  </p>
-                )}
 
                 <div>
                   <label className={labelCls}>Для какого заказа</label>

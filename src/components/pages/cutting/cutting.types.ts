@@ -37,6 +37,8 @@ export type BlankType = {
 
 export type ShiftResult = {
   blankTypeId: string;
+  blankName?: string;
+  material?: string;
   produced: number;
   rawAuto: boolean;
   rawUsed: number;
@@ -46,7 +48,9 @@ export type ShiftResult = {
 export type Shift = {
   id: string;
   placeId: string;
+  placeName?: string;
   employeeId: string;
+  employeeName?: string;
   workType: WorkType;
   date: string;
   status: "active" | "done";

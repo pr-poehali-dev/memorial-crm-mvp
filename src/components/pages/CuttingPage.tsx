@@ -19,7 +19,9 @@ function dbToShift(s: DbShift): Shift {
   return {
     id: String(s.id),
     placeId: String(s.place_id),
+    placeName: s.place_name,
     employeeId: String(s.employee_id),
+    employeeName: s.employee_name,
     workType: s.work_type as WorkType,
     date: s.shift_date?.substring(0, 10) || today,
     status: s.status as "active" | "done",
@@ -28,7 +30,9 @@ function dbToShift(s: DbShift): Shift {
     taskId: s.task_id ? String(s.task_id) : undefined,
     taskQtyAssigned: s.task_qty_assigned || undefined,
     results: (s.results || []).map(r => ({
-      blankTypeId: String(r.blank_type_id),
+      blankTypeId: String(r.blank_type_id ?? ""),
+      blankName: r.blank_name,
+      material: r.material,
       produced: r.produced,
       rawAuto: true,
       rawUsed: Number(r.raw_used),
@@ -140,20 +144,25 @@ export default function CuttingPage() {
     if (!finishShiftId) return;
     cuttingApi.finishShift({
       shiftId: parseInt(finishShiftId),
-      results: fResults.map(r => ({
-        blankTypeId: parseInt(r.blankTypeId),
-        produced:    r.produced,
-        rawAuto:     r.rawAuto,
-        rawUsed:     r.rawUsed,
-        orderId:     r.orderId,
-      })),
+      results: fResults.map(r => {
+        const bt = blankTypes.find(b => b.id === r.blankTypeId);
+        const rawUsed = r.rawAuto && bt
+          ? +(bt.rawPerUnit * r.produced).toFixed(2)
+          : r.rawUsed;
+        return {
+          blankTypeId: parseInt(r.blankTypeId),
+          produced:    r.produced,
+          rawAuto:     r.rawAuto,
+          rawUsed,
+          orderId:     r.orderId,
+        };
+      }),
     }).then(() => {
       reloadShifts();
       reloadTasks();
+      setFinishShiftId(null);
+      setFResults(firstBt ? [emptyResultFromBt(firstBt)] : []);
     }).catch(console.error);
-
-    setFinishShiftId(null);
-    setFResults(firstBt ? [emptyResultFromBt(firstBt)] : []);
   };
 
   const updateResult = (idx: number, patch: Partial<ShiftResult>) => {

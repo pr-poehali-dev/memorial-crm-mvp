@@ -64,9 +64,10 @@ def handler(event: dict, context) -> dict:
                           COALESCE(
                             json_agg(jsonb_build_object(
                               'id',sr.id,'blankTypeId',sr.blank_type_id,
-                              'blankName',bt.name,'produced',sr.produced,
+                              'blankName',bt.name,'material',bt.material,
+                              'produced',sr.produced,
                               'rawUsed',sr.raw_used,'orderRef',sr.order_ref
-                            )) FILTER (WHERE sr.id IS NOT NULL), '[]'
+                            ) ORDER BY sr.sort_order) FILTER (WHERE sr.id IS NOT NULL), '[]'
                           ) as results
                           FROM {SCHEMA}.shifts s
                           LEFT JOIN {SCHEMA}.places p ON p.id=s.place_id
