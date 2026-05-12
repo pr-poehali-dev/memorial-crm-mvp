@@ -18,7 +18,9 @@ function SliderInput({
   onChange: (v: number) => void;
   suffix?: string;
 }) {
-  const pct = max > 0 ? Math.round(((value - min) / (max - min)) * 100) : 0;
+  /* при min === max (1 шт.) — ползунок полностью заполнен */
+  const pct = max <= min ? 100 : Math.round(((value - min) / (max - min)) * 100);
+
   return (
     <div>
       {label && <label className={labelCls}>{label}</label>}
@@ -27,7 +29,7 @@ function SliderInput({
           <input
             type="range"
             min={min}
-            max={max}
+            max={Math.max(max, min)}
             step={1}
             value={value}
             onChange={e => onChange(Number(e.target.value))}
@@ -52,10 +54,12 @@ function SliderInput({
           <span className="text-[11px] text-[#9b9b9b] shrink-0">{suffix}</span>
         </div>
       </div>
-      <div className="flex justify-between mt-1">
-        <span className="text-[10px] text-[#c5c5c5]">{min}</span>
-        <span className="text-[10px] text-[#c5c5c5]">{max}</span>
-      </div>
+      {max > min && (
+        <div className="flex justify-between mt-1">
+          <span className="text-[10px] text-[#c5c5c5]">{min}</span>
+          <span className="text-[10px] text-[#c5c5c5]">{max}</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -326,7 +330,11 @@ export function FinishModal({
                   <label className={labelCls}>Тип заготовки</label>
                   <select
                     value={r.blankTypeId}
-                    onChange={e => onUpdateResult(idx, { blankTypeId: e.target.value })}
+                    onChange={e => {
+                      const newBt = blankTypes.find(b => b.id === e.target.value);
+                      const newRaw = r.rawAuto && newBt ? +(newBt.rawPerUnit * r.produced).toFixed(2) : r.rawUsed;
+                      onUpdateResult(idx, { blankTypeId: e.target.value, rawUsed: newRaw });
+                    }}
                     className={selectCls}
                   >
                     {blankTypes.map(b => (
@@ -341,7 +349,10 @@ export function FinishModal({
                   value={r.produced}
                   min={1}
                   max={maxQty}
-                  onChange={v => onUpdateResult(idx, { produced: v })}
+                  onChange={v => {
+                    const newRaw = r.rawAuto && bt ? +(bt.rawPerUnit * v).toFixed(2) : r.rawUsed;
+                    onUpdateResult(idx, { produced: v, rawUsed: newRaw });
+                  }}
                   suffix="шт."
                 />
 
@@ -350,7 +361,10 @@ export function FinishModal({
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="text-[13px] font-medium text-[#4b4b4b]">Расход сырья (м²)</label>
                     <button
-                      onClick={() => onUpdateResult(idx, { rawAuto: !r.rawAuto, rawUsed: r.rawAuto ? r.rawUsed : autoRaw })}
+                      onClick={() => {
+                        const switchingToAuto = r.rawAuto === false;
+                        onUpdateResult(idx, { rawAuto: !r.rawAuto, rawUsed: switchingToAuto ? autoRaw : r.rawUsed });
+                      }}
                       className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border transition-all
                         ${r.rawAuto
                           ? "bg-[#1a1a1a] text-white border-[#1a1a1a]"
