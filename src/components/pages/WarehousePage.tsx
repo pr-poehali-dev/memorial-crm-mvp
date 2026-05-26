@@ -287,14 +287,19 @@ export default function WarehousePage() {
         onCloseMatDetail={() => setMatDetail(null)}
         onCloseAddMat={() => setShowAddMat(false)}
         onCloseHistory={() => setShowHistory(false)}
-        onAddMat={mat => { setRawMat(prev => [...prev, mat]); reload().catch(console.error); }}
+        onAddMat={mat => {
+          warehouseApi.addMaterial({
+            name:     mat.name,
+            unit:     mat.unit,
+            qty:      mat.qty,
+            minQty:   mat.min,
+            price:    mat.price,
+            imageUrl: mat.imageUrl,
+          } as unknown as Partial<DbMaterial>)
+            .then(() => reload())
+            .catch(console.error);
+        }}
       />
-
-      {loadingData && (
-        <div className="fixed inset-0 bg-white/60 flex items-center justify-center z-50 pointer-events-none">
-          <div className="text-[13px] text-[#9b9b9b]">Загрузка склада…</div>
-        </div>
-      )}
 
     </div>
   );
