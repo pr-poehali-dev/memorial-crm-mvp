@@ -62,6 +62,7 @@ function dbToTask(t: DbCuttingTask): CuttingTask {
     inProgressQty: t.in_progress_qty,
     status: t.status as CuttingTask["status"],
     createdAt: new Date(t.created_at).toLocaleDateString("ru-RU"),
+    updatedAt: t.updated_at ? t.updated_at.substring(0, 10) : undefined,
     deadline: t.deadline ? new Date(t.deadline).toLocaleDateString("ru-RU") : undefined,
   };
 }
@@ -266,11 +267,19 @@ export default function CuttingPage() {
                   <Icon name="ClipboardList" size={11} className="text-[#6366f1]" />
                 </div>
                 <p className="text-[11px] font-bold uppercase tracking-widest text-[#6366f1]">Задачи</p>
-                {tasks.filter(t => t.status !== "done").length > 0 && (
-                  <span className="text-[10px] font-bold bg-[#6366f1] text-white px-1.5 py-px rounded-full">
-                    {tasks.filter(t => t.status !== "done").length}
-                  </span>
-                )}
+                {(() => {
+                  const n = tasks.filter(t => {
+                    if (t.status === "done" || t.status === "cancelled") return false;
+                    if (t.status === "active") {
+                      const rem = (t.totalQty ?? 0) - (t.doneQty ?? 0) - (t.inProgressQty ?? 0);
+                      return rem > 0;
+                    }
+                    return true;
+                  }).length;
+                  return n > 0 ? (
+                    <span className="text-[10px] font-bold bg-[#6366f1] text-white px-1.5 py-px rounded-full">{n}</span>
+                  ) : null;
+                })()}
               </div>
               <div className="flex-1 overflow-y-auto px-5 py-4">
                 <CuttingTaskBlock
@@ -336,7 +345,7 @@ export default function CuttingPage() {
                 )}
               </div>
               <div className="flex-1 overflow-y-auto px-5 py-4">
-                <DoneColumn shifts={todayDone} />
+                <DoneColumn shifts={todayDone} tasks={tasks} />
               </div>
             </div>
 

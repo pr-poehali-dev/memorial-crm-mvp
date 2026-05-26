@@ -4,10 +4,10 @@ import { CuttingTask } from "./cutting.types";
 import { cuttingApi } from "@/api/client";
 
 /* ─── Попап с деталями завершённой задачи ─── */
-function DoneTaskModal({ task, onClose }: { task: CuttingTask; onClose: () => void }) {
-  const totalQty      = task.totalQty      ?? 0;
-  const doneQty       = task.doneQty       ?? 0;
-  const pct           = totalQty > 0 ? Math.round((doneQty / totalQty) * 100) : 100;
+export function DoneTaskModal({ task, onClose }: { task: CuttingTask; onClose: () => void }) {
+  const totalQty = task.totalQty ?? 0;
+  const doneQty  = task.doneQty  ?? 0;
+  const pct      = totalQty > 0 ? Math.round((doneQty / totalQty) * 100) : 100;
 
   return (
     <div
@@ -18,7 +18,6 @@ function DoneTaskModal({ task, onClose }: { task: CuttingTask; onClose: () => vo
         className="bg-white rounded-2xl border border-[#ebebeb] shadow-2xl p-6 w-full max-w-[380px]"
         onClick={e => e.stopPropagation()}
       >
-        {/* Шапка */}
         <div className="flex items-start justify-between gap-3 mb-5">
           <div>
             <div className="flex items-center gap-2 mb-1">
@@ -39,7 +38,6 @@ function DoneTaskModal({ task, onClose }: { task: CuttingTask; onClose: () => vo
           </button>
         </div>
 
-        {/* Прогресс */}
         <div className="bg-[#f8f8f8] rounded-xl p-4 mb-4">
           <div className="flex items-baseline gap-1.5 mb-3">
             <span className="text-[36px] font-bold text-[#1a1a1a] leading-none">{doneQty}</span>
@@ -51,7 +49,6 @@ function DoneTaskModal({ task, onClose }: { task: CuttingTask; onClose: () => vo
           </div>
         </div>
 
-        {/* Детали */}
         <div className="space-y-2.5">
           <div className="flex justify-between items-center py-2 border-b border-[#f5f5f5]">
             <span className="text-[12px] text-[#9b9b9b]">Материал</span>
@@ -100,16 +97,27 @@ type Props = {
 };
 
 export default function CuttingTaskBlock({ tasks, onReload, onAssignClick }: Props) {
-  const [doneModal, setDoneModal] = useState<CuttingTask | null>(null);
-
-  /* Показываем только активные (pending + active), завершённые и отменённые скрыты */
-  const visibleTasks = tasks.filter(t => t.status !== "done" && t.status !== "cancelled");
-
   const handleCancel = (task: CuttingTask) => {
     cuttingApi.cancelTask(parseInt(task.id))
       .then(onReload)
       .catch(console.error);
   };
+
+  /*
+    В колонке ЗАДАЧИ показываем:
+    - pending — ещё не назначена ни одна смена
+    - active — смена назначена, но задача не доделана (remaining > 0)
+    cancelled — не показываем нигде
+    done — не показываем здесь (уйдёт в ЗАВЕРШЕНО)
+  */
+  const visibleTasks = tasks.filter(t => {
+    if (t.status === "done" || t.status === "cancelled") return false;
+    if (t.status === "active") {
+      const remaining = (t.totalQty ?? 0) - (t.doneQty ?? 0) - (t.inProgressQty ?? 0);
+      return remaining > 0;
+    }
+    return true; // pending
+  });
 
   return (
     <div className="flex flex-col gap-2 h-full">
@@ -130,7 +138,6 @@ export default function CuttingTaskBlock({ tasks, onReload, onAssignClick }: Pro
         const remaining     = totalQty - doneQty - inProgressQty;
         const pct           = totalQty > 0 ? Math.round((doneQty / totalQty) * 100) : 0;
         const isActive      = task.status === "active";
-        const canAssign     = !isActive || remaining > 0;
 
         return (
           <div
@@ -171,13 +178,15 @@ export default function CuttingTaskBlock({ tasks, onReload, onAssignClick }: Pro
               <span className="text-[13px] text-[#9b9b9b]">/ {totalQty} шт.</span>
             </div>
 
-            {/* Прогресс-бар */}
-            <div className="h-1.5 bg-[#ebebeb] rounded-full overflow-hidden mb-2.5">
-              <div
-                className="h-full rounded-full transition-all"
-                style={{ width: `${pct}%`, backgroundColor: isActive ? "#6366f1" : "#c0c0c0" }}
-              />
-            </div>
+            {/* Прогресс-бар — показываем только если уже есть прогресс */}
+            {(doneQty > 0 || isActive) && (
+              <div className="h-1.5 bg-[#ebebeb] rounded-full overflow-hidden mb-2.5">
+                <div
+                  className="h-full rounded-full transition-all"
+                  style={{ width: `${pct}%`, backgroundColor: isActive ? "#6366f1" : "#c0c0c0" }}
+                />
+              </div>
+            )}
 
             {/* Детали */}
             <div className="flex items-center gap-3 flex-wrap mb-3">
@@ -200,7 +209,7 @@ export default function CuttingTaskBlock({ tasks, onReload, onAssignClick }: Pro
             </div>
 
             {/* Кнопка назначить смену */}
-            {canAssign && onAssignClick && (
+            {onAssignClick && remaining > 0 && (
               <button
                 onClick={() => onAssignClick(task.id)}
                 className="w-full flex items-center justify-center gap-1.5 text-[11px] font-semibold text-[#6366f1] border border-[#c7d2fe] bg-white rounded-lg py-1.5 hover:bg-[#f5f3ff] transition-all"
@@ -212,47 +221,6 @@ export default function CuttingTaskBlock({ tasks, onReload, onAssignClick }: Pro
           </div>
         );
       })}
-
-      {/* Завершённые задачи — компактный список с кликом */}
-      {(() => {
-        const doneTasks = tasks.filter(t => t.status === "done");
-        if (doneTasks.length === 0) return null;
-        return (
-          <div className="mt-2">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-[#c0c0c0] mb-2 px-1">
-              Завершено ({doneTasks.length})
-            </p>
-            <div className="flex flex-col gap-1.5">
-              {doneTasks.map(task => (
-                <button
-                  key={task.id}
-                  onClick={() => setDoneModal(task)}
-                  className="w-full flex items-center gap-3 bg-[#fafafa] border border-[#ebebeb] rounded-xl px-4 py-3 hover:bg-[#f0fdf4] hover:border-[#bbf7d0] transition-all text-left group"
-                >
-                  <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center shrink-0">
-                    <Icon name="Check" size={12} className="text-green-600" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[12px] font-semibold text-[#6b6b6b] truncate group-hover:text-[#1a1a1a]">
-                      {task.blankName || "Заготовка"}
-                    </p>
-                    <p className="text-[10px] text-[#b5b5b5]">{task.materialName}</p>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-[12px] font-bold text-[#9b9b9b]">{task.doneQty ?? 0} шт.</span>
-                    <Icon name="ChevronRight" size={12} className="text-[#c5c5c5] group-hover:text-[#6b6b6b]" />
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        );
-      })()}
-
-      {/* Попап завершённой задачи */}
-      {doneModal && (
-        <DoneTaskModal task={doneModal} onClose={() => setDoneModal(null)} />
-      )}
     </div>
   );
 }

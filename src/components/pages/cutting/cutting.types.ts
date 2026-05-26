@@ -15,6 +15,7 @@ export type CuttingTask = {
   inProgressQty: number;
   status: CuttingTaskStatus;
   createdAt: string;
+  updatedAt?: string; /* ISO-дата последнего изменения, нужна для «завершено вчера» */
   deadline?: string;
 };
 

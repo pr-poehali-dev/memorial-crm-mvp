@@ -1,8 +1,11 @@
+import { useState } from "react";
 import Icon from "@/components/ui/icon";
 import {
   Shift, WORK_LABELS,
   shiftTotalProduced, shiftTotalRaw,
+  CuttingTask, yesterday,
 } from "./cutting.types";
+import { DoneTaskModal } from "./CuttingTaskBlock";
 
 /* ─── Разбивка сырья по камню ─── */
 function StoneBreakdown({ results }: { results: Shift["results"] }) {
@@ -167,10 +170,19 @@ export function ActiveColumn({ shifts, onFinishClick }: {
 /* ════════════════════════════════════════
    Колонка «Завершено»
 ════════════════════════════════════════ */
-export function DoneColumn({ shifts }: { shifts: Shift[] }) {
+export function DoneColumn({ shifts, tasks }: { shifts: Shift[]; tasks?: CuttingTask[] }) {
+  const [doneModal, setDoneModal] = useState<CuttingTask | null>(null);
+
+  /* Задачи, завершённые вчера */
+  const yesterdayTasks = (tasks ?? []).filter(
+    t => t.status === "done" && t.updatedAt === yesterday
+  );
+
+  const hasAnything = shifts.length > 0 || yesterdayTasks.length > 0;
+
   return (
     <div className="flex flex-col gap-2 h-full">
-      {shifts.length === 0 ? (
+      {!hasAnything && (
         <div className="flex flex-col items-center justify-center py-10 text-center flex-1">
           <div className="w-10 h-10 rounded-2xl bg-[#f4f4f4] flex items-center justify-center mb-2">
             <Icon name="CheckCircle" size={18} className="text-[#c0c0c0]" />
@@ -178,8 +190,53 @@ export function DoneColumn({ shifts }: { shifts: Shift[] }) {
           <p className="text-[12px] text-[#b5b5b5]">Завершённых нет</p>
           <p className="text-[11px] text-[#c5c5c5] mt-0.5">Появятся после завершения смен</p>
         </div>
-      ) : (
-        shifts.map(s => <DoneCard key={s.id} s={s} />)
+      )}
+
+      {/* Смены сегодня */}
+      {shifts.map(s => <DoneCard key={s.id} s={s} />)}
+
+      {/* Раздел «Завершено вчера» — задачи */}
+      {yesterdayTasks.length > 0 && (
+        <div className={shifts.length > 0 ? "mt-3" : ""}>
+          <div className="flex items-center gap-2 mb-2 px-1">
+            <div className="w-4 h-4 rounded-md bg-[#f0f0f0] flex items-center justify-center shrink-0">
+              <Icon name="CalendarCheck" size={10} className="text-[#9b9b9b]" />
+            </div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-[#b5b5b5]">
+              Завершено вчера
+            </p>
+            <span className="text-[10px] font-bold bg-[#f0f0f0] text-[#9b9b9b] px-1.5 py-px rounded-full">
+              {yesterdayTasks.length}
+            </span>
+          </div>
+          <div className="flex flex-col gap-1.5">
+            {yesterdayTasks.map(task => (
+              <button
+                key={task.id}
+                onClick={() => setDoneModal(task)}
+                className="w-full flex items-center gap-3 bg-[#fafafa] border border-[#ebebeb] rounded-xl px-4 py-3 hover:bg-[#f0fdf4] hover:border-[#bbf7d0] transition-all text-left group"
+              >
+                <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                  <Icon name="Check" size={12} className="text-green-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[12px] font-semibold text-[#6b6b6b] truncate group-hover:text-[#1a1a1a]">
+                    {task.blankName || "Заготовка"}
+                  </p>
+                  <p className="text-[10px] text-[#b5b5b5]">{task.materialName}</p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-[12px] font-bold text-[#9b9b9b]">{task.doneQty ?? 0} шт.</span>
+                  <Icon name="ChevronRight" size={12} className="text-[#c5c5c5] group-hover:text-[#6b6b6b]" />
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {doneModal && (
+        <DoneTaskModal task={doneModal} onClose={() => setDoneModal(null)} />
       )}
     </div>
   );
