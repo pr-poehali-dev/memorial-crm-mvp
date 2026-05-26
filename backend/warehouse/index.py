@@ -117,13 +117,10 @@ def handler(event: dict, context) -> dict:
                         (qty, mat_id, company_id)
                     )
                 elif action == "cut" and mat_id and blank_id:
+                    # Только списываем сырьё. Заготовки добавляются на склад при завершении задачи (finish_shift)
                     cur.execute(
                         f"UPDATE {SCHEMA}.materials SET qty=GREATEST(0,qty-%s), updated_at=NOW() WHERE id=%s AND company_id=%s",
                         (qty, mat_id, company_id)
-                    )
-                    cur.execute(
-                        f"UPDATE {SCHEMA}.blanks SET qty=qty+%s, updated_at=NOW() WHERE id=%s AND company_id=%s",
-                        (body.get("blankQty", 1), blank_id, company_id)
                     )
 
                 remain = None
