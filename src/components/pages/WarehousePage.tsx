@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import LoadingScreen from "@/components/ui/LoadingScreen";
 import {
   RawMaterial, Blank, Movement, ModalType, StockItem,
@@ -7,7 +7,6 @@ import {
 } from "./warehouse/warehouse.types";
 import { warehouseApi, cuttingApi, DbMaterial, DbBlank, DbMovement, DbStockItem } from "@/api/client";
 import { useTasks } from "@/store/tasksStore";
-import { useCachedData, invalidateCache } from "@/store/dataCache";
 import { toast } from "sonner";
 import WarehouseHeader from "./warehouse/WarehouseHeader";
 import WarehouseContent from "./warehouse/WarehouseContent";
@@ -45,31 +44,29 @@ export default function WarehousePage() {
   const [tab, setTab]             = useState<"raw" | "blanks" | "stock">("raw");
   const [modal, setModal]         = useState<ModalType>(null);
 
-  const { data: warehouseData, loading: loadingData, refresh } = useCachedData(
-    "warehouse:all",
-    () => Promise.all([
+  const [rawMat,     setRawMat]     = useState<RawMaterial[]>([]);
+  const [blanks,     setBlanks]     = useState<Blank[]>([]);
+  const [movements,  setMovements]  = useState<Movement[]>([]);
+  const [stock,      setStock]      = useState<StockItem[]>([]);
+  const [loadingData, setLoadingData] = useState(true);
+
+  const reload = useCallback(() => {
+    return Promise.all([
       warehouseApi.materials(),
       warehouseApi.blanks(),
       warehouseApi.movements(),
       warehouseApi.stock(),
-    ]).then(([mats, bls, movs, stk]) => ({
-      rawMat:    mats.map(dbToRaw),
-      blanks:    bls.map(dbToBlank),
-      movements: movs.map(dbToMovement),
-      stock:     stk.map(dbToStock),
-    })),
-  );
+    ]).then(([mats, bls, movs, stk]) => {
+      setRawMat(mats.map(dbToRaw));
+      setBlanks(bls.map(dbToBlank));
+      setMovements(movs.map(dbToMovement));
+      setStock(stk.map(dbToStock));
+    });
+  }, []);
 
-  const rawMat    = warehouseData?.rawMat    ?? [];
-  const blanks    = warehouseData?.blanks    ?? [];
-  const movements = warehouseData?.movements ?? [];
-  const stock     = warehouseData?.stock     ?? [];
-
-  /* После мутаций сбрасываем кэш и перезагружаем */
-  const reload = useCallback(() => {
-    invalidateCache("warehouse:all");
-    return refresh(true);
-  }, [refresh]);
+  useEffect(() => {
+    reload().catch(console.error).finally(() => setLoadingData(false));
+  }, [reload]);
 
   const [search, setSearch]     = useState("");
 

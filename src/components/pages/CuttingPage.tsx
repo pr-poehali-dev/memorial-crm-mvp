@@ -7,7 +7,6 @@ import {
 } from "./cutting/cutting.types";
 import { cuttingApi, DbShift, DbPlace, DbEmployee, DbBlankType, DbCuttingTask } from "@/api/client";
 import { useTasks } from "@/store/tasksStore";
-import { useCachedData, invalidateCache } from "@/store/dataCache";
 import CuttingShiftCards from "./cutting/CuttingShiftCards";
 import { ActiveColumn, DoneColumn } from "./cutting/CuttingShiftCards";
 import CuttingJournal from "./cutting/CuttingJournal";
@@ -74,35 +73,13 @@ export default function CuttingPage() {
   /* Задачи из глобального TasksContext (туда пишет и Склад при создании) */
   const { tasks, setTasks: setCtxTasks } = useTasks();
 
-  /* Смены — обновляются часто, короткий staleMs */
-  const { data: shiftsData, refresh: refreshShifts } = useCachedData(
-    "cutting:shifts",
-    () => cuttingApi.shifts().then(d => d.map(dbToShift)),
-  );
-  const shifts = shiftsData ?? [];
+  const [shifts,     setShifts]     = useState<Shift[]>([]);
+  const [places,     setPlaces]     = useState<Place[]>([]);
+  const [employees,  setEmployees]  = useState<Employee[]>([]);
+  const [blankTypes, setBlankTypes] = useState<BlankType[]>([]);
 
-  /* Справочники — меняются редко, держим в кэше дольше */
-  const { data: refsData } = useCachedData(
-    "cutting:refs",
-    () => Promise.all([
-      cuttingApi.places(),
-      cuttingApi.employees(),
-      cuttingApi.blankTypes(),
-    ]).then(([pl, em, bt]) => ({
-      places:     pl.map(dbToPlace),
-      employees:  em.map(dbToEmployee),
-      blankTypes: bt.map(dbToBlankType),
-    })),
-    { staleMs: 5 * 60_000 },
-  );
-  const places     = refsData?.places     ?? [];
-  const employees  = refsData?.employees  ?? [];
-  const blankTypes = refsData?.blankTypes ?? [];
-
-  const reloadShifts = useCallback(() => {
-    invalidateCache("cutting:shifts");
-    return refreshShifts(true);
-  }, [refreshShifts]);
+  const reloadShifts = useCallback(() =>
+    cuttingApi.shifts().then(data => setShifts(data.map(dbToShift))).catch(console.error), []);
 
   const reloadTasks = useCallback(() =>
     cuttingApi.tasks().then(data => {
@@ -110,8 +87,12 @@ export default function CuttingPage() {
     }).catch(console.error), [setCtxTasks]);
 
   useEffect(() => {
+    reloadShifts();
     reloadTasks();
-  }, [reloadTasks]);
+    cuttingApi.places().then(d => setPlaces(d.map(dbToPlace))).catch(console.error);
+    cuttingApi.employees().then(d => setEmployees(d.map(dbToEmployee))).catch(console.error);
+    cuttingApi.blankTypes().then(d => setBlankTypes(d.map(dbToBlankType))).catch(console.error);
+  }, [reloadShifts, reloadTasks]);
 
   /* Модалки */
   const [assignModal,   setAssignModal]   = useState(false);
