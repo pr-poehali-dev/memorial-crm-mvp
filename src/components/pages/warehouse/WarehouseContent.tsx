@@ -1,6 +1,6 @@
 import Icon from "@/components/ui/icon";
-import { RawMaterial, Blank, Movement, StockItem, getAvailable, getAvailableBlank } from "./warehouse.types";
-import { RawTable, BlanksTable, MovementHistory } from "./WarehouseTables";
+import { RawMaterial, Blank, StockItem, getAvailable, getAvailableBlank } from "./warehouse.types";
+import { RawTable, BlanksTable } from "./WarehouseTables";
 import StockTable from "./StockTable";
 
 type Reserve = { materialId: string; totalReserved: number };
@@ -12,14 +12,11 @@ type Props = {
   filteredBlanks: Blank[];
   rawMat: RawMaterial[];
   blanks: Blank[];
-  movements: Movement[];
   stock: StockItem[];
   reserves: Reserve[];
   blankReserves: BlankReserve[];
   getReserved: (id: string) => number;
   getBlankReserved: (id: string) => number;
-  onHistory: (mat: RawMaterial) => void;
-  onOpenAll: () => void;
   onStockAdd: (item: StockItem) => void;
   onStockUpdateQty: (id: string, delta: number) => void;
   onStockRemove: (id: string) => void;
@@ -28,10 +25,9 @@ type Props = {
 export default function WarehouseContent({
   tab,
   filteredRaw, filteredBlanks,
-  rawMat, blanks, movements, stock,
+  rawMat, blanks, stock,
   reserves, blankReserves,
   getReserved, getBlankReserved,
-  onHistory, onOpenAll,
   onStockAdd, onStockUpdateQty, onStockRemove,
 }: Props) {
   return (
@@ -110,7 +106,6 @@ export default function WarehouseContent({
           <RawTable
             filteredRaw={filteredRaw}
             reserves={reserves}
-            onHistory={mat => onHistory(mat)}
           />
         </>
       )}
@@ -200,11 +195,6 @@ export default function WarehouseContent({
           onUpdateQty={(id, delta) => onStockUpdateQty(id, delta)}
           onRemove={onStockRemove}
         />
-      )}
-
-      {/* ── История движений (компактная) ── */}
-      {tab !== "stock" && (
-        <MovementHistory movements={movements} rawMat={rawMat} blanks={blanks} onOpenAll={onOpenAll} />
       )}
     </>
   );

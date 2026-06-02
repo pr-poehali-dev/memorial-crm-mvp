@@ -70,7 +70,6 @@ export default function WarehousePage() {
   const [search, setSearch]     = useState("");
 
   const [showHistory, setShowHistory] = useState(false);
-  const [matDetail,   setMatDetail]   = useState<RawMaterial | null>(null);
   const [showAddMat,  setShowAddMat]  = useState(false);
 
   /* ── форма Приход ── */
@@ -184,7 +183,10 @@ export default function WarehousePage() {
   const totalRawVal   = rawMat.reduce((s, r) => s + r.qty * r.price, 0);
   const totalRawArea  = rawMat.reduce((s, r) => s + r.qty, 0);
   const totalBlankQty = blanks.reduce((s, b) => s + b.qty, 0);
+  const totalBlankVal = blanks.reduce((s, b) => s + b.qty * (b.salePrice || b.costPrice || 0), 0);
   const totalStockQty = stock.reduce((s, i) => s + i.qty, 0);
+  const totalStockVal = stock.reduce((s, i) => s + i.qty * (i.price || 0), 0);
+  const totalWarehouseVal = totalRawVal + totalBlankVal + totalStockVal;
   const criticalRaw   = rawMat.filter(r => getLevelRaw(r, getReserved(r.id)) === "critical").length;
   const critBlanks    = blanks.filter(b => getLevelBlank(b) === "critical").length;
 
@@ -202,7 +204,10 @@ export default function WarehousePage() {
         totalRawVal={totalRawVal}
         totalRawArea={totalRawArea}
         totalBlankQty={totalBlankQty}
+        totalBlankVal={totalBlankVal}
         totalStockQty={totalStockQty}
+        totalStockVal={totalStockVal}
+        totalWarehouseVal={totalWarehouseVal}
         criticalRaw={criticalRaw}
         critBlanks={critBlanks}
         tab={tab}
@@ -218,6 +223,7 @@ export default function WarehousePage() {
           setModal(m);
         }}
         onShowAddMat={() => setShowAddMat(true)}
+        onShowHistory={() => setShowHistory(true)}
       />
 
       <WarehouseContent
@@ -226,14 +232,11 @@ export default function WarehousePage() {
         filteredBlanks={filteredBlanks}
         rawMat={rawMat}
         blanks={blanks}
-        movements={movements}
         stock={stock}
         reserves={reserves}
         blankReserves={blankReserves}
         getReserved={getReserved}
         getBlankReserved={getBlankReserved}
-        onHistory={setMatDetail}
-        onOpenAll={() => setShowHistory(true)}
         onStockAdd={item => {
           warehouseApi.addStock({
             catalogId: item.catalogId || undefined,
@@ -260,7 +263,6 @@ export default function WarehousePage() {
         blanks={blanks}
         stock={stock}
         movements={movements}
-        matDetail={matDetail}
         showAddMat={showAddMat}
         showHistory={showHistory}
         inRawId={inRawId}         setInRawId={setInRawId}
@@ -276,7 +278,6 @@ export default function WarehousePage() {
         onConfirmCut={handleCut}
         onConfirmUse={handleUse}
         onCloseModal={() => setModal(null)}
-        onCloseMatDetail={() => setMatDetail(null)}
         onCloseAddMat={() => setShowAddMat(false)}
         onCloseHistory={() => setShowHistory(false)}
         onAddMat={mat => {

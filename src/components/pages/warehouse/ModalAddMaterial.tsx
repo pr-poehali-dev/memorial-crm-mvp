@@ -16,7 +16,6 @@ export function ModalAddMaterial({ onClose, onAdd }: ModalAddMaterialProps) {
   const [name,     setName]     = useState("");
   const [price,    setPrice]    = useState("");
   const [minQty,   setMinQty]   = useState("5");
-  const [initQty,  setInitQty]  = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [imgError, setImgError] = useState("");
   const [dragging, setDragging] = useState(false);
@@ -53,12 +52,11 @@ export function ModalAddMaterial({ onClose, onAdd }: ModalAddMaterialProps) {
 
   const handleSubmit = () => {
     if (!canSubmit) return;
-    const qty = parseFloat(initQty) || 0;
     const newMat: RawMaterial = {
       id:       "r-" + Date.now(),
       name:     name.trim(),
       unit:     "м²",
-      qty,
+      qty:      0,
       min:      parseFloat(minQty) || 5,
       price:    parseFloat(price),
       imageUrl: imageUrl ?? undefined,
@@ -146,25 +144,6 @@ export function ModalAddMaterial({ onClose, onAdd }: ModalAddMaterialProps) {
             className={inputCls}
           />
         </Field>
-
-        {/* Начальное количество — необязательно */}
-        <div className="bg-[#f7f7f7] border border-[#efefef] rounded-xl p-4 space-y-3">
-          <div className="flex items-center gap-2">
-            <Icon name="Package" size={13} className="text-[#9b9b9b]" />
-            <p className="text-[12px] text-[#6b6b6b] font-medium">Уже есть на складе? (необязательно)</p>
-          </div>
-          <Field label="Количество, м²">
-            <input
-              type="number"
-              value={initQty}
-              onChange={e => setInitQty(e.target.value)}
-              placeholder="0"
-              min={0}
-              step={0.1}
-              className={inputCls}
-            />
-          </Field>
-        </div>
 
         {/* Кнопки */}
         <div className="flex gap-2 pt-1">

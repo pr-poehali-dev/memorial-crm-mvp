@@ -1,4 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Icon from "@/components/ui/icon";
 import { RawMaterial, Blank, Movement, MOVE_TYPE } from "./warehouse.types";
 
@@ -74,8 +75,15 @@ export default function MovementHistoryPanel({ movements, rawMat, blanks, onClos
   const hasFilters = filterType !== "all" || datePreset !== "all" || dateFrom || dateTo || search;
   const resetAll = () => { setFilterType("all"); setDatePreset("all"); setDateFrom(""); setDateTo(""); setSearch(""); };
 
-  return (
-    <div className="fixed inset-0 z-50 bg-white flex flex-col">
+  /* Блокируем прокрутку страницы под панелью */
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, []);
+
+  return createPortal(
+    <div className="fixed inset-0 z-[100] bg-white flex flex-col animate-in fade-in duration-200">
 
       {/* Шапка */}
       <div className="shrink-0 border-b border-[#ebebeb] px-7 py-4 flex items-center justify-between">
@@ -213,6 +221,7 @@ export default function MovementHistoryPanel({ movements, rawMat, blanks, onClos
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

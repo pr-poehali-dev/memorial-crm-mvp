@@ -23,11 +23,9 @@ function OrderLink({ orderId }: { orderId: string }) {
 export function RawTable({
   filteredRaw,
   reserves,
-  onHistory,
 }: {
   filteredRaw: RawMaterial[];
   reserves: MaterialReserve[];
-  onHistory: (mat: RawMaterial) => void;
 }) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
@@ -52,7 +50,7 @@ export function RawTable({
       <table className="w-full">
         <thead>
           <tr className="border-b border-[#f0f0f0]">
-            {["Материал", "Ед.", "Остаток", "Зарезервировано", "Доступно", "Мин.", "Цена / ед.", "Стоимость", "Статус", ""].map(h => (
+            {["Материал", "Ед.", "Остаток", "Зарезервировано", "Доступно", "Мин.", "Цена / ед.", "Стоимость", "Статус"].map(h => (
               <th key={h} className="px-4 py-3 text-left text-[10px] font-semibold text-[#b5b5b5] uppercase tracking-wide whitespace-nowrap">
                 {h}
               </th>
@@ -62,7 +60,7 @@ export function RawTable({
         <tbody>
           {filteredRaw.length === 0 && (
             <tr>
-              <td colSpan={10} className="px-4 py-10 text-center text-[13px] text-[#b5b5b5]">Ничего не найдено</td>
+              <td colSpan={9} className="px-4 py-10 text-center text-[13px] text-[#b5b5b5]">Ничего не найдено</td>
             </tr>
           )}
           {filteredRaw.map((r, i) => {
@@ -176,23 +174,12 @@ export function RawTable({
                     </span>
                   </td>
 
-                  {/* История */}
-                  <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
-                    <button
-                      onClick={() => onHistory(r)}
-                      className="flex items-center gap-1 text-[11px] text-[#9b9b9b] hover:text-[#6366f1] transition-colors whitespace-nowrap"
-                      title="История по материалу"
-                    >
-                      <Icon name="History" size={12} />
-                      История
-                    </button>
-                  </td>
                 </tr>
 
                 {/* Раскрытие — список заказов */}
                 {isOpen && reserve && (
                   <tr key={r.id + "-detail"} className="bg-amber-50/40 border-b border-[#f5f5f5]">
-                    <td colSpan={10} className="px-6 py-3">
+                    <td colSpan={9} className="px-6 py-3">
                       <div className="flex items-center gap-2 mb-2">
                         <Icon name="BookOpen" size={12} className="text-amber-600" />
                         <span className="text-[11px] font-semibold text-amber-800 uppercase tracking-wide">

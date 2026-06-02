@@ -39,17 +39,30 @@ export function Modal({
 }
 
 /* ── MiniStat ── */
-export function MiniStat({ icon, color, label, value, alert: isAlert }: {
-  icon: string; color: string; label: string; value: string; alert?: boolean;
+export function MiniStat({ icon, color, label, value, alert: isAlert, highlight }: {
+  icon: string; color: string; label: string; value: string; alert?: boolean; highlight?: boolean;
 }) {
   return (
-    <div className={`bg-white border rounded-xl px-4 py-3.5 flex items-center gap-3 ${isAlert ? "border-red-200 bg-red-50" : "border-[#ebebeb]"}`}>
-      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: color + "18" }}>
+    <div
+      className={`group relative overflow-hidden bg-white border rounded-xl px-4 py-3.5 flex items-center gap-3
+        transition-all duration-300 ease-out cursor-default
+        hover:-translate-y-1 hover:shadow-[0_8px_24px_-8px_rgba(0,0,0,0.18)]
+        ${isAlert ? "border-red-200 bg-red-50" : highlight ? "border-[#1a1a1a]/15 bg-gradient-to-br from-white to-[#f7f7f7]" : "border-[#ebebeb] hover:border-[#dcdcdc]"}`}
+    >
+      {/* мягкое свечение при наведении */}
+      <span
+        className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+        style={{ background: `radial-gradient(120px 80px at 18% 30%, ${color}14, transparent 70%)` }}
+      />
+      <div
+        className="relative w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3"
+        style={{ backgroundColor: color + "18" }}
+      >
         <Icon name={icon as never} size={15} style={{ color }} />
       </div>
-      <div>
-        <p className="text-[17px] font-semibold text-[#1a1a1a] leading-none mb-0.5">{value}</p>
-        <p className="text-[11px] text-[#9b9b9b]">{label}</p>
+      <div className="relative min-w-0">
+        <p className="text-[17px] font-semibold text-[#1a1a1a] leading-none mb-0.5 transition-colors duration-300 truncate">{value}</p>
+        <p className="text-[11px] text-[#9b9b9b] truncate">{label}</p>
       </div>
     </div>
   );
