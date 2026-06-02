@@ -27,6 +27,7 @@ export type MovementType = "in" | "cut" | "use" | "adjust";
 export type Movement = {
   id: string;
   date: string;
+  isoDate?: string;
   type: MovementType;
   materialId?: string;
   blankId?: string;

@@ -1,14 +1,17 @@
-import { RawMaterial, Blank, Movement, ModalType } from "./warehouse.types";
+import { RawMaterial, Blank, Movement, ModalType, StockItem } from "./warehouse.types";
 import {
-  ModalIn, ModalCut, ModalUse,
-  ModalHistory, ModalMaterial,
+  ModalIn, ModalCut, ModalUseAny,
+  ModalMaterial,
 } from "./WarehouseModals";
+import type { UseAnyPayload } from "./WarehouseModals";
+import MovementHistoryPanel from "./MovementHistoryPanel";
 import { ModalAddMaterial } from "./ModalAddMaterial";
 
 type Props = {
   modal: ModalType;
   rawMat: RawMaterial[];
   blanks: Blank[];
+  stock: StockItem[];
   movements: Movement[];
   matDetail: RawMaterial | null;
   showAddMat: boolean;
@@ -25,13 +28,9 @@ type Props = {
   cutRawPer: string;   setCutRawPer: (v: string) => void;
   cutDeadline: string; setCutDeadline: (v: string) => void;
 
-  useBlankId: string;  setUseBlankId: (v: string) => void;
-  useQty: string;      setUseQty: (v: string) => void;
-  useOrder: string;    setUseOrder: (v: string) => void;
-
   onConfirmIn: () => void;
   onConfirmCut: () => void;
-  onConfirmUse: () => void;
+  onConfirmUse: (p: UseAnyPayload) => void;
   onCloseModal: () => void;
   onCloseMatDetail: () => void;
   onCloseAddMat: () => void;
@@ -40,11 +39,10 @@ type Props = {
 };
 
 export default function WarehouseModalsGroup({
-  modal, rawMat, blanks, movements, matDetail, showAddMat, showHistory,
+  modal, rawMat, blanks, stock, movements, matDetail, showAddMat, showHistory,
   inRawId, setInRawId, inQty, setInQty, inReceiptId, setInReceiptId, inPrice, setInPrice,
   cutRawId, setCutRawId, cutBlankId, setCutBlankId,
   cutQty, setCutQty, cutRawPer, setCutRawPer, cutDeadline, setCutDeadline,
-  useBlankId, setUseBlankId, useQty, setUseQty, useOrder, setUseOrder,
   onConfirmIn, onConfirmCut, onConfirmUse,
   onCloseModal, onCloseMatDetail, onCloseAddMat, onCloseHistory,
   onAddMat,
@@ -77,11 +75,10 @@ export default function WarehouseModalsGroup({
       )}
 
       {modal === "use" && (
-        <ModalUse
+        <ModalUseAny
+          rawMat={rawMat}
           blanks={blanks}
-          useBlankId={useBlankId} setUseBlankId={setUseBlankId}
-          useQty={useQty}         setUseQty={setUseQty}
-          useOrder={useOrder}     setUseOrder={setUseOrder}
+          stock={stock}
           onConfirm={onConfirmUse}
           onClose={onCloseModal}
         />
@@ -103,9 +100,10 @@ export default function WarehouseModalsGroup({
       )}
 
       {showHistory && (
-        <ModalHistory
+        <MovementHistoryPanel
           movements={movements}
           rawMat={rawMat}
+          blanks={blanks}
           onClose={onCloseHistory}
         />
       )}

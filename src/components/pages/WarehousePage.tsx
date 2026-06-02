@@ -25,6 +25,7 @@ function dbToBlank(b: DbBlank): Blank {
 }
 function dbToMovement(m: DbMovement): Movement {
   return { id: String(m.id), date: new Date(m.move_date).toLocaleDateString("ru-RU", {day:"numeric",month:"short"}),
+           isoDate: String(m.move_date).substring(0, 10),
            type: m.move_type as Movement["type"], materialId: m.material_id ? String(m.material_id) : undefined,
            blankId: m.blank_id ? String(m.blank_id) : undefined, qty: Number(m.qty),
            pricePerUnit: m.price_per_unit ? Number(m.price_per_unit) : undefined,
@@ -85,10 +86,7 @@ export default function WarehousePage() {
   const [cutRawPer,   setCutRawPer]   = useState("");
   const [cutDeadline, setCutDeadline] = useState("");
 
-  /* ── форма Списание ── */
-  const [useBlankId, setUseBlankId] = useState("");
-  const [useQty,     setUseQty]     = useState("");
-  const [useOrder,   setUseOrder]   = useState("");
+
 
   /* ════════ ДЕЙСТВИЯ ════════ */
 
@@ -166,21 +164,11 @@ export default function WarehousePage() {
     setModal(null);
   };
 
-  const handleUse = () => {
-    const q = parseInt(useQty);
-    if (!q || q <= 0) return;
-    const blkId2 = useBlankId || blanks[0]?.id || "";
-    const blk    = blanks.find(b => b.id === blkId2)!;
-    if (!blk || blk.qty < q) return;
-
-    warehouseApi.useBlank({
-      blankId:  parseInt(blkId2),
-      qty:      q,
-      note:     "Списание на заказ",
-      orderRef: useOrder.trim() || undefined,
-    }).then(() => reload()).catch(console.error);
-
-    setUseQty(""); setUseOrder("");
+  const handleUse = (p: { itemType: "raw"|"blank"|"stock"; itemId: number; qty: number; note: string; orderRef?: string }) => {
+    warehouseApi.useAny(p)
+      .then(() => reload())
+      .then(() => toast.success("Списано со склада"))
+      .catch(console.error);
     setModal(null);
   };
 
@@ -193,9 +181,12 @@ export default function WarehousePage() {
   const getReserved      = (id: string) => reserves.find(r => r.materialId === id)?.totalReserved ?? 0;
   const getBlankReserved = (id: string) => blankReserves.find(r => r.blankId === id)?.totalReserved ?? 0;
 
-  const totalRawVal = rawMat.reduce((s, r) => s + r.qty * r.price, 0);
-  const criticalRaw = rawMat.filter(r => getLevelRaw(r, getReserved(r.id)) === "critical").length;
-  const critBlanks  = blanks.filter(b => getLevelBlank(b) === "critical").length;
+  const totalRawVal   = rawMat.reduce((s, r) => s + r.qty * r.price, 0);
+  const totalRawArea  = rawMat.reduce((s, r) => s + r.qty, 0);
+  const totalBlankQty = blanks.reduce((s, b) => s + b.qty, 0);
+  const totalStockQty = stock.reduce((s, i) => s + i.qty, 0);
+  const criticalRaw   = rawMat.filter(r => getLevelRaw(r, getReserved(r.id)) === "critical").length;
+  const critBlanks    = blanks.filter(b => getLevelBlank(b) === "critical").length;
 
   if (loadingData) {
     return <LoadingScreen text="Загружаем склад" />;
@@ -207,7 +198,11 @@ export default function WarehousePage() {
       <WarehouseHeader
         rawMat={rawMat}
         blanks={blanks}
+        stock={stock}
         totalRawVal={totalRawVal}
+        totalRawArea={totalRawArea}
+        totalBlankQty={totalBlankQty}
+        totalStockQty={totalStockQty}
         criticalRaw={criticalRaw}
         critBlanks={critBlanks}
         tab={tab}
@@ -220,7 +215,6 @@ export default function WarehousePage() {
             if (!cutBlankId && blanks.length > 0) setCutBlankId(blanks[0].id);
           }
           if (m === "in" && !inRawId && rawMat.length > 0) setInRawId(rawMat[0].id);
-          if (m === "use" && !useBlankId && blanks.length > 0) setUseBlankId(blanks[0].id);
           setModal(m);
         }}
         onShowAddMat={() => setShowAddMat(true)}
@@ -264,6 +258,7 @@ export default function WarehousePage() {
         modal={modal}
         rawMat={rawMat}
         blanks={blanks}
+        stock={stock}
         movements={movements}
         matDetail={matDetail}
         showAddMat={showAddMat}
@@ -277,9 +272,6 @@ export default function WarehousePage() {
         cutQty={cutQty}           setCutQty={setCutQty}
         cutRawPer={cutRawPer}     setCutRawPer={setCutRawPer}
         cutDeadline={cutDeadline} setCutDeadline={setCutDeadline}
-        useBlankId={useBlankId}   setUseBlankId={setUseBlankId}
-        useQty={useQty}           setUseQty={setUseQty}
-        useOrder={useOrder}       setUseOrder={setUseOrder}
         onConfirmIn={handleIn}
         onConfirmCut={handleCut}
         onConfirmUse={handleUse}

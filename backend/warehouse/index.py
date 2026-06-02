@@ -28,7 +28,7 @@ def get_company_id(token: str) -> int | None:
     return None
 
 def handler(event: dict, context) -> dict:
-    """Склад. GET /?section=materials|blanks|movements|stock. POST /?action=in|cut|use|adjust|add_material|add_blank|add_stock|update_stock_qty|remove_stock|use_blank"""
+    """Склад. GET /?section=materials|blanks|movements|stock. POST /?action=in|cut|use|adjust|add_material|add_blank|add_stock|update_stock_qty|remove_stock|use_blank|use_any"""
     if event.get("httpMethod") == "OPTIONS":
         return {"statusCode": 200, "headers": CORS, "body": ""}
 
@@ -161,6 +161,62 @@ def handler(event: dict, context) -> dict:
                      body.get("note", "Списание на заказ"),
                      body.get("orderRef"))
                 )
+                conn.commit()
+                return {"statusCode": 201, "headers": CORS, "body": json.dumps({"ok": True})}
+
+            if action == "use_any":
+                # Универсальное списание: itemType = raw | blank | stock
+                item_type = body.get("itemType")
+                item_id   = body.get("itemId")
+                qty       = float(body.get("qty", 0))
+                note      = body.get("note", "Списание")
+                order_ref = body.get("orderRef")
+                if not item_type or not item_id or qty <= 0:
+                    return {"statusCode": 400, "headers": CORS, "body": json.dumps({"error": "invalid params"})}
+
+                if item_type == "raw":
+                    cur.execute(
+                        f"UPDATE {SCHEMA}.materials SET qty=GREATEST(0,qty-%s), updated_at=NOW() WHERE id=%s AND company_id=%s RETURNING qty",
+                        (qty, item_id, company_id)
+                    )
+                    row = cur.fetchone()
+                    remain = float(row["qty"]) if row else None
+                    cur.execute(
+                        f"""INSERT INTO {SCHEMA}.warehouse_movements
+                            (company_id, move_date, move_type, material_id, qty, note, order_ref, remain_after)
+                            VALUES (%s, CURRENT_DATE, 'use', %s, %s, %s, %s, %s)""",
+                        (company_id, item_id, qty, note, order_ref, remain)
+                    )
+                elif item_type == "blank":
+                    cur.execute(
+                        f"UPDATE {SCHEMA}.blanks SET qty=GREATEST(0,qty-%s), updated_at=NOW() WHERE id=%s AND company_id=%s RETURNING qty",
+                        (int(qty), item_id, company_id)
+                    )
+                    row = cur.fetchone()
+                    remain = float(row["qty"]) if row else None
+                    cur.execute(
+                        f"""INSERT INTO {SCHEMA}.warehouse_movements
+                            (company_id, move_date, move_type, blank_id, qty, note, order_ref, remain_after)
+                            VALUES (%s, CURRENT_DATE, 'use', %s, %s, %s, %s, %s)""",
+                        (company_id, item_id, int(qty), note, order_ref, remain)
+                    )
+                elif item_type == "stock":
+                    cur.execute(
+                        f"UPDATE {SCHEMA}.stock_items SET qty=GREATEST(0,qty-%s) WHERE id=%s AND company_id=%s RETURNING qty",
+                        (int(qty), item_id, company_id)
+                    )
+                    row = cur.fetchone()
+                    remain = float(row["qty"]) if row else None
+                    # stock_items не связан FK с движениями — пишем без material/blank, инфо в note
+                    cur.execute(
+                        f"""INSERT INTO {SCHEMA}.warehouse_movements
+                            (company_id, move_date, move_type, qty, note, order_ref, remain_after)
+                            VALUES (%s, CURRENT_DATE, 'use', %s, %s, %s, %s)""",
+                        (company_id, int(qty), note, order_ref, remain)
+                    )
+                else:
+                    return {"statusCode": 400, "headers": CORS, "body": json.dumps({"error": "unknown itemType"})}
+
                 conn.commit()
                 return {"statusCode": 201, "headers": CORS, "body": json.dumps({"ok": True})}
 

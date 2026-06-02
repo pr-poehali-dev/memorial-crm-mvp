@@ -204,7 +204,7 @@ export default function WarehouseContent({
 
       {/* ── История движений (компактная) ── */}
       {tab !== "stock" && (
-        <MovementHistory movements={movements} onOpenAll={onOpenAll} />
+        <MovementHistory movements={movements} rawMat={rawMat} blanks={blanks} onOpenAll={onOpenAll} />
       )}
     </>
   );

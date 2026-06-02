@@ -1,14 +1,23 @@
 import Icon from "@/components/ui/icon";
-import { Movement, MOVE_TYPE } from "./warehouse.types";
+import { Movement, MOVE_TYPE, RawMaterial, Blank } from "./warehouse.types";
 
 export function MovementHistory({
   movements,
+  rawMat = [],
+  blanks = [],
   onOpenAll,
 }: {
   movements: Movement[];
+  rawMat?: RawMaterial[];
+  blanks?: Blank[];
   onOpenAll: () => void;
 }) {
   const recent = movements.slice(0, 5);
+  const nameOf = (m: Movement): string => {
+    if (m.materialId) return rawMat.find(r => r.id === m.materialId)?.name ?? "";
+    if (m.blankId)    return blanks.find(b => b.id === m.blankId)?.name ?? "";
+    return "";
+  };
   return (
     <div className="bg-white border border-[#ebebeb] rounded-xl overflow-hidden">
       <div className="px-4 py-3 border-b border-[#f0f0f0] flex items-center justify-between">
@@ -41,6 +50,9 @@ export function MovementHistory({
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="text-[12px] font-semibold" style={{ color: mt.color }}>{mt.label}</span>
+                  {nameOf(m) && (
+                    <span className="text-[12px] font-medium text-[#1a1a1a]">{nameOf(m)}</span>
+                  )}
                   {m.order && (
                     <span className="text-[11px] bg-[#f0f0f0] text-[#4b4b4b] px-1.5 py-0.5 rounded font-mono">{m.order}</span>
                   )}

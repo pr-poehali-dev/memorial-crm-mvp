@@ -96,6 +96,8 @@ export const warehouseApi = {
     request<{ ok: boolean }>("warehouse", "POST", { action }, data),
   useBlank: (data: Record<string, unknown>) =>
     request<{ ok: boolean }>("warehouse", "POST", { action: "use_blank" }, data),
+  useAny: (data: { itemType: "raw"|"blank"|"stock"; itemId: number; qty: number; note?: string; orderRef?: string }) =>
+    request<{ ok: boolean }>("warehouse", "POST", { action: "use_any" }, data),
   addStock: (data: Record<string, unknown>) =>
     request<{ id: number }>("warehouse", "POST", { action: "add_stock" }, data),
   updateStockQty: (id: number, delta: number) =>

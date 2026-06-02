@@ -1,11 +1,15 @@
 import Icon from "@/components/ui/icon";
-import { RawMaterial, Blank, ModalType } from "./warehouse.types";
+import { RawMaterial, Blank, StockItem, ModalType } from "./warehouse.types";
 import { MiniStat, TabBtn } from "./WarehouseModals";
 
 type Props = {
   rawMat: RawMaterial[];
   blanks: Blank[];
+  stock: StockItem[];
   totalRawVal: number;
+  totalRawArea: number;
+  totalBlankQty: number;
+  totalStockQty: number;
   criticalRaw: number;
   critBlanks: number;
   tab: "raw" | "blanks" | "stock";
@@ -17,7 +21,8 @@ type Props = {
 };
 
 export default function WarehouseHeader({
-  rawMat, blanks, totalRawVal,
+  rawMat, blanks, stock,
+  totalRawVal, totalRawArea, totalBlankQty, totalStockQty,
   criticalRaw, critBlanks,
   tab, search,
   onTabChange, onSearchChange, onModal, onShowAddMat,
@@ -61,10 +66,14 @@ export default function WarehouseHeader({
       </div>
 
       {/* ── Статы ── */}
-      <div className="grid grid-cols-3 gap-3">
-        <MiniStat icon="Layers"   color="#6b6b6b" label="Видов сырья"     value={String(rawMat.length)} />
-        <MiniStat icon="Package"  color="#6366f1" label="Видов заготовок" value={String(blanks.length)} />
-        <MiniStat icon="Banknote" color="#16a34a" label="Стоимость сырья" value={`${(totalRawVal / 1000).toFixed(0)} тыс. ₽`} />
+      <div className="grid grid-cols-4 gap-3">
+        <MiniStat icon="Layers"     color="#6b6b6b" label="Видов сырья"        value={String(rawMat.length)} />
+        <MiniStat icon="SquareStack" color="#0ea5e9" label="Объём сырья"        value={`${totalRawArea.toFixed(1)} м²`} />
+        <MiniStat icon="Package"    color="#6366f1" label="Видов заготовок"    value={String(blanks.length)} />
+        <MiniStat icon="Boxes"      color="#8b5cf6" label="Заготовок, шт."     value={String(totalBlankQty)} />
+        <MiniStat icon="Banknote"   color="#16a34a" label="Стоимость сырья"    value={`${(totalRawVal / 1000).toFixed(0)} тыс. ₽`} />
+        <MiniStat icon="LayoutGrid" color="#f59e0b" label="Видов изделий"      value={String(stock.length)} />
+        <MiniStat icon="ShoppingBag" color="#ec4899" label="Изделий, шт."       value={String(totalStockQty)} />
       </div>
 
       {/* ── Вкладки + поиск ── */}
