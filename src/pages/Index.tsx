@@ -20,8 +20,9 @@ import CatalogPage from "@/components/pages/CatalogPage";
 import Logo, { LogoCompact } from "@/components/Logo";
 import CuttingPage from "@/components/pages/CuttingPage";
 import BlankAnalyticsPage from "@/components/pages/BlankAnalyticsPage";
+import SketchesPage from "@/components/pages/SketchesPage";
 
-type Section = "overview" | "orders" | "production" | "cutting" | "warehouse" | "clients" | "analytics" | "estimate" | "catalog" | "settings" | "blank-analytics";
+type Section = "overview" | "orders" | "production" | "cutting" | "warehouse" | "clients" | "analytics" | "estimate" | "catalog" | "settings" | "blank-analytics" | "sketches";
 
 type NavItem = { id: Section; label: string; icon: string; sub?: string };
 type NavGroup = { group: string; color: string; hoverBg: string; activeBg: string; items: NavItem[] };
@@ -46,7 +47,8 @@ const NAV_GROUPS: NavGroup[] = [
     activeBg: "#fef3c7",
     items: [
       { id: "cutting",    label: "Заготовки",    icon: "Scissors", sub: "Распил и учёт смен" },
-      { id: "production", label: "Производство", icon: "Hammer",   sub: "Эскиз, гравировка, полировка" },
+      { id: "sketches",   label: "Эскизы",       icon: "PenTool",  sub: "Разработка эскизов" },
+      { id: "production", label: "Изготовление", icon: "Hammer",   sub: "Гравировка, полировка, готово" },
     ],
   },
   {
@@ -83,9 +85,9 @@ const ALL_NAV: NavItem[] = NAV_GROUPS.flatMap(g => g.items);
 const ROLE_NAV: Record<Role, Section[]> = {
   manager:    ["orders", "catalog", "clients"],
   estimator:  ["orders", "catalog", "estimate", "warehouse", "analytics"],
-  production: ["cutting", "production", "warehouse", "analytics"],
+  production: ["cutting", "sketches", "production", "warehouse", "analytics"],
   accountant: ["orders", "clients", "analytics"],
-  owner:      ["orders", "cutting", "production", "catalog", "warehouse", "clients", "analytics", "estimate", "settings"],
+  owner:      ["orders", "cutting", "sketches", "production", "catalog", "warehouse", "clients", "analytics", "estimate", "settings"],
 };
 
 const ROLE_DEFAULT: Record<Role, Section> = {
@@ -160,6 +162,7 @@ export default function Index() {
     switch (active) {
       case "overview":   return <OverviewPage />;
       case "orders":     return <OrdersPage onOpenOrder={(id) => setOpenOrder(id)} onNewOrder={() => setCreatingOrder(true)} />;
+      case "sketches":   return <SketchesPage />;
       case "production": return <ProductionPage />;
       case "cutting":    return <CuttingPage />;
       case "warehouse":  return <WarehousePage />;
