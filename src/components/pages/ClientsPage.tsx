@@ -53,7 +53,7 @@ export default function ClientsPage({ onOpenClient: _onOpenClient }: { onOpenCli
   const [filterActive, setFilterActive] = useState<"all" | "active" | "inactive">("all");
   const [selected, setSelected]         = useState<Client | null>(null);
 
-  const { data: rawClients, loading } = useApiData(() => clientsApi.list());
+  const { data: rawClients, loading } = useApiData(() => clientsApi.list(), [], "clients:list");
   const clients: Client[] = useMemo(() => (rawClients || []).map(dbToClient), [rawClients]);
 
   const filtered = clients.filter(c => {

@@ -42,7 +42,7 @@ export default function OrdersPage({ onOpenOrder, onNewOrder }: { onOpenOrder?: 
   const [search, setSearch]     = useState("");
   const [selected, setSelected] = useState<Order | null>(null);
 
-  const { data: rawOrders, loading } = useApiData(() => ordersApi.list());
+  const { data: rawOrders, loading } = useApiData(() => ordersApi.list(), [], "orders:list");
   const orders: Order[] = useMemo(() => (rawOrders || []).map(dbToOrder), [rawOrders]);
 
   const applyFilter = (o: Order) => {
