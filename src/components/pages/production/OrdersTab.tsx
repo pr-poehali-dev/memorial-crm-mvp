@@ -45,6 +45,31 @@ const NEXT_STATUS: Record<string, string> = {
   "Доставка":    "",
 };
 
+function ProblemCell({ comment }: { comment?: string }) {
+  const [open, setOpen] = useState(false);
+  if (!comment) return <span className="text-[12px] text-[#c5c5c5]">—</span>;
+  return (
+    <button
+      onClick={() => setOpen(v => !v)}
+      className="flex items-start gap-1.5 text-left w-full group"
+    >
+      <Icon name="AlertCircle" size={12} className="text-amber-500 shrink-0 mt-0.5" />
+      {open ? (
+        <span className="text-[12px] text-amber-700 whitespace-normal break-words">{comment}</span>
+      ) : (
+        <span className="text-[12px] text-amber-600 font-medium group-hover:underline underline-offset-2">
+          Есть проблема
+        </span>
+      )}
+      <Icon
+        name={open ? "ChevronUp" : "ChevronDown"}
+        size={11}
+        className="text-amber-400 shrink-0 mt-0.5 ml-auto"
+      />
+    </button>
+  );
+}
+
 export default function OrdersTab({ orders, onOpenOrder, onNextStage }: Props) {
   const [filter, setFilter] = useState<OrderFilter>("active");
   const [search, setSearch] = useState("");
@@ -222,15 +247,8 @@ export default function OrdersTab({ orders, onOpenOrder, onNextStage }: Props) {
                         </td>
 
                         {/* Проблема */}
-                        <td className="px-4 py-3.5 max-w-[160px]">
-                          {o.comment ? (
-                            <div className="flex items-start gap-1.5">
-                              <Icon name="AlertCircle" size={12} className="text-amber-500 shrink-0 mt-0.5" />
-                              <span className="text-[12px] text-amber-700 truncate">{o.comment}</span>
-                            </div>
-                          ) : (
-                            <span className="text-[12px] text-[#c5c5c5]">—</span>
-                          )}
+                        <td className="px-4 py-3.5 max-w-[200px]">
+                          <ProblemCell comment={o.comment ?? undefined} />
                         </td>
 
                         {/* Ответственный */}
