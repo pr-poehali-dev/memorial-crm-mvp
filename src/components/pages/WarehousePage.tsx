@@ -5,7 +5,8 @@ import {
   getLevelRaw, getLevelBlank,
   calcReserves, calcBlankReserves,
 } from "./warehouse/warehouse.types";
-import { warehouseApi, cuttingApi, DbMaterial, DbBlank, DbMovement, DbStockItem } from "@/api/client";
+import { warehouseApi, cuttingApi, ordersApi, DbMaterial, DbBlank, DbMovement, DbStockItem } from "@/api/client";
+import type { Order } from "./orders/orders.types";
 import { useTasks } from "@/store/tasksStore";
 import { toast } from "sonner";
 import WarehouseHeader from "./warehouse/WarehouseHeader";
@@ -48,6 +49,7 @@ export default function WarehousePage() {
   const [blanks,     setBlanks]     = useState<Blank[]>([]);
   const [movements,  setMovements]  = useState<Movement[]>([]);
   const [stock,      setStock]      = useState<StockItem[]>([]);
+  const [orders,     setOrders]     = useState<Order[]>([]);
   const [loadingData, setLoadingData] = useState(true);
 
   const reload = useCallback(() => {
@@ -56,11 +58,31 @@ export default function WarehousePage() {
       warehouseApi.blanks(),
       warehouseApi.movements(),
       warehouseApi.stock(),
-    ]).then(([mats, bls, movs, stk]) => {
+      ordersApi.list(),
+    ]).then(([mats, bls, movs, stk, ords]) => {
       setRawMat(mats.map(dbToRaw));
       setBlanks(bls.map(dbToBlank));
       setMovements(movs.map(dbToMovement));
       setStock(stk.map(dbToStock));
+      setOrders(ords.map(o => ({
+        id:            o.id,
+        client:        o.client_name,
+        phone:         o.phone || "",
+        stone:         o.stone || "",
+        size:          o.size || "",
+        inscription:   o.inscription || "",
+        design:        o.design || "",
+        status:        o.status,
+        statusColor:   o.status_color,
+        amount:        Number(o.amount),
+        paid:          Number(o.paid),
+        date:          o.order_date ? new Date(o.order_date).toLocaleDateString("ru-RU") : "",
+        deadline:      o.deadline   ? new Date(o.deadline).toLocaleDateString("ru-RU") : "",
+        manager:       o.manager || "",
+        comment:       o.comment || "",
+        deadlineState: (o.deadline_state as Order["deadlineState"]) || "ok",
+        payStatus:     (o.pay_status  as Order["payStatus"])  || "unpaid",
+      })));
     });
   }, []);
 
@@ -176,8 +198,8 @@ export default function WarehousePage() {
   const filteredRaw    = rawMat.filter(r => r.name.toLowerCase().includes(search.toLowerCase()));
   const filteredBlanks = blanks.filter(b => b.name.toLowerCase().includes(search.toLowerCase()));
 
-  const reserves      = useMemo(() => calcReserves([]), []);
-  const blankReserves = useMemo(() => calcBlankReserves([]), []);
+  const reserves      = useMemo(() => calcReserves(orders), [orders]);
+  const blankReserves = useMemo(() => calcBlankReserves(orders), [orders]);
   const getReserved      = (id: string) => reserves.find(r => r.materialId === id)?.totalReserved ?? 0;
   const getBlankReserved = (id: string) => blankReserves.find(r => r.blankId === id)?.totalReserved ?? 0;
 

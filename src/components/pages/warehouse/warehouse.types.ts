@@ -45,13 +45,13 @@ export type ModalType = "in" | "cut" | "use" | null;
 export type MaterialReserve = {
   materialId: string;
   totalReserved: number;
-  orders: { orderId: string; qty: number }[];
+  orders: { orderId: string; qty: number; clientName?: string; stage?: string }[];
 };
 
 export type BlankReserve = {
   blankId: string;
   totalReserved: number;
-  orders: { orderId: string; qty: number }[];
+  orders: { orderId: string; qty: number; clientName?: string; stage?: string }[];
 };
 
 const STONE_TO_RAW_ID: Record<string, string> = {
@@ -84,7 +84,7 @@ function calcAreaFromSize(size: string): number {
 const ACTIVE_STATUSES = ["Эскиз", "Производство", "Готов", "Доставка"];
 
 export function calcReserves(orders: Order[]): MaterialReserve[] {
-  const map: Record<string, { totalReserved: number; orders: { orderId: string; qty: number }[] }> = {};
+  const map: Record<string, { totalReserved: number; orders: { orderId: string; qty: number; clientName?: string; stage?: string }[] }> = {};
 
   for (const o of orders) {
     if (!ACTIVE_STATUSES.includes(o.status)) continue;
@@ -94,7 +94,7 @@ export function calcReserves(orders: Order[]): MaterialReserve[] {
     if (qty <= 0) continue;
     if (!map[rawId]) map[rawId] = { totalReserved: 0, orders: [] };
     map[rawId].totalReserved = +(map[rawId].totalReserved + qty).toFixed(2);
-    map[rawId].orders.push({ orderId: o.id, qty });
+    map[rawId].orders.push({ orderId: o.id, qty, clientName: o.client, stage: o.status });
   }
 
   return Object.entries(map).map(([materialId, v]) => ({ materialId, ...v }));
@@ -108,7 +108,7 @@ const SIZE_TO_BLANK_ID: Record<string, string> = {
 };
 
 export function calcBlankReserves(orders: Order[]): BlankReserve[] {
-  const map: Record<string, { totalReserved: number; orders: { orderId: string; qty: number }[] }> = {};
+  const map: Record<string, { totalReserved: number; orders: { orderId: string; qty: number; clientName?: string; stage?: string }[] }> = {};
 
   for (const o of orders) {
     if (!ACTIVE_STATUSES.includes(o.status)) continue;
@@ -116,7 +116,7 @@ export function calcBlankReserves(orders: Order[]): BlankReserve[] {
     if (!blankId) continue;
     if (!map[blankId]) map[blankId] = { totalReserved: 0, orders: [] };
     map[blankId].totalReserved += 1;
-    map[blankId].orders.push({ orderId: o.id, qty: 1 });
+    map[blankId].orders.push({ orderId: o.id, qty: 1, clientName: o.client, stage: o.status });
   }
 
   return Object.entries(map).map(([blankId, v]) => ({ blankId, ...v }));

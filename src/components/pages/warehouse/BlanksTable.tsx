@@ -179,24 +179,38 @@ export function BlanksTable({
                 {/* Раскрытие — список заказов */}
                 {isOpen && reserve && (
                   <tr key={b.id + "-detail"} className="bg-amber-50/40 border-b border-[#f5f5f5]">
-                    <td colSpan={11} className="px-6 py-3">
-                      <div className="flex items-center gap-2 mb-2">
+                    <td colSpan={11} className="px-6 py-4">
+                      <div className="flex items-center gap-2 mb-3">
                         <Icon name="BookOpen" size={12} className="text-amber-600" />
                         <span className="text-[11px] font-semibold text-amber-800 uppercase tracking-wide">
                           Зарезервировано под заказы
                         </span>
+                        <span className="text-[10px] bg-amber-200 text-amber-700 px-1.5 py-0.5 rounded-full font-bold ml-1">
+                          {reserve.orders.length}
+                        </span>
                       </div>
-                      <div className="flex flex-wrap gap-2">
+                      <div className="grid grid-cols-3 gap-2">
                         {reserve.orders.map(o => (
                           <div
                             key={o.orderId}
-                            className="flex items-center gap-2 bg-white border border-amber-200 rounded-lg px-3 py-1.5"
+                            className="flex items-center justify-between bg-white border border-amber-200 rounded-lg px-3 py-2 gap-3"
                           >
-                            <OrderLink orderId={o.orderId} />
-                            <span className="text-[11px] text-[#6b6b6b]">→</span>
-                            <span className="text-[12px] font-mono font-semibold text-amber-700">
-                              {o.qty} шт.
-                            </span>
+                            <div className="flex items-center gap-2 min-w-0">
+                              <OrderLink orderId={o.orderId} />
+                              {o.clientName && (
+                                <span className="text-[12px] text-[#4b4b4b] truncate">{o.clientName}</span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              {o.stage && (
+                                <span className="text-[10px] font-semibold bg-[#f0f0f0] text-[#6b6b6b] px-2 py-0.5 rounded whitespace-nowrap">
+                                  {o.stage}
+                                </span>
+                              )}
+                              <span className="text-[12px] font-mono font-bold text-amber-700 whitespace-nowrap">
+                                {o.qty} шт.
+                              </span>
+                            </div>
                           </div>
                         ))}
                       </div>
