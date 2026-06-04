@@ -189,6 +189,55 @@ def handler(event: dict, context) -> dict:
                             (produced, r["blankTypeId"], company_id)
                         )
 
+                # Снимаем резерв сырья по задаче и списываем фактически использованное
+                cur.execute(
+                    f"SELECT task_id FROM {SCHEMA}.shifts WHERE id=%s",
+                    (shift_id,)
+                )
+                shift_task_row = cur.fetchone()
+                if shift_task_row and shift_task_row["task_id"]:
+                    task_id_for_reserve = shift_task_row["task_id"]
+                    # Считаем сколько сырья фактически ушло в этой смене
+                    actual_raw = sum(float(r.get("rawUsed", 0)) for r in results)
+                    # Получаем зарезервированный материал
+                    cur.execute(
+                        f"""SELECT id, material_id, qty FROM {SCHEMA}.material_reserves
+                            WHERE task_id=%s AND company_id=%s AND active=TRUE""",
+                        (task_id_for_reserve, company_id)
+                    )
+                    reserve_row = cur.fetchone()
+                    if reserve_row and actual_raw > 0:
+                        mat_id_res = reserve_row["material_id"]
+                        reserved_qty = float(reserve_row["qty"])
+                        # Списываем фактически использованное (не больше чем зарезервировано)
+                        to_deduct = min(actual_raw, reserved_qty)
+                        cur.execute(
+                            f"UPDATE {SCHEMA}.materials SET qty=GREATEST(0,qty-%s), updated_at=NOW() WHERE id=%s AND company_id=%s",
+                            (to_deduct, mat_id_res, company_id)
+                        )
+                        cur.execute(
+                            f"""SELECT qty FROM {SCHEMA}.materials WHERE id=%s""",
+                            (mat_id_res,)
+                        )
+                        remain_row = cur.fetchone()
+                        remain_after = float(remain_row["qty"]) if remain_row else None
+                        # Запись в историю движений
+                        cur.execute(
+                            f"""INSERT INTO {SCHEMA}.warehouse_movements
+                                (company_id, move_date, move_type, material_id, qty, note, remain_after)
+                                VALUES (%s, CURRENT_DATE, 'use', %s, %s, %s, %s)""",
+                            (company_id, mat_id_res, to_deduct,
+                             f"Списание при завершении смены (задача #{task_id_for_reserve})",
+                             remain_after)
+                        )
+                    # Снимаем резерв (деактивируем)
+                    cur.execute(
+                        f"""UPDATE {SCHEMA}.material_reserves
+                            SET active=FALSE, released_at=NOW()
+                            WHERE task_id=%s AND company_id=%s AND active=TRUE""",
+                        (task_id_for_reserve, company_id)
+                    )
+
                 # Обновляем задачу
                 cur.execute(
                     f"SELECT task_id, task_qty_assigned FROM {SCHEMA}.shifts WHERE id=%s",

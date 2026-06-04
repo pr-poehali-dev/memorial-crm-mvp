@@ -85,11 +85,22 @@ export const settingsApi = {
 };
 
 // ── Warehouse ──
+export type DbMaterialReserve = {
+  id: number;
+  material_id: number;
+  task_id?: number;
+  qty: number;
+  note?: string;
+  material_name?: string;
+  task_status?: string;
+};
+
 export const warehouseApi = {
   materials: () => request<DbMaterial[]>("warehouse", "GET", { section: "materials" }),
   blanks:    () => request<DbBlank[]>("warehouse", "GET", { section: "blanks" }),
   movements: () => request<DbMovement[]>("warehouse", "GET", { section: "movements" }),
   stock:     () => request<DbStockItem[]>("warehouse", "GET", { section: "stock" }),
+  reserves:  () => request<DbMaterialReserve[]>("warehouse", "GET", { section: "reserves" }),
   addMaterial: (data: Partial<DbMaterial>) =>
     request<{ id: number }>("warehouse", "POST", { action: "add_material" }, data),
   movement: (action: "in"|"cut"|"use"|"adjust", data: Record<string, unknown>) =>

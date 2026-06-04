@@ -3,7 +3,7 @@ import LoadingScreen from "@/components/ui/LoadingScreen";
 import {
   RawMaterial, Blank, Movement, ModalType, StockItem,
   getLevelRaw, getLevelBlank,
-  calcReserves, calcBlankReserves,
+  MaterialReserve, calcBlankReserves,
 } from "./warehouse/warehouse.types";
 import { warehouseApi, cuttingApi, ordersApi, DbMaterial, DbBlank, DbMovement, DbStockItem } from "@/api/client";
 import type { Order } from "./orders/orders.types";
@@ -45,11 +45,12 @@ export default function WarehousePage() {
   const [tab, setTab]             = useState<"raw" | "blanks" | "stock">("raw");
   const [modal, setModal]         = useState<ModalType>(null);
 
-  const [rawMat,     setRawMat]     = useState<RawMaterial[]>([]);
-  const [blanks,     setBlanks]     = useState<Blank[]>([]);
-  const [movements,  setMovements]  = useState<Movement[]>([]);
-  const [stock,      setStock]      = useState<StockItem[]>([]);
-  const [orders,     setOrders]     = useState<Order[]>([]);
+  const [rawMat,      setRawMat]      = useState<RawMaterial[]>([]);
+  const [blanks,      setBlanks]      = useState<Blank[]>([]);
+  const [movements,   setMovements]   = useState<Movement[]>([]);
+  const [stock,       setStock]       = useState<StockItem[]>([]);
+  const [orders,      setOrders]      = useState<Order[]>([]);
+  const [rawReserves, setRawReserves] = useState<MaterialReserve[]>([]);
   const [loadingData, setLoadingData] = useState(true);
 
   const reload = useCallback(() => {
@@ -59,7 +60,24 @@ export default function WarehousePage() {
       warehouseApi.movements(),
       warehouseApi.stock(),
       ordersApi.list(),
-    ]).then(([mats, bls, movs, stk, ords]) => {
+      warehouseApi.reserves(),
+    ]).then(([mats, bls, movs, stk, ords, res]) => {
+      // Строим MaterialReserve[] из записей БД
+      const reserveMap: Record<string, MaterialReserve> = {};
+      for (const r of res) {
+        const matId = String(r.material_id);
+        if (!reserveMap[matId]) {
+          reserveMap[matId] = { materialId: matId, totalReserved: 0, orders: [] };
+        }
+        reserveMap[matId].totalReserved = +(reserveMap[matId].totalReserved + Number(r.qty)).toFixed(2);
+        reserveMap[matId].orders.push({
+          orderId:    `Задача #${r.task_id ?? r.id}`,
+          qty:        Number(r.qty),
+          clientName: r.material_name ?? undefined,
+          stage:      r.task_status ?? "pending",
+        });
+      }
+      setRawReserves(Object.values(reserveMap));
       setRawMat(mats.map(dbToRaw));
       setBlanks(bls.map(dbToBlank));
       setMovements(movs.map(dbToMovement));
@@ -146,24 +164,34 @@ export default function WarehousePage() {
     const blk   = blanks.find(b => b.id === blkId)!;
     if (!raw || !blk) return;
     const totalUsed = +(perUnit * q).toFixed(2);
-    if (raw.qty < totalUsed) return;
 
-    warehouseApi.movement("cut", {
-      materialId: parseInt(rawId),
-      blankId:    parseInt(blkId),
-      qty:        totalUsed,
-      blankQty:   q,
-      note:       `Нарезка: ${blk.name} (${q} шт.)${cutDeadline ? ` · до ${cutDeadline}` : ""}`,
-    }).then(() => reload()).catch(console.error);
+    // Проверяем: остаток - уже зарезервировано >= нужное количество
+    const alreadyReserved = getReserved(rawId);
+    if (raw.qty - alreadyReserved < totalUsed) return;
 
+    const note = `Нарезка: ${blk.name} (${q} шт.)${cutDeadline ? ` · до ${cutDeadline}` : ""}`;
+
+    // Сначала создаём задачу, чтобы получить taskId для резерва
     cuttingApi.createTask({
       blankTypeId:  blk.blankTypeId ?? null,
       materialName: raw.name,
       totalQty:     q,
       deadline:     cutDeadline || null,
     }).then(res => {
+      const taskId = res.id;
+
+      // Создаём движение с taskId — бэкенд запишет резерв, не спишет
+      warehouseApi.movement("cut", {
+        materialId: parseInt(rawId),
+        blankId:    parseInt(blkId),
+        qty:        totalUsed,
+        blankQty:   q,
+        taskId,
+        note,
+      }).then(() => reload()).catch(console.error);
+
       const newTask = {
-        id:            String(res.id),
+        id:            String(taskId),
         blankTypeId:   blk.blankTypeId ? String(blk.blankTypeId) : "",
         blankName:     blk.name,
         blankSize:     blk.size,
@@ -177,7 +205,7 @@ export default function WarehousePage() {
       };
       addTask(newTask);
       toast.success(`Задача создана: ${blk.name} — ${q} шт.`, {
-        description: "Появилась в разделе Заготовки → Задачи",
+        description: `Зарезервировано ${totalUsed} ${raw.unit} камня`,
         duration: 4000,
       });
     }).catch(console.error);
@@ -198,9 +226,10 @@ export default function WarehousePage() {
   const filteredRaw    = rawMat.filter(r => r.name.toLowerCase().includes(search.toLowerCase()));
   const filteredBlanks = blanks.filter(b => b.name.toLowerCase().includes(search.toLowerCase()));
 
-  const reserves      = useMemo(() => calcReserves(orders), [orders]);
+  // Резервы сырья — из БД (задачи нарезки)
+  const getReserved = (id: string) => rawReserves.find(r => r.materialId === id)?.totalReserved ?? 0;
+  // Резервы заготовок — из заказов
   const blankReserves = useMemo(() => calcBlankReserves(orders), [orders]);
-  const getReserved      = (id: string) => reserves.find(r => r.materialId === id)?.totalReserved ?? 0;
   const getBlankReserved = (id: string) => blankReserves.find(r => r.blankId === id)?.totalReserved ?? 0;
 
   const totalRawVal   = rawMat.reduce((s, r) => s + r.qty * r.price, 0);
@@ -256,7 +285,7 @@ export default function WarehousePage() {
         rawMat={rawMat}
         blanks={blanks}
         stock={stock}
-        reserves={reserves}
+        reserves={rawReserves}
         blankReserves={blankReserves}
         getReserved={getReserved}
         getBlankReserved={getBlankReserved}

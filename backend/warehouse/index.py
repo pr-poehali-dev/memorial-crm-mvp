@@ -78,6 +78,17 @@ def handler(event: dict, context) -> dict:
                     f"SELECT * FROM {SCHEMA}.stock_items WHERE company_id=%s ORDER BY added_at DESC",
                     (company_id,)
                 )
+            elif section == "reserves":
+                # Активные резервы сырья под задачи нарезки
+                cur.execute(
+                    f"""SELECT mr.id, mr.material_id, mr.task_id, mr.qty, mr.note,
+                               ct.material_name, ct.total_qty, ct.status as task_status
+                        FROM {SCHEMA}.material_reserves mr
+                        LEFT JOIN {SCHEMA}.cutting_tasks ct ON ct.id=mr.task_id
+                        WHERE mr.company_id=%s AND mr.active=TRUE
+                        ORDER BY mr.created_at DESC""",
+                    (company_id,)
+                )
             else:
                 return {"statusCode": 400, "headers": CORS, "body": json.dumps({"error": "unknown section"})}
 
@@ -117,10 +128,14 @@ def handler(event: dict, context) -> dict:
                         (qty, mat_id, company_id)
                     )
                 elif action == "cut" and mat_id and blank_id:
-                    # Только списываем сырьё. Заготовки добавляются на склад при завершении задачи (finish_shift)
+                    # Не списываем сырьё сразу — создаём резерв под задачу нарезки.
+                    # Фактическое списание произойдёт в finish_shift.
+                    task_id = body.get("taskId")
                     cur.execute(
-                        f"UPDATE {SCHEMA}.materials SET qty=GREATEST(0,qty-%s), updated_at=NOW() WHERE id=%s AND company_id=%s",
-                        (qty, mat_id, company_id)
+                        f"""INSERT INTO {SCHEMA}.material_reserves
+                            (company_id, material_id, task_id, qty, note)
+                            VALUES (%s,%s,%s,%s,%s)""",
+                        (company_id, mat_id, task_id, qty, body.get("note",""))
                     )
 
                 remain = None
@@ -130,6 +145,7 @@ def handler(event: dict, context) -> dict:
                     if row:
                         remain = float(row["qty"])
 
+                # Записываем движение (для истории), но qty не трогает остаток при cut
                 cur.execute(
                     f"""INSERT INTO {SCHEMA}.warehouse_movements
                         (company_id, move_date, move_type, material_id, blank_id,
