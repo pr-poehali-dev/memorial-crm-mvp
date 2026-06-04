@@ -178,26 +178,48 @@ export default function CuttingTaskBlock({ tasks, onReload, onAssignClick }: Pro
               <span className="text-[13px] text-[#9b9b9b]">/ {totalQty} шт.</span>
             </div>
 
-            {/* Прогресс-бар — показываем только если уже есть прогресс */}
-            {(doneQty > 0 || isActive) && (
-              <div className="h-1.5 bg-[#ebebeb] rounded-full overflow-hidden mb-2.5">
-                <div
-                  className="h-full rounded-full transition-all"
-                  style={{ width: `${pct}%`, backgroundColor: isActive ? "#6366f1" : "#c0c0c0" }}
-                />
+            {/* Составной прогресс-бар: зелёный = сделано, жёлтый = в работе */}
+            {(doneQty > 0 || inProgressQty > 0) && (
+              <div className="mb-3 space-y-1.5">
+                <div className="h-2 bg-[#ebebeb] rounded-full overflow-hidden flex">
+                  {doneQty > 0 && (
+                    <div
+                      className="h-full transition-all bg-green-500"
+                      style={{ width: `${(doneQty / totalQty) * 100}%` }}
+                    />
+                  )}
+                  {inProgressQty > 0 && (
+                    <div
+                      className="h-full transition-all bg-amber-400"
+                      style={{ width: `${(inProgressQty / totalQty) * 100}%` }}
+                    />
+                  )}
+                </div>
+                <div className="flex items-center gap-3 flex-wrap text-[11px]">
+                  {inProgressQty > 0 && (
+                    <span className="flex items-center gap-1 text-amber-600 font-semibold">
+                      <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
+                      В работе: {inProgressQty} из {totalQty} шт.
+                    </span>
+                  )}
+                  {doneQty > 0 && (
+                    <span className="flex items-center gap-1 text-green-600 font-semibold">
+                      <span className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
+                      Готово: {doneQty} шт.
+                    </span>
+                  )}
+                  {remaining > 0 && (
+                    <span className="text-[#9b9b9b] ml-auto">ещё {remaining} шт.</span>
+                  )}
+                </div>
               </div>
             )}
 
-            {/* Детали */}
+            {/* Детали (если прогресса нет — показываем только остаток) */}
             <div className="flex items-center gap-3 flex-wrap mb-3">
-              {remaining > 0 && (
+              {doneQty === 0 && inProgressQty === 0 && remaining > 0 && (
                 <span className="text-[11px] text-[#6b6b6b]">
                   Осталось: <b className="text-[#6366f1]">{remaining} шт.</b>
-                </span>
-              )}
-              {inProgressQty > 0 && (
-                <span className="text-[11px] text-[#6b6b6b]">
-                  В работе: <b className="text-[#f59e0b]">{inProgressQty} шт.</b>
                 </span>
               )}
               {task.deadline && (
