@@ -80,7 +80,7 @@ export default function WarehouseHeader({
       {/* ── Статы ── */}
       <div className="grid grid-cols-5 gap-3">
         <MiniStat icon="Layers"      color="#6b6b6b" label="Видов сырья"      value={String(rawMat.length)} />
-        <MiniStat icon="SquareStack" color="#0ea5e9" label="Объём сырья"      value={`${totalRawArea.toFixed(1)} м²`} />
+        <MiniStat icon="SquareStack" color="#0ea5e9" label="Объём сырья"      value={`${totalRawArea.toFixed(2)} м²`} />
         <MiniStat icon="Banknote"    color="#16a34a" label="Стоимость сырья"  value={money(totalRawVal)} />
         <MiniStat icon="Package"     color="#6366f1" label="Видов заготовок"  value={String(blanks.length)} />
         <MiniStat icon="Boxes"       color="#8b5cf6" label="Заготовок, шт."   value={String(totalBlankQty)} />

@@ -234,7 +234,7 @@ export default function WarehouseContent({
       {/* ── Вкладка: Изделия ── */}
       {tab === "stock" && (
         <StockTable
-          stock={stock}
+          items={stock}
           onAdd={onStockAdd}
           onUpdateQty={onStockUpdateQty}
           onRemove={onStockRemove}

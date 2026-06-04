@@ -40,8 +40,8 @@ export function RawTable({
   const getReserve = (id: string): MaterialReserve | undefined =>
     reserves.find(r => r.materialId === id);
 
-  const totalQtyR       = filteredRaw.reduce((a, r) => a + r.qty, 0);
-  const totalReservedR  = filteredRaw.reduce((a, r) => a + (getReserve(r.id)?.totalReserved ?? 0), 0);
+  const totalQtyR       = +filteredRaw.reduce((a, r) => a + r.qty, 0).toFixed(2);
+  const totalReservedR  = +filteredRaw.reduce((a, r) => a + (getReserve(r.id)?.totalReserved ?? 0), 0).toFixed(2);
   const totalAvailableR = +(filteredRaw.reduce((a, r) => a + getAvailable(r, getReserve(r.id)?.totalReserved ?? 0), 0)).toFixed(2);
   const totalCostR      = filteredRaw.reduce((a, r) => a + r.qty * r.price, 0);
 
@@ -118,7 +118,7 @@ export function RawTable({
 
                   {/* Остаток */}
                   <td className="px-4 py-3 whitespace-nowrap">
-                    <span className="font-mono text-[14px] font-bold text-[#1a1a1a]">{r.qty}</span>
+                    <span className="font-mono text-[14px] font-bold text-[#1a1a1a]">{(+r.qty.toFixed(2))}</span>
                     <span className="text-[11px] text-[#6b6b6b] ml-1">{r.unit}</span>
                   </td>
 
@@ -126,7 +126,7 @@ export function RawTable({
                   <td className="px-4 py-3 whitespace-nowrap">
                     {reserved > 0 ? (
                       <div className="flex items-center gap-1.5">
-                        <span className="font-mono text-[13px] font-semibold text-[#1a1a1a]">{reserved}</span>
+                        <span className="font-mono text-[13px] font-semibold text-[#1a1a1a]">{(+reserved.toFixed(2))}</span>
                         <span className="text-[11px] text-[#6b6b6b]">{r.unit}</span>
                         <span className="text-[10px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded font-medium">
                           {reserve?.orders.length} зак.
@@ -144,14 +144,14 @@ export function RawTable({
                         className="font-mono text-[14px] font-bold"
                         style={{ color: availColor }}
                       >
-                        {available}
+                        {(+available.toFixed(2))}
                       </span>
                       <span className="text-[11px] text-[#6b6b6b]">{r.unit}</span>
                     </div>
                   </td>
 
                   {/* Мин. */}
-                  <td className="px-4 py-3 whitespace-nowrap text-[12px] text-[#1a1a1a] font-mono">{r.min} {r.unit}</td>
+                  <td className="px-4 py-3 whitespace-nowrap text-[12px] text-[#1a1a1a] font-mono">{(+r.min.toFixed(2))} {r.unit}</td>
 
                   {/* Цена */}
                   <td className="px-4 py-3 whitespace-nowrap text-[12px] text-[#1a1a1a] font-mono">{r.price.toLocaleString("ru")} ₽</td>
