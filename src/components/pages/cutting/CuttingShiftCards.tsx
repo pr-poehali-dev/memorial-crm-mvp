@@ -3,7 +3,7 @@ import Icon from "@/components/ui/icon";
 import {
   Shift, WORK_LABELS,
   shiftTotalProduced, shiftTotalRaw,
-  CuttingTask, yesterday,
+  CuttingTask, BlankType, yesterday,
 } from "./cutting.types";
 import { DoneTaskModal } from "./CuttingTaskBlock";
 
@@ -46,9 +46,26 @@ function BlankBreakdown({ results }: { results: Shift["results"] }) {
 }
 
 /* ─── Карточка активной смены ─── */
-export function ActiveShiftCard({ s, onFinish }: { s: Shift; onFinish: () => void }) {
+export function ActiveShiftCard({
+  s, onFinish, tasks, blankTypes,
+}: {
+  s: Shift;
+  onFinish: () => void;
+  tasks?: CuttingTask[];
+  blankTypes?: BlankType[];
+}) {
   const placeName    = s.placeName    ?? s.placeId;
   const employeeName = s.employeeName ?? s.employeeId;
+
+  const linkedTask = s.taskId && tasks ? tasks.find(t => t.id === s.taskId) : undefined;
+  const plan = s.taskQtyAssigned ?? 0;
+
+  const expectedRaw = (() => {
+    if (!plan || !linkedTask || !blankTypes) return null;
+    const bt = blankTypes.find(b => b.id === linkedTask.blankTypeId);
+    if (!bt) return null;
+    return +(bt.rawPerUnit * plan).toFixed(2);
+  })();
 
   return (
     <div className="bg-[#f0fdf4] border border-[#bbf7d0] rounded-xl overflow-hidden">
@@ -68,13 +85,21 @@ export function ActiveShiftCard({ s, onFinish }: { s: Shift; onFinish: () => voi
       </div>
 
       {/* Тело */}
-      <div className="px-4 py-3">
+      <div className="px-4 py-3 space-y-2">
         {s.taskId ? (
-          <p className="text-[11px] text-[#4b6b4b] mb-3">
-            Выполняет задачу · {s.taskQtyAssigned} шт. запланировано
-          </p>
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-[11px] text-[#4b6b4b]">
+              Задача · <b>{plan} шт.</b>
+            </span>
+            {expectedRaw !== null && (
+              <span className="text-[11px] text-[#4b6b4b] flex items-center gap-1">
+                <Icon name="Package" size={10} className="text-[#6366f1]" />
+                ожид. сырьё: <b className="text-[#6366f1]">{expectedRaw} м²</b>
+              </span>
+            )}
+          </div>
         ) : (
-          <p className="text-[11px] text-[#9b9b9b] mb-3">Задача не привязана</p>
+          <p className="text-[11px] text-[#9b9b9b]">Задача не привязана</p>
         )}
 
         {/* Статус + кнопка */}
@@ -144,9 +169,11 @@ function DoneCard({ s }: { s: Shift }) {
 /* ════════════════════════════════════════
    Колонка «Активные»
 ════════════════════════════════════════ */
-export function ActiveColumn({ shifts, onFinishClick }: {
+export function ActiveColumn({ shifts, onFinishClick, tasks, blankTypes }: {
   shifts: Shift[];
   onFinishClick: (id: string) => void;
+  tasks?: CuttingTask[];
+  blankTypes?: BlankType[];
 }) {
   return (
     <div className="flex flex-col gap-2 h-full">
@@ -160,7 +187,13 @@ export function ActiveColumn({ shifts, onFinishClick }: {
         </div>
       ) : (
         shifts.map(s => (
-          <ActiveShiftCard key={s.id} s={s} onFinish={() => onFinishClick(s.id)} />
+          <ActiveShiftCard
+            key={s.id}
+            s={s}
+            onFinish={() => onFinishClick(s.id)}
+            tasks={tasks}
+            blankTypes={blankTypes}
+          />
         ))
       )}
     </div>

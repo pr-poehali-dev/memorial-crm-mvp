@@ -30,13 +30,13 @@ function dbToShift(s: DbShift): Shift {
     taskId: s.task_id ? String(s.task_id) : undefined,
     taskQtyAssigned: s.task_qty_assigned || undefined,
     results: (s.results || []).map(r => ({
-      blankTypeId: String(r.blank_type_id ?? ""),
-      blankName: r.blank_name,
+      blankTypeId: String(r.blankTypeId ?? r.blank_type_id ?? ""),
+      blankName: r.blankName ?? r.blank_name,
       material: r.material,
-      produced: r.produced,
+      produced: Number(r.produced ?? 0),
       rawAuto: true,
-      rawUsed: Number(r.raw_used),
-      orderId: r.order_ref || undefined,
+      rawUsed: Number(r.rawUsed ?? r.raw_used ?? 0),
+      orderId: (r.orderRef ?? r.order_ref) || undefined,
     })),
   };
 }
@@ -310,6 +310,8 @@ export default function CuttingPage() {
               <div className="flex-1 overflow-y-auto px-5 py-4">
                 <ActiveColumn
                   shifts={activeShifts}
+                  tasks={tasks}
+                  blankTypes={blankTypes}
                   onFinishClick={(id) => {
                     setFinishShiftId(id);
                     const shift = activeShifts.find(s => s.id === id);
