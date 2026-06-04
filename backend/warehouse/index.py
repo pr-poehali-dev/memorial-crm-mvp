@@ -112,6 +112,39 @@ def handler(event: dict, context) -> dict:
                 conn.commit()
                 return {"statusCode": 201, "headers": CORS, "body": json.dumps({"id": new_id})}
 
+            if action == "add_blank":
+                # Добавляем новый вид заготовки (в blanks + blank_types)
+                name       = body["name"]
+                size       = body.get("size", "")
+                mat_id_b   = body.get("materialId")
+                min_qty    = body.get("minQty", 0)
+                cost_price = body.get("costPrice", 0)
+                sale_price = body.get("salePrice", 0)
+                raw_per_u  = body.get("rawPerUnit", 0)
+
+                # Создаём запись в blanks (складской остаток)
+                cur.execute(
+                    f"""INSERT INTO {SCHEMA}.blanks
+                        (company_id, material_id, name, size, qty, min_qty, cost_price, sale_price)
+                        VALUES (%s,%s,%s,%s,0,%s,%s,%s) RETURNING id""",
+                    (company_id, mat_id_b or None, name, size, min_qty, cost_price, sale_price)
+                )
+                blank_id_new = cur.fetchone()["id"]
+
+                # Создаём или обновляем запись в blank_types (для нарезки)
+                cur.execute(
+                    f"""INSERT INTO {SCHEMA}.blank_types
+                        (company_id, name, size, material, raw_per_unit, active)
+                        VALUES (%s,%s,%s,
+                          COALESCE((SELECT name FROM {SCHEMA}.materials WHERE id=%s LIMIT 1),''),
+                          %s, TRUE)
+                        ON CONFLICT DO NOTHING
+                        RETURNING id""",
+                    (company_id, name, size, mat_id_b, raw_per_u)
+                )
+                conn.commit()
+                return {"statusCode": 201, "headers": CORS, "body": json.dumps({"id": blank_id_new})}
+
             if action in ("in", "cut", "use", "adjust"):
                 mat_id   = body.get("materialId")
                 blank_id = body.get("blankId")

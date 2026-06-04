@@ -110,8 +110,9 @@ export default function WarehousePage() {
 
   const [search, setSearch]     = useState("");
 
-  const [showHistory, setShowHistory] = useState(false);
-  const [showAddMat,  setShowAddMat]  = useState(false);
+  const [showHistory,  setShowHistory]  = useState(false);
+  const [showAddMat,   setShowAddMat]   = useState(false);
+  const [showAddBlank, setShowAddBlank] = useState(false);
 
   /* ── форма Приход ── */
   const [inRawId,     setInRawId]     = useState("");
@@ -275,6 +276,7 @@ export default function WarehousePage() {
           setModal(m);
         }}
         onShowAddMat={() => setShowAddMat(true)}
+        onShowAddBlank={() => setShowAddBlank(true)}
         onShowHistory={() => setShowHistory(true)}
       />
 
@@ -316,6 +318,7 @@ export default function WarehousePage() {
         stock={stock}
         movements={movements}
         showAddMat={showAddMat}
+        showAddBlank={showAddBlank}
         showHistory={showHistory}
         inRawId={inRawId}         setInRawId={setInRawId}
         inQty={inQty}             setInQty={setInQty}
@@ -331,6 +334,7 @@ export default function WarehousePage() {
         onConfirmUse={handleUse}
         onCloseModal={() => setModal(null)}
         onCloseAddMat={() => setShowAddMat(false)}
+        onCloseAddBlank={() => setShowAddBlank(false)}
         onCloseHistory={() => setShowHistory(false)}
         onAddMat={mat => {
           warehouseApi.addMaterial({
@@ -341,6 +345,19 @@ export default function WarehousePage() {
             price:    mat.price,
             imageUrl: mat.imageUrl,
           } as unknown as Partial<DbMaterial>)
+            .then(() => reload())
+            .catch(console.error);
+        }}
+        onAddBlank={data => {
+          warehouseApi.addBlank({
+            name:       data.name,
+            size:       data.size,
+            materialId: data.materialId,
+            minQty:     data.minQty,
+            costPrice:  data.costPrice,
+            salePrice:  data.salePrice,
+            rawPerUnit: data.rawPerUnit,
+          })
             .then(() => reload())
             .catch(console.error);
         }}

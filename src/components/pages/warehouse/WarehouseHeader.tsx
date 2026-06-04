@@ -21,6 +21,7 @@ type Props = {
   onSearchChange: (v: string) => void;
   onModal: (m: ModalType) => void;
   onShowAddMat: () => void;
+  onShowAddBlank: () => void;
   onShowHistory: () => void;
 };
 
@@ -36,7 +37,7 @@ export default function WarehouseHeader({
   totalStockQty, totalStockVal, totalWarehouseVal,
   criticalRaw, critBlanks,
   tab, search,
-  onTabChange, onSearchChange, onModal, onShowAddMat, onShowHistory,
+  onTabChange, onSearchChange, onModal, onShowAddMat, onShowAddBlank, onShowHistory,
 }: Props) {
   return (
     <>
@@ -55,6 +56,12 @@ export default function WarehouseHeader({
             className="flex items-center gap-2 bg-white border border-[#ebebeb] text-[#4b4b4b] text-[13px] px-4 py-2 rounded-[8px] hover:border-[#c5c5c5] transition-colors"
           >
             <Icon name="Plus" size={14} />Материал
+          </button>
+          <button
+            onClick={onShowAddBlank}
+            className="flex items-center gap-2 bg-white border border-[#ebebeb] text-[#4b4b4b] text-[13px] px-4 py-2 rounded-[8px] hover:border-[#c5c5c5] transition-colors"
+          >
+            <Icon name="Plus" size={14} />Заготовка
           </button>
           <button
             onClick={() => onModal("in")}
@@ -85,9 +92,9 @@ export default function WarehouseHeader({
         <MiniStat icon="Package"     color="#6366f1" label="Видов заготовок"  value={String(blanks.length)} />
         <MiniStat icon="Boxes"       color="#8b5cf6" label="Заготовок, шт."   value={String(totalBlankQty)} />
         <MiniStat icon="Coins"       color="#0d9488" label="Стоимость заготовок" value={money(totalBlankVal)} />
-        <MiniStat icon="LayoutGrid"  color="#f59e0b" label="Видов изделий"    value={String(stock.length)} />
-        <MiniStat icon="ShoppingBag" color="#ec4899" label="Изделий, шт."     value={String(totalStockQty)} />
-        <MiniStat icon="BadgeDollarSign" color="#d946ef" label="Стоимость изделий" value={money(totalStockVal)} />
+        <MiniStat icon="ShoppingBag" color="#f59e0b" label="В наличии, видов"  value={String(stock.length)} />
+        <MiniStat icon="PackageCheck" color="#ec4899" label="В наличии, шт."  value={String(totalStockQty)} />
+        <MiniStat icon="BadgeDollarSign" color="#d946ef" label="Стоимость готовых" value={money(totalStockVal)} />
         <MiniStat icon="Wallet"      color="#1a1a1a" label="Стоимость склада" value={money(totalWarehouseVal)} highlight />
       </div>
 
@@ -96,7 +103,7 @@ export default function WarehouseHeader({
         <div className="flex gap-0.5 bg-[#f0f0f0] rounded-[8px] p-0.5">
           <TabBtn active={tab === "raw"}    onClick={() => onTabChange("raw")}    icon="Layers"     label="Сырьё"     count={criticalRaw} />
           <TabBtn active={tab === "blanks"} onClick={() => onTabChange("blanks")} icon="Package"    label="Заготовки" count={critBlanks} />
-          <TabBtn active={tab === "stock"}  onClick={() => onTabChange("stock")}  icon="LayoutGrid" label="Изделия"   count={0} />
+          <TabBtn active={tab === "stock"}  onClick={() => onTabChange("stock")}  icon="ShoppingBag" label="В наличии" count={0} />
         </div>
         <div className="relative flex-1 max-w-[240px]">
           <Icon name="Search" size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#b5b5b5]" />

@@ -103,6 +103,8 @@ export const warehouseApi = {
   reserves:  () => request<DbMaterialReserve[]>("warehouse", "GET", { section: "reserves" }),
   addMaterial: (data: Partial<DbMaterial>) =>
     request<{ id: number }>("warehouse", "POST", { action: "add_material" }, data),
+  addBlank: (data: Record<string, unknown>) =>
+    request<{ id: number }>("warehouse", "POST", { action: "add_blank" }, data),
   movement: (action: "in"|"cut"|"use"|"adjust", data: Record<string, unknown>) =>
     request<{ ok: boolean }>("warehouse", "POST", { action }, data),
   useBlank: (data: Record<string, unknown>) =>

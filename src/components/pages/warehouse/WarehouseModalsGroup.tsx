@@ -5,6 +5,8 @@ import {
 import type { UseAnyPayload } from "./WarehouseModals";
 import MovementHistoryPanel from "./MovementHistoryPanel";
 import { ModalAddMaterial } from "./ModalAddMaterial";
+import { ModalAddBlank } from "./ModalAddBlank";
+import type { NewBlankData } from "./ModalAddBlank";
 
 type Props = {
   modal: ModalType;
@@ -13,6 +15,7 @@ type Props = {
   stock: StockItem[];
   movements: Movement[];
   showAddMat: boolean;
+  showAddBlank: boolean;
   showHistory: boolean;
 
   inRawId: string;     setInRawId: (v: string) => void;
@@ -31,18 +34,20 @@ type Props = {
   onConfirmUse: (p: UseAnyPayload) => void;
   onCloseModal: () => void;
   onCloseAddMat: () => void;
+  onCloseAddBlank: () => void;
   onCloseHistory: () => void;
   onAddMat: (mat: RawMaterial) => void;
+  onAddBlank: (data: NewBlankData) => void;
 };
 
 export default function WarehouseModalsGroup({
-  modal, rawMat, blanks, stock, movements, showAddMat, showHistory,
+  modal, rawMat, blanks, stock, movements, showAddMat, showAddBlank, showHistory,
   inRawId, setInRawId, inQty, setInQty, inReceiptId, setInReceiptId, inPrice, setInPrice,
   cutRawId, setCutRawId, cutBlankId, setCutBlankId,
   cutQty, setCutQty, cutRawPer, setCutRawPer, cutDeadline, setCutDeadline,
   onConfirmIn, onConfirmCut, onConfirmUse,
-  onCloseModal, onCloseAddMat, onCloseHistory,
-  onAddMat,
+  onCloseModal, onCloseAddMat, onCloseAddBlank, onCloseHistory,
+  onAddMat, onAddBlank,
 }: Props) {
   return (
     <>
@@ -85,6 +90,14 @@ export default function WarehouseModalsGroup({
         <ModalAddMaterial
           onClose={onCloseAddMat}
           onAdd={onAddMat}
+        />
+      )}
+
+      {showAddBlank && (
+        <ModalAddBlank
+          rawMat={rawMat}
+          onClose={onCloseAddBlank}
+          onAdd={onAddBlank}
         />
       )}
 
