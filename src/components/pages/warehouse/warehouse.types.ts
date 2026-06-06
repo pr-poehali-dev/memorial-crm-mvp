@@ -20,6 +20,8 @@ export type Blank = {
   costPrice: number;
   salePrice: number;
   blankTypeId?: number;
+  rawPerUnit?: number;   // расход сырья на 1 шт, м²
+  materialPrice?: number; // цена сырья за 1 м²
 };
 
 export type MovementType = "in" | "cut" | "use" | "adjust";

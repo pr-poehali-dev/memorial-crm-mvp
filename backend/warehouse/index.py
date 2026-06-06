@@ -55,7 +55,8 @@ def handler(event: dict, context) -> dict:
             elif section == "blanks":
                 cur.execute(
                     f"""SELECT b.*, m.name as material_name, m.unit as material_unit,
-                               bt.id as blank_type_id
+                               m.price as material_price,
+                               bt.id as blank_type_id, bt.raw_per_unit
                         FROM {SCHEMA}.blanks b
                         LEFT JOIN {SCHEMA}.materials m ON m.id=b.material_id
                         LEFT JOIN {SCHEMA}.blank_types bt ON bt.name=b.name AND bt.company_id=b.company_id
@@ -113,33 +114,36 @@ def handler(event: dict, context) -> dict:
                 return {"statusCode": 201, "headers": CORS, "body": json.dumps({"id": new_id})}
 
             if action == "add_blank":
-                # Добавляем новый вид заготовки (в blanks + blank_types)
-                name       = body["name"]
-                size       = body.get("size", "")
-                mat_id_b   = body.get("materialId")
-                min_qty    = body.get("minQty", 0)
-                cost_price = body.get("costPrice", 0)
-                sale_price = body.get("salePrice", 0)
-                raw_per_u  = body.get("rawPerUnit", 0)
+                name      = body["name"]
+                size      = body.get("size", "")
+                mat_id_b  = body.get("materialId")
+                min_qty   = body.get("minQty", 0)
+                raw_per_u = float(body.get("rawPerUnit", 0))
 
-                # Создаём запись в blanks (складской остаток)
+                # Автоматически считаем себестоимость из цены материала
+                auto_cost = 0.0
+                if mat_id_b and raw_per_u > 0:
+                    cur.execute(f"SELECT price FROM {SCHEMA}.materials WHERE id=%s", (mat_id_b,))
+                    mat_row = cur.fetchone()
+                    if mat_row:
+                        auto_cost = round(float(mat_row["price"]) * raw_per_u, 2)
+
                 cur.execute(
                     f"""INSERT INTO {SCHEMA}.blanks
                         (company_id, material_id, name, size, qty, min_qty, cost_price, sale_price)
-                        VALUES (%s,%s,%s,%s,0,%s,%s,%s) RETURNING id""",
-                    (company_id, mat_id_b or None, name, size, min_qty, cost_price, sale_price)
+                        VALUES (%s,%s,%s,%s,0,%s,%s,0) RETURNING id""",
+                    (company_id, mat_id_b or None, name, size, min_qty, auto_cost)
                 )
                 blank_id_new = cur.fetchone()["id"]
 
-                # Создаём или обновляем запись в blank_types (для нарезки)
+                # Создаём запись в blank_types (для нарезки)
                 cur.execute(
                     f"""INSERT INTO {SCHEMA}.blank_types
                         (company_id, name, size, material, raw_per_unit, active)
                         VALUES (%s,%s,%s,
                           COALESCE((SELECT name FROM {SCHEMA}.materials WHERE id=%s LIMIT 1),''),
                           %s, TRUE)
-                        ON CONFLICT DO NOTHING
-                        RETURNING id""",
+                        ON CONFLICT DO NOTHING""",
                     (company_id, name, size, mat_id_b, raw_per_u)
                 )
                 conn.commit()
@@ -151,10 +155,25 @@ def handler(event: dict, context) -> dict:
                 qty      = float(body.get("qty", 0))
 
                 if action == "in" and mat_id:
+                    new_price = body.get("pricePerUnit", 0) or 0
                     cur.execute(
                         f"UPDATE {SCHEMA}.materials SET qty=qty+%s, price=%s, updated_at=NOW() WHERE id=%s AND company_id=%s",
-                        (qty, body.get("pricePerUnit", 0) or 0, mat_id, company_id)
+                        (qty, new_price, mat_id, company_id)
                     )
+                    # Пересчитываем себестоимость всех заготовок из этого материала
+                    if new_price and float(new_price) > 0:
+                        cur.execute(
+                            f"""UPDATE {SCHEMA}.blanks b
+                                SET cost_price = ROUND(bt.raw_per_unit * %s, 2),
+                                    updated_at = NOW()
+                                FROM {SCHEMA}.blank_types bt
+                                WHERE bt.name = b.name
+                                  AND bt.company_id = b.company_id
+                                  AND b.material_id = %s
+                                  AND b.company_id = %s
+                                  AND bt.raw_per_unit > 0""",
+                            (float(new_price), mat_id, company_id)
+                        )
                 elif action == "use" and mat_id:
                     cur.execute(
                         f"UPDATE {SCHEMA}.materials SET qty=GREATEST(0,qty-%s), updated_at=NOW() WHERE id=%s AND company_id=%s",

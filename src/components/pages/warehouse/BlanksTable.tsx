@@ -45,15 +45,14 @@ export function BlanksTable({
   const totalQtyB       = filteredBlanks.reduce((a, b) => a + b.qty, 0);
   const totalReservedB  = filteredBlanks.reduce((a, b) => a + (getBlankReserve(b.id)?.totalReserved ?? 0), 0);
   const totalAvailableB = filteredBlanks.reduce((a, b) => a + getAvailableBlank(b, getBlankReserve(b.id)?.totalReserved ?? 0), 0);
-  const totalCostB      = filteredBlanks.reduce((a, b) => a + b.qty * b.costPrice, 0);
-  const totalSaleB      = filteredBlanks.reduce((a, b) => a + b.qty * b.salePrice, 0);
+  const totalCostB = filteredBlanks.reduce((a, b) => a + b.qty * b.costPrice, 0);
 
   return (
     <div className="bg-white border border-[#ebebeb] rounded-xl overflow-hidden">
       <table className="w-full">
         <thead>
           <tr className="border-b border-[#f0f0f0]">
-            {["Заготовка", "Размер", "Материал", "Остаток", "Зарезервировано", "Доступно", "Мин.", "Себест.", "Цена прод.", "Статус", ""].map(h => (
+            {["Заготовка", "Размер", "Материал", "Остаток", "Зарезервировано", "Доступно", "Мин.", "Себестоимость", "Статус", ""].map(h => (
               <th key={h} className="px-4 py-3 text-left text-[10px] font-semibold text-[#b5b5b5] uppercase tracking-wide whitespace-nowrap">
                 {h}
               </th>
@@ -63,7 +62,7 @@ export function BlanksTable({
         <tbody>
           {filteredBlanks.length === 0 && (
             <tr>
-              <td colSpan={11} className="px-4 py-10 text-center text-[13px] text-[#b5b5b5]">Ничего не найдено</td>
+              <td colSpan={10} className="px-4 py-10 text-center text-[13px] text-[#b5b5b5]">Ничего не найдено</td>
             </tr>
           )}
           {filteredBlanks.map((b, i) => {
@@ -153,11 +152,21 @@ export function BlanksTable({
                   {/* Мин. */}
                   <td className="px-4 py-3 whitespace-nowrap text-[12px] text-[#1a1a1a] font-mono">{b.min} шт.</td>
 
-                  {/* Себестоимость */}
-                  <td className="px-4 py-3 whitespace-nowrap text-[12px] text-[#6b6b6b] font-mono">{b.costPrice.toLocaleString("ru")} ₽</td>
-
-                  {/* Цена продажи */}
-                  <td className="px-4 py-3 whitespace-nowrap text-[12px] font-semibold text-[#1a1a1a] font-mono">{b.salePrice.toLocaleString("ru")} ₽</td>
+                  {/* Себестоимость с расшифровкой */}
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <div className="group relative inline-block">
+                      <span className="text-[13px] font-semibold text-[#1a1a1a] font-mono cursor-default">
+                        {b.costPrice > 0 ? `${b.costPrice.toLocaleString("ru")} ₽` : "—"}
+                      </span>
+                      {b.costPrice > 0 && b.rawPerUnit && b.materialPrice && (
+                        <div className="absolute bottom-full left-0 mb-1.5 hidden group-hover:flex flex-col gap-1 bg-[#1a1a1a] text-white text-[11px] rounded-lg px-3 py-2 whitespace-nowrap z-10 shadow-lg">
+                          <span className="text-[#9b9b9b]">Расчёт себестоимости:</span>
+                          <span>{b.rawPerUnit} м² × {b.materialPrice.toLocaleString("ru")} ₽/м²</span>
+                          <span className="text-[#22c55e] font-semibold">= {b.costPrice.toLocaleString("ru")} ₽</span>
+                        </div>
+                      )}
+                    </div>
+                  </td>
 
                   {/* Статус */}
                   <td className="px-4 py-3">
@@ -179,7 +188,7 @@ export function BlanksTable({
                 {/* Раскрытие — список заказов */}
                 {isOpen && reserve && (
                   <tr key={b.id + "-detail"} className="bg-amber-50/40 border-b border-[#f5f5f5]">
-                    <td colSpan={11} className="px-6 py-4">
+                    <td colSpan={10} className="px-6 py-4">
                       <div className="flex items-center gap-2 mb-3">
                         <Icon name="BookOpen" size={12} className="text-amber-600" />
                         <span className="text-[11px] font-semibold text-amber-800 uppercase tracking-wide">
@@ -228,8 +237,10 @@ export function BlanksTable({
             <td className="px-4 py-3 font-mono text-[13px] font-semibold text-[#1a1a1a]">{totalReservedB} <span className="text-[11px] font-normal text-[#9b9b9b]">шт.</span></td>
             <td className="px-4 py-3 font-mono text-[14px] font-bold" style={{ color: totalAvailableB < 0 ? "#ef4444" : "#16a34a" }}>{totalAvailableB} <span className="text-[11px] font-normal text-[#9b9b9b]">шт.</span></td>
             <td className="px-4 py-3" />
-            <td className="px-4 py-3 font-mono text-[12px] font-semibold text-[#6b6b6b]">{totalCostB.toLocaleString("ru")} ₽</td>
-            <td className="px-4 py-3 font-mono text-[13px] font-bold text-[#6366f1]">{totalSaleB.toLocaleString("ru")} ₽</td>
+            <td className="px-4 py-3 font-mono text-[13px] font-bold text-[#1a1a1a]">
+              {totalCostB.toLocaleString("ru")} ₽
+              <span className="text-[10px] font-normal text-[#9b9b9b] ml-1">общая себест.</span>
+            </td>
             <td colSpan={2} className="px-4 py-3" />
           </tr>
         </tfoot>

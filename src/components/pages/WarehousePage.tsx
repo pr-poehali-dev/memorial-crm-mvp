@@ -22,7 +22,9 @@ function dbToBlank(b: DbBlank): Blank {
            qty: Number(b.qty), min: Number(b.min_qty),
            costPrice: Number(b.cost_price) || 0,
            salePrice: Number(b.sale_price) || 0,
-           blankTypeId: b.blank_type_id || undefined };
+           blankTypeId: b.blank_type_id || undefined,
+           rawPerUnit: b.raw_per_unit ? Number(b.raw_per_unit) : undefined,
+           materialPrice: b.material_price ? Number(b.material_price) : undefined };
 }
 function dbToMovement(m: DbMovement): Movement {
   return { id: String(m.id), date: new Date(m.move_date).toLocaleDateString("ru-RU", {day:"numeric",month:"short"}),
@@ -236,7 +238,7 @@ export default function WarehousePage() {
   const totalRawVal   = rawMat.reduce((s, r) => s + r.qty * r.price, 0);
   const totalRawArea  = rawMat.reduce((s, r) => s + r.qty, 0);
   const totalBlankQty = blanks.reduce((s, b) => s + b.qty, 0);
-  const totalBlankVal = blanks.reduce((s, b) => s + b.qty * (b.salePrice || b.costPrice || 0), 0);
+  const totalBlankVal = blanks.reduce((s, b) => s + b.qty * (b.costPrice || 0), 0);
   const totalStockQty = stock.reduce((s, i) => s + i.qty, 0);
   const totalStockVal = stock.reduce((s, i) => s + i.qty * (i.price || 0), 0);
   const totalWarehouseVal = totalRawVal + totalBlankVal + totalStockVal;
