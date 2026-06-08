@@ -85,17 +85,54 @@ export default function WarehouseHeader({
       </div>
 
       {/* ── Статы ── */}
-      <div className="grid grid-cols-5 gap-3">
-        <MiniStat icon="Layers"      color="#6b6b6b" label="Видов сырья"      value={String(rawMat.length)} />
-        <MiniStat icon="SquareStack" color="#0ea5e9" label="Объём сырья"      value={`${totalRawArea.toFixed(2)} м²`} />
-        <MiniStat icon="Banknote"    color="#16a34a" label="Стоимость сырья"  value={money(totalRawVal)} />
-        <MiniStat icon="Package"     color="#6366f1" label="Видов заготовок"  value={String(blanks.length)} />
-        <MiniStat icon="Boxes"       color="#8b5cf6" label="Заготовок, шт."   value={String(totalBlankQty)} />
-        <MiniStat icon="Coins"       color="#0d9488" label="Стоимость заготовок" value={money(totalBlankVal)} />
-        <MiniStat icon="ShoppingBag" color="#f59e0b" label="В наличии, видов"  value={String(stock.length)} />
-        <MiniStat icon="PackageCheck" color="#ec4899" label="В наличии, шт."  value={String(totalStockQty)} />
-        <MiniStat icon="BadgeDollarSign" color="#d946ef" label="Стоимость готовых" value={money(totalStockVal)} />
-        <MiniStat icon="Wallet"      color="#1a1a1a" label="Стоимость склада" value={money(totalWarehouseVal)} highlight />
+      <div className="grid grid-cols-4 gap-3">
+
+        {/* Сырьё — голубой */}
+        <div className="col-span-1 bg-sky-50/70 border border-sky-100 rounded-2xl p-3 space-y-2">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-sky-400 px-1">Сырьё</p>
+          <MiniStat icon="Layers"      color="#0ea5e9" label="Видов сырья"     value={String(rawMat.length)} />
+          <MiniStat icon="SquareStack" color="#0ea5e9" label="Объём"           value={`${totalRawArea.toFixed(1)} м²`} />
+          <MiniStat icon="Banknote"    color="#0ea5e9" label="Стоимость сырья" value={money(totalRawVal)} />
+        </div>
+
+        {/* Заготовки — фиолетовый */}
+        <div className="col-span-1 bg-violet-50/70 border border-violet-100 rounded-2xl p-3 space-y-2">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-violet-400 px-1">Заготовки</p>
+          <MiniStat icon="Package"     color="#8b5cf6" label="Видов заготовок"    value={String(blanks.length)} />
+          <MiniStat icon="Boxes"       color="#8b5cf6" label="Количество, шт."    value={String(totalBlankQty)} />
+          <MiniStat icon="Coins"       color="#8b5cf6" label="Стоимость заготовок" value={money(totalBlankVal)} />
+        </div>
+
+        {/* В наличии — янтарный */}
+        <div className="col-span-1 bg-amber-50/70 border border-amber-100 rounded-2xl p-3 space-y-2">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-amber-400 px-1">В наличии</p>
+          <MiniStat icon="ShoppingBag"     color="#f59e0b" label="Видов позиций"     value={String(stock.length)} />
+          <MiniStat icon="PackageCheck"    color="#f59e0b" label="Количество, шт."   value={String(totalStockQty)} />
+          <MiniStat icon="BadgeDollarSign" color="#f59e0b" label="Стоимость готовых" value={money(totalStockVal)} />
+        </div>
+
+        {/* Итог — серый */}
+        <div className="col-span-1 bg-[#f4f4f4]/80 border border-[#e8e8e8] rounded-2xl p-3 flex flex-col justify-between">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-[#b5b5b5] px-1">Весь склад</p>
+          <div className="flex-1 flex flex-col justify-center space-y-2 mt-2">
+            <MiniStat icon="Wallet" color="#1a1a1a" label="Стоимость склада" value={money(totalWarehouseVal)} highlight />
+          </div>
+          <div className="mt-3 space-y-1 px-1">
+            <div className="flex justify-between text-[11px]">
+              <span className="text-[#9b9b9b]">Сырьё</span>
+              <span className="font-semibold text-sky-600">{money(totalRawVal)}</span>
+            </div>
+            <div className="flex justify-between text-[11px]">
+              <span className="text-[#9b9b9b]">Заготовки</span>
+              <span className="font-semibold text-violet-600">{money(totalBlankVal)}</span>
+            </div>
+            <div className="flex justify-between text-[11px]">
+              <span className="text-[#9b9b9b]">В наличии</span>
+              <span className="font-semibold text-amber-600">{money(totalStockVal)}</span>
+            </div>
+          </div>
+        </div>
+
       </div>
 
       {/* ── Вкладки + поиск ── */}

@@ -1,6 +1,9 @@
 import { useState, useMemo } from "react";
 import Icon from "@/components/ui/icon";
 import { DbProductionOrder } from "@/api/client";
+import OrdersKanban from "./OrdersKanban";
+
+type ViewMode = "list" | "kanban";
 
 type OrderFilter = "all" | "active" | "urgent" | "overdue" | "problem" | "ready" | "done";
 
@@ -71,6 +74,7 @@ function ProblemCell({ comment }: { comment?: string }) {
 }
 
 export default function OrdersTab({ orders, onOpenOrder, onNextStage }: Props) {
+  const [view,   setView]   = useState<ViewMode>("list");
   const [filter, setFilter] = useState<OrderFilter>("active");
   const [search, setSearch] = useState("");
 
@@ -117,8 +121,21 @@ export default function OrdersTab({ orders, onOpenOrder, onNextStage }: Props) {
 
   return (
     <div className="flex flex-col flex-1 overflow-hidden">
-      {/* Фильтры */}
+      {/* Фильтры + переключатель вида */}
       <div className="shrink-0 bg-white border-b border-[#f0f0f0] px-7 py-3 flex items-center gap-3">
+        {/* Переключатель Список / Канбан */}
+        <div className="flex gap-0.5 bg-[#f0f0f0] rounded-[8px] p-0.5 shrink-0">
+          {(["list", "kanban"] as ViewMode[]).map(v => (
+            <button key={v} onClick={() => setView(v)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-[6px] text-[12px] font-medium transition-all ${
+                view === v ? "bg-white text-[#1a1a1a] shadow-sm" : "text-[#6b6b6b] hover:text-[#1a1a1a]"
+              }`}>
+              <Icon name={v === "kanban" ? "LayoutGrid" : "List"} size={13} />
+              {v === "kanban" ? "Канбан" : "Список"}
+            </button>
+          ))}
+        </div>
+        <div className="w-px h-5 bg-[#e8e8e8] shrink-0" />
         <div className="flex gap-0.5 bg-[#f0f0f0] rounded-[8px] p-0.5 flex-wrap">
           {FILTERS.map(f => {
             const cnt = counts[f.key];
@@ -155,7 +172,19 @@ export default function OrdersTab({ orders, onOpenOrder, onNextStage }: Props) {
         </div>
       </div>
 
-      {/* Таблица */}
+      {/* Канбан */}
+      {view === "kanban" && (
+        <div className="flex-1 overflow-hidden">
+          <OrdersKanban
+            orders={orders}
+            onOpenOrder={onOpenOrder}
+            onNextStage={onNextStage}
+          />
+        </div>
+      )}
+
+      {/* Таблица (список) */}
+      {view === "list" && (
       <div className="flex-1 overflow-y-auto px-7 py-4">
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -282,6 +311,7 @@ export default function OrdersTab({ orders, onOpenOrder, onNextStage }: Props) {
           </>
         )}
       </div>
+      )}
     </div>
   );
 }
