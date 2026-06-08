@@ -164,94 +164,114 @@ export default function Index() {
     }
   };
 
-  /* Все nav-пункты текущей роли — плоский список */
-  const flatNav = NAV_GROUPS.flatMap(g => g.items).filter(i => ROLE_NAV[role].includes(i.id));
+  /* Группы с пунктами для текущей роли */
+  const visibleGroups = NAV_GROUPS
+    .map(g => ({ ...g, items: g.items.filter(i => ROLE_NAV[role].includes(i.id)) }))
+    .filter(g => g.items.length > 0);
 
-  /* Разделители: перед «Аналитика» и «Настройки» */
-  const DIVIDER_BEFORE = new Set(["analytics", "settings"]);
+  /* Одиночные группы (не разворачиваются) */
+  const SOLO_GROUPS = new Set(["Главная", "Склад", "Аналитика", "Система"]);
 
   return (
     <NavContext.Provider value={navValue}>
-    <div className="flex h-screen font-golos overflow-hidden bg-[#f5f5f7]">
+    <div className="flex h-screen font-golos overflow-hidden bg-[#f0f0f2]">
 
       {/* ── Sidebar ── */}
-      <aside className={`flex flex-col bg-white border-r border-[#e8e8e8] transition-all duration-200 shrink-0 ${collapsed ? "w-[52px]" : "w-[200px]"}`}>
+      <aside className={`flex flex-col bg-[#f0f0f2] transition-all duration-200 shrink-0 ${collapsed ? "w-[60px]" : "w-[210px]"}`}>
 
-        {/* Логотип / название */}
-        <div className={`flex items-center h-[52px] border-b border-[#f0f0f0] shrink-0 ${collapsed ? "justify-center px-0" : "px-4 gap-2.5"}`}>
-          <div className="w-7 h-7 rounded-lg bg-[#1a1a1a] flex items-center justify-center shrink-0">
-            <span className="text-white text-[13px] font-bold select-none">П</span>
+        {/* Логотип */}
+        <div className={`flex items-center h-[56px] shrink-0 ${collapsed ? "justify-center" : "px-4 gap-3"}`}>
+          <div className="w-8 h-8 rounded-xl bg-[#1a1a1a] flex items-center justify-center shrink-0 shadow-sm">
+            <span className="text-white text-[14px] font-bold select-none leading-none">П</span>
           </div>
           {!collapsed && (
-            <div className="min-w-0">
-              <p className="text-[13px] font-semibold text-[#1a1a1a] truncate leading-tight">pio-admin</p>
-            </div>
+            <p className="text-[14px] font-bold text-[#1a1a1a] truncate">pio-admin</p>
           )}
         </div>
 
-        {/* Навигация — плоский список */}
-        <nav className="flex-1 overflow-y-auto overflow-x-hidden py-2 px-2 space-y-0.5">
-          {flatNav.map((item) => {
-            const isActive = active === item.id;
-            const showDivider = DIVIDER_BEFORE.has(item.id);
+        {/* Навигация */}
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden px-2 pb-2 space-y-1">
+          {visibleGroups.map((group, gi) => {
+            const isSolo = SOLO_GROUPS.has(group.group);
             return (
-              <div key={item.id}>
-                {showDivider && <div className="my-1.5 mx-1 h-px bg-[#f0f0f0]" />}
-                <button
-                  onClick={() => handleNavClick(item.id)}
-                  title={collapsed ? item.label : undefined}
-                  className={`w-full flex items-center gap-2.5 rounded-[6px] transition-all duration-150
-                    ${collapsed ? "justify-center h-9 px-0" : "px-3 py-2"}
-                    ${isActive
-                      ? "bg-[#1a1a1a] text-white"
-                      : "text-[#6b6b6b] hover:bg-[#f5f5f5] hover:text-[#1a1a1a]"
-                    }`}
-                >
-                  <Icon
-                    name={item.icon as never}
-                    size={15}
-                    className="shrink-0"
-                  />
-                  {!collapsed && (
-                    <span className="text-[13px] font-medium leading-none truncate">{item.label}</span>
-                  )}
-                </button>
+              <div key={group.group}>
+                {/* Метка группы */}
+                {!collapsed && !isSolo && (
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-[#b0b0b0] px-3 pt-3 pb-1 select-none">
+                    {group.group}
+                  </p>
+                )}
+                {!collapsed && isSolo && gi > 0 && (
+                  <div className="h-px bg-[#e4e4e6] mx-3 my-2" />
+                )}
+
+                {/* Пункты */}
+                <div className="space-y-0.5">
+                  {group.items.map(item => {
+                    const isActive = active === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => handleNavClick(item.id)}
+                        title={collapsed ? item.label : undefined}
+                        className={`relative w-full flex items-center transition-all duration-150 outline-none
+                          ${collapsed ? "justify-center h-10 rounded-xl" : "gap-2.5 px-3 py-2.5 rounded-xl"}
+                          ${isActive
+                            ? "bg-white text-[#1a1a1a] shadow-[0_1px_4px_rgba(0,0,0,0.10)]"
+                            : "text-[#6b6b6b] hover:bg-white/60 hover:text-[#1a1a1a]"
+                          }`}
+                      >
+                        <Icon
+                          name={item.icon as never}
+                          size={15}
+                          className="shrink-0"
+                          style={{ color: isActive ? "#1a1a1a" : undefined }}
+                        />
+                        {!collapsed && (
+                          <span className={`text-[13px] truncate ${isActive ? "font-semibold" : "font-medium"}`}>
+                            {item.label}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             );
           })}
         </nav>
 
-        {/* Роль + сворачивание */}
-        <div className="border-t border-[#f0f0f0] py-2 px-2 space-y-0.5">
+        {/* Нижняя часть: роль + свернуть */}
+        <div className={`pb-3 px-2 space-y-0.5`}>
+          <div className="h-px bg-[#e4e4e6] mx-1 mb-2" />
           <button
             onClick={() => setShowRolePicker(true)}
-            className={`w-full flex items-center gap-2.5 rounded-[6px] py-2 hover:bg-[#f5f5f5] transition-colors
-              ${collapsed ? "justify-center px-0" : "px-3"}`}
             title={collapsed ? currentRole.label : undefined}
+            className={`w-full flex items-center gap-2.5 rounded-xl py-2 hover:bg-white/60 transition-colors
+              ${collapsed ? "justify-center px-0" : "px-3"}`}
           >
-            <div className="w-6 h-6 rounded-md flex items-center justify-center shrink-0"
+            <div className="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
               style={{ backgroundColor: currentRole.color }}>
-              <Icon name={currentRole.icon as never} size={12} className="text-white" />
+              <Icon name={currentRole.icon as never} size={11} className="text-white" />
             </div>
             {!collapsed && (
               <span className="text-[12px] font-medium text-[#6b6b6b] truncate flex-1 text-left">{currentRole.label}</span>
             )}
           </button>
-
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className={`w-full flex items-center gap-2.5 rounded-[6px] py-2 text-[#b5b5b5] hover:bg-[#f5f5f5] hover:text-[#6b6b6b] transition-colors
+            className={`w-full flex items-center gap-2.5 rounded-xl py-2 text-[#b0b0b0] hover:bg-white/60 hover:text-[#6b6b6b] transition-colors
               ${collapsed ? "justify-center px-0" : "px-3"}`}
           >
-            <Icon name={collapsed ? "PanelLeftOpen" : "PanelLeftClose"} size={14} className="shrink-0" />
+            <Icon name={collapsed ? "PanelLeftOpen" : "PanelLeftClose"} size={13} className="shrink-0" />
             {!collapsed && <span className="text-[12px]">Свернуть</span>}
           </button>
         </div>
       </aside>
 
-      {/* ── Main ── */}
-      <main className="flex-1 overflow-hidden min-w-0 relative flex flex-col">
-        <div className="flex-1 overflow-y-auto">
+      {/* ── Рабочая область с скруглёнными углами ── */}
+      <div className="flex-1 overflow-hidden min-w-0 relative my-2 mr-2 rounded-2xl bg-white shadow-sm border border-[#e8e8e8] flex flex-col">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden">
           {renderMain()}
         </div>
 
@@ -261,18 +281,15 @@ export default function Index() {
             onClick={() => setAiOpen(true)}
             className="absolute bottom-6 right-6 rounded-full flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-200"
             style={{
-              width: 52, height: 52,
+              width: 48, height: 48,
               background: "linear-gradient(135deg, #1a1a1a 0%, #3a3a5c 60%, #1a1a1a 100%)",
-              boxShadow: "0 0 20px 4px rgba(99,102,241,0.3), 0 4px 14px rgba(0,0,0,0.25)",
+              boxShadow: "0 0 16px 3px rgba(99,102,241,0.25), 0 4px 12px rgba(0,0,0,0.2)",
             }}
           >
-            <span className="text-[20px] leading-none select-none">✦</span>
-            <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center shadow-sm">
-              <span className="text-[9px] font-bold text-white">3</span>
-            </span>
+            <span className="text-[18px] leading-none select-none">✦</span>
           </button>
         )}
-      </main>
+      </div>
 
       <AiAssistant open={aiOpen} onClose={() => setAiOpen(false)} />
 

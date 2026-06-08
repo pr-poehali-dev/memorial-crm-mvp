@@ -82,10 +82,10 @@ function AlertRow({ icon, color, bg, text, onClick }: {
 }
 
 export default function DashboardPage({ onNavigate }: Props) {
-  const { data: rawOrders,  loading: l1 } = useApiData(() => ordersApi.production(), []);
-  const { data: rawShifts,  loading: l2 } = useApiData(() => cuttingApi.shifts(),    []);
-  const { data: rawMats,    loading: l3 } = useApiData(() => warehouseApi.materials(), []);
-  const { data: rawBlanks,  loading: l4 } = useApiData(() => warehouseApi.blanks(),   []);
+  const { data: rawOrders,  loading: l1 } = useApiData(() => ordersApi.production(),    [], "orders:production");
+  const { data: rawShifts,  loading: l2 } = useApiData(() => cuttingApi.shifts(),       [], "cutting:shifts");
+  const { data: rawMats,    loading: l3 } = useApiData(() => warehouseApi.materials(),  [], "warehouse:materials");
+  const { data: rawBlanks,  loading: l4 } = useApiData(() => warehouseApi.blanks(),     [], "warehouse:blanks");
 
   const loading = l1 || l2 || l3 || l4;
 

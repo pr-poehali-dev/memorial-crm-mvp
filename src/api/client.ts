@@ -10,6 +10,14 @@ function getToken(): string {
   return localStorage.getItem("crm_token") || "";
 }
 
+/* ── In-memory GET-кэш (TTL 45 сек) ── */
+const REQ_CACHE = new Map<string, { data: unknown; ts: number }>();
+const REQ_TTL = 45_000;
+
+function getCacheKey(fn: string, params: Record<string, string>): string {
+  return fn + ":" + JSON.stringify(params);
+}
+
 async function request<T>(
   fn: keyof typeof URLS,
   method: string,
@@ -18,6 +26,13 @@ async function request<T>(
 ): Promise<T> {
   const url = new URL(URLS[fn]);
   Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+
+  /* Только GET-запросы кэшируем */
+  if (method === "GET") {
+    const key = getCacheKey(fn, params);
+    const hit = REQ_CACHE.get(key);
+    if (hit && Date.now() - hit.ts < REQ_TTL) return hit.data as T;
+  }
 
   const res = await fetch(url.toString(), {
     method,
@@ -42,7 +57,23 @@ async function request<T>(
     const err = (data as { error?: string })?.error || `HTTP ${res.status}`;
     throw new Error(err);
   }
+
+  if (method === "GET") {
+    REQ_CACHE.set(getCacheKey(fn, params), { data, ts: Date.now() });
+  }
+
   return data as T;
+}
+
+/* Сбросить весь кэш (вызывать после POST/PUT/DELETE) */
+export function clearRequestCache(fn?: keyof typeof URLS) {
+  if (fn) {
+    for (const key of REQ_CACHE.keys()) {
+      if (key.startsWith(fn + ":")) REQ_CACHE.delete(key);
+    }
+  } else {
+    REQ_CACHE.clear();
+  }
 }
 
 // ── Auth ──
