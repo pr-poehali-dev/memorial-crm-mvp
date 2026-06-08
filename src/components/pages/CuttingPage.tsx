@@ -391,7 +391,7 @@ export default function CuttingPage() {
 
         {/* Журнал */}
         {tab === "journal" && (
-          <div className="flex-1 overflow-y-auto px-7 py-5">
+          <div className="flex-1 overflow-hidden px-7 py-5">
             <CuttingJournal doneShifts={allDone} />
           </div>
         )}

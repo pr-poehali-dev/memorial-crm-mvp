@@ -141,12 +141,22 @@ export default function WarehouseHeader({
             <p className="text-[10px] font-bold uppercase tracking-widest text-white/40 mb-1">Весь склад</p>
             <div className="flex items-center justify-between flex-wrap gap-1">
               <span className="text-[18px] font-bold text-white">{money(totalWarehouseVal)}</span>
-              <div className="flex gap-2 text-[10px] text-white/50">
-                <span className="text-sky-400">{money(totalRawVal)}</span>
-                <span>+</span>
-                <span className="text-violet-400">{money(totalBlankVal)}</span>
-                <span>+</span>
-                <span className="text-amber-400">{money(totalStockVal)}</span>
+              <div className="flex flex-col gap-0.5 text-[10px]">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-sky-400 shrink-0" />
+                  <span className="text-white/40">Сырьё:</span>
+                  <span className="text-sky-400 font-semibold">{money(totalRawVal)}</span>
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-violet-400 shrink-0" />
+                  <span className="text-white/40">Заготовки:</span>
+                  <span className="text-violet-400 font-semibold">{money(totalBlankVal)}</span>
+                </span>
+                <span className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                  <span className="text-white/40">В наличии:</span>
+                  <span className="text-amber-400 font-semibold">{money(totalStockVal)}</span>
+                </span>
               </div>
             </div>
           </div>

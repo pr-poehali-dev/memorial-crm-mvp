@@ -66,37 +66,6 @@ export default function StockTable({ items, onAdd, onUpdateQty, onRemove }: Prop
   return (
     <div className="space-y-4">
 
-      {/* ── Мини-статы ── */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="bg-white border border-[#ebebeb] rounded-xl px-4 py-3 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-[#eef2ff] flex items-center justify-center shrink-0">
-            <Icon name="Package" size={15} className="text-[#6366f1]" />
-          </div>
-          <div>
-            <p className="text-[17px] font-semibold text-[#1a1a1a] leading-none">{items.length}</p>
-            <p className="text-[11px] text-[#9b9b9b]">Позиций</p>
-          </div>
-        </div>
-        <div className="bg-white border border-[#ebebeb] rounded-xl px-4 py-3 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-[#f0fdf4] flex items-center justify-center shrink-0">
-            <Icon name="Layers" size={15} className="text-[#16a34a]" />
-          </div>
-          <div>
-            <p className="text-[17px] font-semibold text-[#1a1a1a] leading-none">{totalQty}</p>
-            <p className="text-[11px] text-[#9b9b9b]">Единиц итого</p>
-          </div>
-        </div>
-        <div className="bg-white border border-[#ebebeb] rounded-xl px-4 py-3 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-[#fffbeb] flex items-center justify-center shrink-0">
-            <Icon name="Banknote" size={15} className="text-[#d97706]" />
-          </div>
-          <div>
-            <p className="text-[17px] font-semibold text-[#1a1a1a] leading-none">{(totalVal / 1000).toFixed(0)} тыс. ₽</p>
-            <p className="text-[11px] text-[#9b9b9b]">Стоимость склада</p>
-          </div>
-        </div>
-      </div>
-
       {/* ── Фильтры + кнопка ── */}
       <div className="flex items-center gap-3 flex-wrap">
         <div className="flex gap-0.5 bg-[#f4f4f4] rounded-[9px] p-0.5 shrink-0">

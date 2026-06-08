@@ -44,10 +44,9 @@ const NAV_GROUPS: NavGroup[] = [
     hoverBg: "#eff6ff",
     activeBg: "#dbeafe",
     items: [
-      { id: "orders",   label: "Заказы",      icon: "FileText",   sub: "Учёт и статусы" },
-      { id: "clients",  label: "Заказчики",    icon: "Users",      sub: "База заказчиков" },
-      { id: "estimate", label: "Калькулятор", icon: "Calculator", sub: "Расчёт стоимости" },
-      { id: "catalog",  label: "Каталог",     icon: "BookOpen",   sub: "Изделия и цены" },
+      { id: "orders",   label: "Заказы",    icon: "FileText" },
+      { id: "clients",  label: "Заказчики", icon: "Users" },
+      { id: "catalog",  label: "Каталог",   icon: "BookOpen" },
     ],
   },
   {
@@ -56,9 +55,9 @@ const NAV_GROUPS: NavGroup[] = [
     hoverBg: "#fffbeb",
     activeBg: "#fef3c7",
     items: [
-      { id: "cutting",    label: "Заготовки",    icon: "Scissors", sub: "Распил и учёт смен" },
-      { id: "sketches",   label: "Эскизы",       icon: "PenTool",  sub: "Разработка эскизов" },
-      { id: "production", label: "Изготовление", icon: "Hammer",   sub: "Гравировка, полировка, готово" },
+      { id: "cutting",    label: "Заготовки",    icon: "Scissors" },
+      { id: "sketches",   label: "Эскизы",       icon: "PenTool"  },
+      { id: "production", label: "Изготовление", icon: "Hammer"   },
     ],
   },
   {
@@ -67,16 +66,17 @@ const NAV_GROUPS: NavGroup[] = [
     hoverBg: "#f5f5f5",
     activeBg: "#ebebeb",
     items: [
-      { id: "warehouse", label: "Склад", icon: "Package", sub: "Сырьё и заготовки" },
+      { id: "warehouse", label: "Склад", icon: "Package" },
     ],
   },
   {
-    group: "Аналитика",
+    group: "Инструменты",
     color: "#6366f1",
     hoverBg: "#eef2ff",
     activeBg: "#e0e7ff",
     items: [
-      { id: "analytics", label: "Аналитика", icon: "BarChart2", sub: "Отчёты и статистика" },
+      { id: "analytics", label: "Аналитика",  icon: "BarChart2"  },
+      { id: "estimate",  label: "Калькулятор",icon: "Calculator" },
     ],
   },
   {
@@ -85,13 +85,13 @@ const NAV_GROUPS: NavGroup[] = [
     hoverBg: "#f5f5f5",
     activeBg: "#ebebeb",
     items: [
-      { id: "settings", label: "Настройки", icon: "Settings", sub: "Конфигурация" },
+      { id: "settings", label: "Настройки", icon: "Settings" },
     ],
   },
 ];
 
 const ROLE_NAV: Record<Role, Section[]> = {
-  manager:    ["dashboard", "orders", "catalog", "clients"],
+  manager:    ["dashboard", "orders", "catalog", "clients", "estimate"],
   estimator:  ["orders", "catalog", "estimate", "warehouse", "analytics"],
   production: ["cutting", "sketches", "production", "warehouse", "analytics"],
   accountant: ["orders", "clients", "analytics"],
@@ -169,15 +169,15 @@ export default function Index() {
     .map(g => ({ ...g, items: g.items.filter(i => ROLE_NAV[role].includes(i.id)) }))
     .filter(g => g.items.length > 0);
 
-  /* Одиночные группы (не разворачиваются) */
-  const SOLO_GROUPS = new Set(["Главная", "Склад", "Аналитика", "Система"]);
+  /* Группы без метки сверху (одиночные или с особым поведением) */
+  const SOLO_GROUPS = new Set(["Главная", "Склад", "Система"]);
 
   return (
     <NavContext.Provider value={navValue}>
-    <div className="flex h-screen font-golos overflow-hidden bg-[#f0f0f2]">
+    <div className="flex h-screen font-golos overflow-hidden bg-white">
 
       {/* ── Sidebar ── */}
-      <aside className={`flex flex-col bg-[#f0f0f2] transition-all duration-200 shrink-0 ${collapsed ? "w-[60px]" : "w-[210px]"}`}>
+      <aside className={`flex flex-col bg-[#f4f4f5] transition-all duration-200 shrink-0 ${collapsed ? "w-[60px]" : "w-[210px]"}`}>
 
         {/* Логотип */}
         <div className={`flex items-center h-[56px] shrink-0 ${collapsed ? "justify-center" : "px-4 gap-3"}`}>
@@ -269,8 +269,8 @@ export default function Index() {
         </div>
       </aside>
 
-      {/* ── Рабочая область с скруглёнными углами ── */}
-      <div className="flex-1 overflow-hidden min-w-0 relative my-2 mr-2 rounded-2xl bg-white shadow-sm border border-[#e8e8e8] flex flex-col">
+      {/* ── Рабочая область ── */}
+      <div className="flex-1 overflow-hidden min-w-0 relative bg-white flex flex-col border-l border-[#e8e8e8]">
         <div className="flex-1 overflow-y-auto overflow-x-hidden">
           {renderMain()}
         </div>
