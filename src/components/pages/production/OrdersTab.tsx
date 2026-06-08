@@ -8,7 +8,6 @@ type ViewMode = "list" | "kanban";
 type OrderFilter = "all" | "active" | "urgent" | "overdue" | "problem" | "ready" | "done";
 
 const STAGE_LABEL: Record<string, string> = {
-  "Эскиз":       "Эскиз",
   "Производство":"Производство",
   "Гравировка":  "Гравировка",
   "Полировка":   "Полировка",
@@ -17,7 +16,6 @@ const STAGE_LABEL: Record<string, string> = {
 };
 
 const STAGE_COLOR: Record<string, string> = {
-  "Эскиз":       "#6366f1",
   "Производство":"#f59e0b",
   "Гравировка":  "#ec4899",
   "Полировка":   "#14b8a6",
@@ -40,7 +38,6 @@ type Props = {
 };
 
 const NEXT_STATUS: Record<string, string> = {
-  "Эскиз":       "Производство",
   "Производство":"Гравировка",
   "Гравировка":  "Полировка",
   "Полировка":   "Готов",

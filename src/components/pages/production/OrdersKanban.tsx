@@ -1,10 +1,9 @@
 import Icon from "@/components/ui/icon";
 import { DbProductionOrder } from "@/api/client";
 
-const STAGES = ["Эскиз", "Производство", "Гравировка", "Полировка", "Готов", "Доставка"] as const;
+const STAGES = ["Производство", "Гравировка", "Полировка", "Готов", "Доставка"] as const;
 
 const STAGE_COLOR: Record<string, string> = {
-  "Эскиз":        "#6366f1",
   "Производство": "#f59e0b",
   "Гравировка":   "#ec4899",
   "Полировка":    "#14b8a6",
@@ -13,7 +12,6 @@ const STAGE_COLOR: Record<string, string> = {
 };
 
 const STAGE_BG: Record<string, string> = {
-  "Эскиз":        "#eef2ff",
   "Производство": "#fffbeb",
   "Гравировка":   "#fdf2f8",
   "Полировка":    "#f0fdfa",
@@ -22,7 +20,6 @@ const STAGE_BG: Record<string, string> = {
 };
 
 const NEXT_STATUS: Record<string, string> = {
-  "Эскиз":        "Производство",
   "Производство": "Гравировка",
   "Гравировка":   "Полировка",
   "Полировка":    "Готов",

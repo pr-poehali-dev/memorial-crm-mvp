@@ -49,16 +49,14 @@ export type FlatItem = {
 
 /* ─── Статичные конфиги колонок ─── */
 export const COL_CONFIG: { id: string; label: string; color: string; statuses: string[] }[] = [
-  { id: "sketch",    label: "Эскиз",      color: "#6366f1", statuses: ["Эскиз"] },
-  { id: "production",label: "Производство",color: "#f59e0b", statuses: ["Производство"] },
-  { id: "engraving", label: "Гравировка", color: "#ec4899", statuses: ["Гравировка"] },
-  { id: "polishing",  label: "Полировка",  color: "#14b8a6", statuses: ["Полировка"] },
-  { id: "ready",     label: "Готов",      color: "#22c55e", statuses: ["Готов"] },
-  { id: "delivery",  label: "Доставка",   color: "#6b7280", statuses: ["Доставка"] },
+  { id: "production", label: "Производство", color: "#f59e0b", statuses: ["Производство"] },
+  { id: "engraving",  label: "Гравировка",   color: "#ec4899", statuses: ["Гравировка"] },
+  { id: "polishing",  label: "Полировка",    color: "#14b8a6", statuses: ["Полировка"] },
+  { id: "ready",      label: "Готов",        color: "#22c55e", statuses: ["Готов"] },
+  { id: "delivery",   label: "Доставка",     color: "#6b7280", statuses: ["Доставка"] },
 ];
 
 export const COL_NEXT_STATUS: Record<string, string> = {
-  sketch:     "Производство",
   production: "Гравировка",
   engraving:  "Полировка",
   polishing:  "Готов",
@@ -67,7 +65,6 @@ export const COL_NEXT_STATUS: Record<string, string> = {
 };
 
 export const COL_NEXT_LABEL: Record<string, string> = {
-  sketch:     "Производство",
   production: "Гравировка",
   engraving:  "Полировка",
   polishing:  "Готов",

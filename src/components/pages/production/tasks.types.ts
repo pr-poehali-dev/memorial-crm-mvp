@@ -1,15 +1,14 @@
 import { DbProductionOrder } from "@/api/client";
 
-export type Stage = "sketch" | "cutting" | "engraving" | "polishing" | "ready";
+export type Stage = "cutting" | "engraving" | "polishing" | "ready";
 
 export const STAGE_CONFIG: {
   key: Stage; label: string; color: string; status: string;
 }[] = [
-  { key: "sketch",    label: "Эскиз",      color: "#6366f1", status: "Эскиз" },
-  { key: "cutting",   label: "Распил",     color: "#f59e0b", status: "Производство" },
-  { key: "engraving", label: "Гравировка", color: "#ec4899", status: "Гравировка" },
-  { key: "polishing", label: "Полировка",  color: "#14b8a6", status: "Полировка" },
-  { key: "ready",     label: "Готово",     color: "#22c55e", status: "Готов" },
+  { key: "cutting",   label: "Производство", color: "#f59e0b", status: "Производство" },
+  { key: "engraving", label: "Гравировка",   color: "#ec4899", status: "Гравировка" },
+  { key: "polishing", label: "Полировка",    color: "#14b8a6", status: "Полировка" },
+  { key: "ready",     label: "Готово",       color: "#22c55e", status: "Готов" },
 ];
 
 export type Task = {

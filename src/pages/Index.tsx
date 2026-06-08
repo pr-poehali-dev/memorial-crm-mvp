@@ -21,13 +21,23 @@ import Logo, { LogoCompact } from "@/components/Logo";
 import CuttingPage from "@/components/pages/CuttingPage";
 import BlankAnalyticsPage from "@/components/pages/BlankAnalyticsPage";
 import SketchesPage from "@/components/pages/SketchesPage";
+import DashboardPage from "@/components/pages/DashboardPage";
 
-type Section = "overview" | "orders" | "production" | "cutting" | "warehouse" | "clients" | "analytics" | "estimate" | "catalog" | "settings" | "blank-analytics" | "sketches";
+type Section = "dashboard" | "overview" | "orders" | "production" | "cutting" | "warehouse" | "clients" | "analytics" | "estimate" | "catalog" | "settings" | "blank-analytics" | "sketches";
 
 type NavItem = { id: Section; label: string; icon: string; sub?: string };
 type NavGroup = { group: string; color: string; hoverBg: string; activeBg: string; items: NavItem[] };
 
 const NAV_GROUPS: NavGroup[] = [
+  {
+    group: "Обзор",
+    color: "#6366f1",
+    hoverBg: "#eef2ff",
+    activeBg: "#e0e7ff",
+    items: [
+      { id: "dashboard", label: "Главная", icon: "LayoutDashboard", sub: "Текущий процесс" },
+    ],
+  },
   {
     group: "Продажи",
     color: "#3b82f6",
@@ -83,19 +93,19 @@ const NAV_GROUPS: NavGroup[] = [
 const ALL_NAV: NavItem[] = NAV_GROUPS.flatMap(g => g.items);
 
 const ROLE_NAV: Record<Role, Section[]> = {
-  manager:    ["orders", "catalog", "clients"],
+  manager:    ["dashboard", "orders", "catalog", "clients"],
   estimator:  ["orders", "catalog", "estimate", "warehouse", "analytics"],
   production: ["cutting", "sketches", "production", "warehouse", "analytics"],
   accountant: ["orders", "clients", "analytics"],
-  owner:      ["orders", "cutting", "sketches", "production", "catalog", "warehouse", "clients", "analytics", "estimate", "settings"],
+  owner:      ["dashboard", "orders", "cutting", "sketches", "production", "catalog", "warehouse", "clients", "analytics", "estimate", "settings"],
 };
 
 const ROLE_DEFAULT: Record<Role, Section> = {
-  manager:    "orders",
+  manager:    "dashboard",
   estimator:  "estimate",
   production: "production",
   accountant: "orders",
-  owner:      "orders",
+  owner:      "dashboard",
 };
 
 type AppScreen = "landing" | "login" | "role-select" | "app";
@@ -103,7 +113,7 @@ type AppScreen = "landing" | "login" | "role-select" | "app";
 export default function Index() {
   const [screen, setScreen]     = useState<AppScreen>("app");
   const [role, setRole]         = useState<Role | null>("owner");
-  const [active, setActive]     = useState<Section>("overview");
+  const [active, setActive]     = useState<Section>("dashboard");
   const [collapsed, setCollapsed]   = useState(false);
   const [openOrder, setOpenOrder]   = useState<string | null>(null);
   const [showRolePicker, setShowRolePicker] = useState(false);
@@ -160,6 +170,7 @@ export default function Index() {
     if (creatingOrder) return <NewOrderPage onBack={() => setCreatingOrder(false)} />;
     if (active === "orders" && openOrder) return <OrderDetailPage onBack={() => setOpenOrder(null)} />;
     switch (active) {
+      case "dashboard":  return <DashboardPage onNavigate={(s) => handleNavClick(s as Section)} />;
       case "overview":   return <OverviewPage />;
       case "orders":     return <OrdersPage onOpenOrder={(id) => setOpenOrder(id)} onNewOrder={() => setCreatingOrder(true)} />;
       case "sketches":   return <SketchesPage />;
