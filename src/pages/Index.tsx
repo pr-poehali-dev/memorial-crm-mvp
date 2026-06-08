@@ -17,7 +17,7 @@ import LoginPage from "@/components/LoginPage";
 import NewOrderPage from "@/components/pages/NewOrderPage";
 import EstimatePage from "@/components/pages/EstimatePage";
 import CatalogPage from "@/components/pages/CatalogPage";
-import Logo, { LogoCompact } from "@/components/Logo";
+
 import CuttingPage from "@/components/pages/CuttingPage";
 import BlankAnalyticsPage from "@/components/pages/BlankAnalyticsPage";
 import SketchesPage from "@/components/pages/SketchesPage";
@@ -30,12 +30,12 @@ type NavGroup = { group: string; color: string; hoverBg: string; activeBg: strin
 
 const NAV_GROUPS: NavGroup[] = [
   {
-    group: "Обзор",
-    color: "#6366f1",
-    hoverBg: "#eef2ff",
-    activeBg: "#e0e7ff",
+    group: "Главная",
+    color: "#1a1a1a",
+    hoverBg: "#f5f5f5",
+    activeBg: "#1a1a1a",
     items: [
-      { id: "dashboard", label: "Главная", icon: "LayoutDashboard", sub: "Текущий процесс" },
+      { id: "dashboard", label: "Главная", icon: "LayoutDashboard" },
     ],
   },
   {
@@ -90,8 +90,6 @@ const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
-const ALL_NAV: NavItem[] = NAV_GROUPS.flatMap(g => g.items);
-
 const ROLE_NAV: Record<Role, Section[]> = {
   manager:    ["dashboard", "orders", "catalog", "clients"],
   estimator:  ["orders", "catalog", "estimate", "warehouse", "analytics"],
@@ -119,23 +117,6 @@ export default function Index() {
   const [showRolePicker, setShowRolePicker] = useState(false);
   const [creatingOrder, setCreatingOrder]   = useState(false);
   const [aiOpen, setAiOpen]               = useState(false);
-  const [openGroups, setOpenGroups] = useState<Set<string>>(() => {
-    try {
-      const saved = localStorage.getItem("nav_open_groups");
-      if (saved) return new Set(JSON.parse(saved) as string[]);
-    } catch (_e) { /* ignore */ }
-    return new Set(NAV_GROUPS.map(g => g.group));
-  });
-
-  const toggleGroup = (group: string) => {
-    setOpenGroups(prev => {
-      const next = new Set(prev);
-      if (next.has(group)) next.delete(group); else next.add(group);
-      try { localStorage.setItem("nav_open_groups", JSON.stringify([...next])); } catch (_e) { /* ignore */ }
-      return next;
-    });
-  };
-
   const handleRoleSelect = (r: Role) => {
     setRole(r);
     setActive(ROLE_DEFAULT[r]);
@@ -147,9 +128,6 @@ export default function Index() {
     setActive(id);
     setOpenOrder(null);
     setCreatingOrder(false);
-    // auto-expand group containing this item
-    const parentGroup = NAV_GROUPS.find(g => g.items.some(i => i.id === id));
-    if (parentGroup) setOpenGroups(prev => new Set([...prev, parentGroup.group]));
   };
 
   const navValue = useMemo(() => ({
@@ -186,172 +164,98 @@ export default function Index() {
     }
   };
 
+  /* Все nav-пункты текущей роли — плоский список */
+  const flatNav = NAV_GROUPS.flatMap(g => g.items).filter(i => ROLE_NAV[role].includes(i.id));
+
+  /* Разделители: перед «Аналитика» и «Настройки» */
+  const DIVIDER_BEFORE = new Set(["analytics", "settings"]);
+
   return (
     <NavContext.Provider value={navValue}>
-    <div className="flex h-screen bg-[#fafafa] font-golos overflow-hidden">
+    <div className="flex h-screen font-golos overflow-hidden bg-[#f5f5f7]">
 
-      {/* Sidebar */}
-      <aside className={`flex flex-col border-r border-[#ebebeb] bg-white transition-all duration-300 shrink-0 ${collapsed ? "w-[56px]" : "w-[220px]"}`}>
+      {/* ── Sidebar ── */}
+      <aside className={`flex flex-col bg-white border-r border-[#e8e8e8] transition-all duration-200 shrink-0 ${collapsed ? "w-[52px]" : "w-[200px]"}`}>
 
-        {/* Logo */}
-        <button
-          onClick={() => { setScreen("landing"); setRole(null); }}
-          className={`flex items-center h-[56px] border-b border-[#ebebeb] hover:bg-[#fafafa] transition-colors w-full ${collapsed ? "justify-center px-0" : "px-4"}`}
-        >
-          {collapsed ? <Logo size="sm" iconOnly /> : <LogoCompact />}
-        </button>
-
-        {/* Role badge */}
-        {!collapsed && (
-          <div className="px-3 pt-3 pb-1">
-            <button
-              onClick={() => setShowRolePicker(true)}
-              className="w-full flex items-center gap-2 px-2.5 py-2 rounded-[8px] border border-[#f0f0f0] hover:border-[#d5d5d5] transition-all group"
-              style={{ backgroundColor: currentRole.bg }}
-            >
-              <div className="w-5 h-5 rounded-md flex items-center justify-center shrink-0"
-                style={{ backgroundColor: currentRole.color }}>
-                <Icon name={currentRole.icon as never} size={11} className="text-white" />
-              </div>
-              <div className="flex-1 min-w-0 text-left">
-                <p className="text-[11px] font-semibold truncate" style={{ color: currentRole.color }}>{currentRole.label}</p>
-              </div>
-              <Icon name="ChevronsUpDown" size={11} className="text-[#b5b5b5] group-hover:text-[#6b6b6b] shrink-0 transition-colors" />
-            </button>
+        {/* Логотип / название */}
+        <div className={`flex items-center h-[52px] border-b border-[#f0f0f0] shrink-0 ${collapsed ? "justify-center px-0" : "px-4 gap-2.5"}`}>
+          <div className="w-7 h-7 rounded-lg bg-[#1a1a1a] flex items-center justify-center shrink-0">
+            <span className="text-white text-[13px] font-bold select-none">П</span>
           </div>
-        )}
-        {collapsed && (
-          <div className="flex justify-center py-2">
-            <button onClick={() => setShowRolePicker(true)} title={currentRole.label}
-              className="w-8 h-8 rounded-lg flex items-center justify-center transition-all hover:opacity-80"
-              style={{ backgroundColor: currentRole.color }}>
-              <Icon name={currentRole.icon as never} size={13} className="text-white" />
-            </button>
-          </div>
-        )}
+          {!collapsed && (
+            <div className="min-w-0">
+              <p className="text-[13px] font-semibold text-[#1a1a1a] truncate leading-tight">pio-admin</p>
+            </div>
+          )}
+        </div>
 
-        {/* Nav */}
-        <nav className="flex-1 py-2 px-2 flex flex-col overflow-y-auto overflow-x-hidden">
-          {NAV_GROUPS.map((group, gi) => {
-            const groupItems = group.items.filter(n => ROLE_NAV[role].includes(n.id));
-            if (groupItems.length === 0) return null;
-            const isOpen = openGroups.has(group.group);
-            const hasActive = groupItems.some(i => i.id === active);
-
-            const noCollapse = group.group === "Склад" || group.group === "Аналитика" || group.group === "Система";
-
+        {/* Навигация — плоский список */}
+        <nav className="flex-1 overflow-y-auto overflow-x-hidden py-2 px-2 space-y-0.5">
+          {flatNav.map((item) => {
+            const isActive = active === item.id;
+            const showDivider = DIVIDER_BEFORE.has(item.id);
             return (
-              <div key={group.group} className={gi > 0 ? "mt-1" : ""}>
-
-                {/* Заголовок группы */}
-                {!collapsed && !noCollapse ? (
-                  <button
-                    onClick={() => toggleGroup(group.group)}
-                    className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-[6px] hover:bg-[#f5f5f5] transition-colors group/hdr"
-                  >
-                    <span
-                      className="text-[10px] font-bold uppercase tracking-widest flex-1 text-left transition-colors"
-                      style={{ color: hasActive ? group.color : "#c0c0c0" }}
-                    >
-                      {group.group}
-                    </span>
-                    <Icon
-                      name={isOpen ? "ChevronDown" : "ChevronRight"}
-                      size={11}
-                      className="transition-all duration-200 text-[#d0d0d0] group-hover/hdr:text-[#9b9b9b]"
-                    />
-                  </button>
-                ) : !collapsed && noCollapse ? (
-                  <div className="mx-2 my-1.5 h-px bg-[#f0f0f0]" />
-                ) : (
-                  gi > 0 && <div className="mx-auto w-4 h-px bg-[#ebebeb] my-1.5" />
-                )}
-
-                {/* Пункты группы */}
-                <div
-                  className="grid transition-all duration-200"
-                  style={{
-                    gridTemplateRows: (collapsed || isOpen || noCollapse) ? "1fr" : "0fr",
-                    opacity: (collapsed || isOpen || noCollapse) ? 1 : 0,
-                  }}
+              <div key={item.id}>
+                {showDivider && <div className="my-1.5 mx-1 h-px bg-[#f0f0f0]" />}
+                <button
+                  onClick={() => handleNavClick(item.id)}
+                  title={collapsed ? item.label : undefined}
+                  className={`w-full flex items-center gap-2.5 rounded-[6px] transition-all duration-150
+                    ${collapsed ? "justify-center h-9 px-0" : "px-3 py-2"}
+                    ${isActive
+                      ? "bg-[#1a1a1a] text-white"
+                      : "text-[#6b6b6b] hover:bg-[#f5f5f5] hover:text-[#1a1a1a]"
+                    }`}
                 >
-                <div className="flex flex-col gap-0.5 overflow-hidden">
-                  {groupItems.map((item) => {
-                    const isActive = active === item.id;
-                    return (
-                      <button
-                        key={item.id}
-                        onClick={() => handleNavClick(item.id)}
-                        title={collapsed ? item.label : undefined}
-                        className={`relative flex items-center gap-2.5 rounded-[6px] transition-all duration-150 w-full text-left group/item
-                          ${collapsed ? "justify-center h-8 px-0" : "px-2.5 py-1.5"}`}
-                        style={{
-                          backgroundColor: isActive ? group.activeBg : undefined,
-                        }}
-                        onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.backgroundColor = group.hoverBg; }}
-                        onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.backgroundColor = ""; }}
-                      >
-                        {/* Активная полоска слева */}
-                        {!collapsed && isActive && (
-                          <span
-                            className="absolute left-0 top-1 bottom-1 w-[3px] rounded-full"
-                            style={{ backgroundColor: group.color }}
-                          />
-                        )}
-
-                        <Icon
-                          name={item.icon as never}
-                          size={15}
-                          className="shrink-0 transition-colors duration-150"
-                          style={{ color: isActive ? group.color : undefined }}
-                        />
-
-                        {!collapsed && (
-                          <div className="flex-1 min-w-0">
-                            <p
-                              className="text-[13px] leading-tight transition-colors duration-150"
-                              style={{ color: isActive ? group.color : undefined, fontWeight: isActive ? 500 : undefined }}
-                            >
-                              {item.label}
-                            </p>
-                            {item.sub && (
-                              <p className="text-[10px] text-[#c5c5c5] leading-tight mt-0.5">{item.sub}</p>
-                            )}
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-                </div>
+                  <Icon
+                    name={item.icon as never}
+                    size={15}
+                    className="shrink-0"
+                  />
+                  {!collapsed && (
+                    <span className="text-[13px] font-medium leading-none truncate">{item.label}</span>
+                  )}
+                </button>
               </div>
             );
           })}
         </nav>
 
-        {/* Bottom */}
-        <div className="border-t border-[#ebebeb] pt-2 pb-3 px-2 space-y-1">
-          {!collapsed && (
-            <div className="px-2.5 py-2 rounded-[6px]">
-              <p className="text-[11px] font-semibold text-[#1a1a1a] leading-snug truncate">ООО «Память Урал»</p>
-              <p className="text-[10px] text-[#b5b5b5]">Производство памятников</p>
+        {/* Роль + сворачивание */}
+        <div className="border-t border-[#f0f0f0] py-2 px-2 space-y-0.5">
+          <button
+            onClick={() => setShowRolePicker(true)}
+            className={`w-full flex items-center gap-2.5 rounded-[6px] py-2 hover:bg-[#f5f5f5] transition-colors
+              ${collapsed ? "justify-center px-0" : "px-3"}`}
+            title={collapsed ? currentRole.label : undefined}
+          >
+            <div className="w-6 h-6 rounded-md flex items-center justify-center shrink-0"
+              style={{ backgroundColor: currentRole.color }}>
+              <Icon name={currentRole.icon as never} size={12} className="text-white" />
             </div>
-          )}
+            {!collapsed && (
+              <span className="text-[12px] font-medium text-[#6b6b6b] truncate flex-1 text-left">{currentRole.label}</span>
+            )}
+          </button>
+
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className={`flex items-center gap-2.5 rounded-[6px] h-8 text-[#9b9b9b] hover:text-[#1a1a1a] hover:bg-[#f5f5f5] transition-all w-full ${collapsed ? "justify-center px-0" : "px-2.5"}`}
+            className={`w-full flex items-center gap-2.5 rounded-[6px] py-2 text-[#b5b5b5] hover:bg-[#f5f5f5] hover:text-[#6b6b6b] transition-colors
+              ${collapsed ? "justify-center px-0" : "px-3"}`}
           >
             <Icon name={collapsed ? "PanelLeftOpen" : "PanelLeftClose"} size={14} className="shrink-0" />
-            {!collapsed && <span className="text-[13px]">Свернуть</span>}
+            {!collapsed && <span className="text-[12px]">Свернуть</span>}
           </button>
         </div>
       </aside>
 
-      {/* Main */}
-      <main className="flex-1 overflow-y-auto min-w-0 relative">
-        {renderMain()}
+      {/* ── Main ── */}
+      <main className="flex-1 overflow-hidden min-w-0 relative flex flex-col">
+        <div className="flex-1 overflow-y-auto">
+          {renderMain()}
+        </div>
 
-        {/* AI FAB — внутри контент-зоны */}
+        {/* AI FAB */}
         {!aiOpen && (
           <button
             onClick={() => setAiOpen(true)}
