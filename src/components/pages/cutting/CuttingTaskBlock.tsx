@@ -120,14 +120,20 @@ type Props = {
   onReload: () => void;
   onAssignClick?: (taskId: string) => void;
   openTaskId?: string | null;
+  onTaskOpened?: () => void;
 };
 
-export default function CuttingTaskBlock({ tasks, onReload, onAssignClick, openTaskId }: Props) {
+export default function CuttingTaskBlock({ tasks, onReload, onAssignClick, openTaskId, onTaskOpened }: Props) {
   const [modalTask, setModalTask] = useState<CuttingTask | null>(null);
 
   /* Если снаружи передан openTaskId — автоматически открываем модал */
   const effectiveModal = modalTask
     ?? (openTaskId ? tasks.find(t => t.id === openTaskId) ?? null : null);
+
+  const handleClose = () => {
+    setModalTask(null);
+    onTaskOpened?.(); /* сбрасываем openTaskId в родителе */
+  };
 
   const handleCancel = (task: CuttingTask) => {
     cuttingApi.cancelTask(parseInt(task.id)).then(onReload).catch(console.error);
@@ -147,7 +153,7 @@ export default function CuttingTaskBlock({ tasks, onReload, onAssignClick, openT
       {effectiveModal && (
         <TaskModal
           task={effectiveModal}
-          onClose={() => setModalTask(null)}
+          onClose={handleClose}
           onAssign={onAssignClick}
         />
       )}
@@ -171,10 +177,13 @@ export default function CuttingTaskBlock({ tasks, onReload, onAssignClick, openT
           const isActive      = task.status === "active";
 
           return (
-            <button
+            <div
               key={task.id}
               onClick={() => setModalTask(task)}
-              className={`rounded-xl border p-4 transition-all text-left hover:shadow-sm w-full ${
+              role="button"
+              tabIndex={0}
+              onKeyDown={e => e.key === "Enter" && setModalTask(task)}
+              className={`rounded-xl border p-4 transition-all text-left hover:shadow-sm w-full cursor-pointer ${
                 isActive ? "border-[#c7d2fe] bg-[#f5f3ff] hover:border-[#a5b4fc]" : "border-[#e8e8e8] bg-white hover:border-[#d0d0d0]"
               }`}
             >
@@ -225,7 +234,7 @@ export default function CuttingTaskBlock({ tasks, onReload, onAssignClick, openT
                   + Назначить смену
                 </button>
               )}
-            </button>
+            </div>
           );
         })}
       </div>

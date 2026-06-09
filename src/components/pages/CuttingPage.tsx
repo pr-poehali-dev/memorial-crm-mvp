@@ -268,6 +268,7 @@ export default function CuttingPage({ openTaskId, onTaskOpened }: Props) {
                   tasks={tasks}
                   onReload={reloadTasks}
                   openTaskId={openTaskId}
+                  onTaskOpened={onTaskOpened}
                   onAssignClick={(taskId) => {
                     setFTaskId(taskId);
                     setFTaskQty("");
