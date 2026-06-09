@@ -65,18 +65,23 @@ export default function WarehousePage() {
       ordersApi.list(),
       warehouseApi.reserves(),
     ]).then(([mats, bls, movs, stk, ords, res]) => {
-      // Строим MaterialReserve[] из записей БД
+      // Строим MaterialReserve[] из задач нарезки
       const reserveMap: Record<string, MaterialReserve> = {};
       for (const r of res) {
+        if (!r.material_id || Number(r.qty) <= 0) continue;
         const matId = String(r.material_id);
         if (!reserveMap[matId]) {
           reserveMap[matId] = { materialId: matId, totalReserved: 0, orders: [] };
         }
         reserveMap[matId].totalReserved = +(reserveMap[matId].totalReserved + Number(r.qty)).toFixed(2);
+        // Подпись: "Имя заготовки · размер" если есть, иначе material_name
+        const blankLabel = r.blank_name
+          ? (r.blank_size ? `${r.blank_name} ${r.blank_size}` : r.blank_name)
+          : (r.material_name ?? "Задача");
         reserveMap[matId].orders.push({
           orderId:    `Задача #${r.task_id ?? r.id}`,
           qty:        Number(r.qty),
-          clientName: r.material_name ?? undefined,
+          clientName: blankLabel,
           stage:      r.task_status ?? "pending",
         });
       }

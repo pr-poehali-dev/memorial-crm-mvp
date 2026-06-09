@@ -80,14 +80,35 @@ def handler(event: dict, context) -> dict:
                     (company_id,)
                 )
             elif section == "reserves":
-                # Активные резервы сырья под задачи нарезки
+                # Резервы = все активные задачи нарезки (не done/cancelled),
+                # у которых есть привязка к blank_type → material
+                # Количество = raw_per_unit * (total_qty - done_qty)
                 cur.execute(
-                    f"""SELECT mr.id, mr.material_id, mr.task_id, mr.qty, mr.note,
-                               ct.material_name, ct.total_qty, ct.status as task_status
-                        FROM {SCHEMA}.material_reserves mr
-                        LEFT JOIN {SCHEMA}.cutting_tasks ct ON ct.id=mr.task_id
-                        WHERE mr.company_id=%s AND mr.active=TRUE
-                        ORDER BY mr.created_at DESC""",
+                    f"""SELECT
+                           ct.id          AS id,
+                           m.id           AS material_id,
+                           ct.id          AS task_id,
+                           GREATEST(
+                               ROUND(bt.raw_per_unit::numeric * GREATEST(ct.total_qty - ct.done_qty, 0), 3),
+                               0
+                           )              AS qty,
+                           ct.status      AS task_status,
+                           ct.material_name,
+                           ct.total_qty,
+                           ct.done_qty,
+                           bt.name        AS blank_name,
+                           bt.size        AS blank_size,
+                           NULL           AS note
+                        FROM {SCHEMA}.cutting_tasks ct
+                        JOIN {SCHEMA}.blank_types bt ON bt.id = ct.blank_type_id
+                        JOIN {SCHEMA}.materials m
+                             ON m.company_id = ct.company_id
+                            AND m.name = bt.material
+                            AND m.active = TRUE
+                        WHERE ct.company_id = %s
+                          AND ct.status NOT IN ('done', 'cancelled')
+                          AND (ct.total_qty - ct.done_qty) > 0
+                        ORDER BY ct.created_at DESC""",
                     (company_id,)
                 )
             else:

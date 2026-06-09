@@ -266,6 +266,7 @@ export default function CuttingPage({ openTaskId, onTaskOpened }: Props) {
               <div className="flex-1 overflow-y-auto px-5 py-4">
                 <CuttingTaskBlock
                   tasks={tasks}
+                  allShifts={shifts}
                   onReload={reloadTasks}
                   openTaskId={openTaskId}
                   onTaskOpened={onTaskOpened}
@@ -342,7 +343,7 @@ export default function CuttingPage({ openTaskId, onTaskOpened }: Props) {
         {/* Журнал */}
         {tab === "journal" && (
           <div className="flex-1 overflow-hidden px-7 py-5">
-            <CuttingJournal doneShifts={allDone} />
+            <CuttingJournal doneShifts={allDone} allTasks={tasks} />
           </div>
         )}
       </div>
