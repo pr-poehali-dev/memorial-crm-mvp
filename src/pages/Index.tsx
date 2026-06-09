@@ -182,7 +182,7 @@ export default function Index() {
         {/* Логотип */}
         <div className={`flex items-center shrink-0 ${collapsed ? "justify-center h-[64px]" : "px-4 py-3 gap-3"}`}>
           <img
-            src="https://cdn.poehali.dev/projects/4e0e07db-0b5c-4868-8b3d-3bd655c50b19/bucket/67a0bb82-2164-4b93-a557-fc93d3175179.jpg"
+            src="https://cdn.poehali.dev/projects/4e0e07db-0b5c-4868-8b3d-3bd655c50b19/bucket/0246c54c-eecf-476c-a002-30b881a57acf.png"
             alt="Память"
             className="shrink-0 object-contain rounded-lg"
             style={{ width: collapsed ? 36 : 40, height: collapsed ? 36 : 40 }}
