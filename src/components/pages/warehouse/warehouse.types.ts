@@ -183,7 +183,8 @@ export type StockItem = {
   name: string;
   category: string;
   qty: number;
-  price: number;
+  price: number;      // цена продажи
+  costPrice: number;  // себестоимость
   addedAt: string;
   note?: string;
 };

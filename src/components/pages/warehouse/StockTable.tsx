@@ -28,11 +28,12 @@ export default function StockTable({ items, onAdd, onUpdateQty, onRemove }: Prop
   const [showAdd, setShowAdd] = useState(false);
 
   /* форма добавления */
-  const [formName,  setFormName]  = useState("");
-  const [formCat,   setFormCat]   = useState("monument");
-  const [formQty,   setFormQty]   = useState("1");
-  const [formPrice, setFormPrice] = useState("");
-  const [formNote,  setFormNote]  = useState("");
+  const [formName,      setFormName]      = useState("");
+  const [formCat,       setFormCat]       = useState("monument");
+  const [formQty,       setFormQty]       = useState("1");
+  const [formPrice,     setFormPrice]     = useState("");
+  const [formCostPrice, setFormCostPrice] = useState("");
+  const [formNote,      setFormNote]      = useState("");
 
   const filtered = items.filter(it => {
     const matchSearch = it.name.toLowerCase().includes(search.toLowerCase());
@@ -40,10 +41,7 @@ export default function StockTable({ items, onAdd, onUpdateQty, onRemove }: Prop
     return matchSearch && matchCat;
   });
 
-  const totalQty    = items.reduce((s, i) => s + i.qty, 0);
-  const totalVal    = items.reduce((s, i) => s + i.qty * i.price, 0);
   const filtTotalQty = filtered.reduce((s, i) => s + i.qty, 0);
-  const filtTotalVal = filtered.reduce((s, i) => s + i.qty * i.price, 0);
   const filtZeroQty  = filtered.filter(i => i.qty === 0).length;
   const cats     = [...new Set(items.map(i => i.category))];
 
@@ -56,10 +54,11 @@ export default function StockTable({ items, onAdd, onUpdateQty, onRemove }: Prop
       category:  formCat,
       qty:       parseInt(formQty) || 1,
       price:     parseFloat(formPrice),
+      costPrice: parseFloat(formCostPrice) || 0,
       addedAt:   new Date().toLocaleDateString("ru-RU", { day: "numeric", month: "short" }),
       note:      formNote.trim() || undefined,
     });
-    setFormName(""); setFormCat("monument"); setFormQty("1"); setFormPrice(""); setFormNote("");
+    setFormName(""); setFormCat("monument"); setFormQty("1"); setFormPrice(""); setFormCostPrice(""); setFormNote("");
     setShowAdd(false);
   };
 
@@ -127,10 +126,14 @@ export default function StockTable({ items, onAdd, onUpdateQty, onRemove }: Prop
               <input type="number" min={1} value={formQty} onChange={e => setFormQty(e.target.value)} className={inputCls} />
             </div>
             <div>
-              <label className="block text-[11px] text-[#6b6b6b] mb-1">Цена (₽) *</label>
+              <label className="block text-[11px] text-[#6b6b6b] mb-1">Себестоимость (₽)</label>
+              <input type="number" min={0} value={formCostPrice} onChange={e => setFormCostPrice(e.target.value)} placeholder="15000" className={inputCls} />
+            </div>
+            <div>
+              <label className="block text-[11px] text-[#6b6b6b] mb-1">Цена продажи (₽) *</label>
               <input type="number" min={0} value={formPrice} onChange={e => setFormPrice(e.target.value)} placeholder="22000" className={inputCls} />
             </div>
-            <div className="col-span-2">
+            <div>
               <label className="block text-[11px] text-[#6b6b6b] mb-1">Примечание</label>
               <input value={formNote} onChange={e => setFormNote(e.target.value)} placeholder="Необязательно..." className={inputCls} />
             </div>
@@ -153,7 +156,7 @@ export default function StockTable({ items, onAdd, onUpdateQty, onRemove }: Prop
         <table className="w-full">
           <thead>
             <tr className="border-b border-[#f0f0f0]">
-              {["Изделие", "Категория", "На складе", "Цена / шт.", "Стоимость", "Добавлено", ""].map(h => (
+              {["Изделие", "Категория", "На складе", "Себест.", "Цена продажи", "Прибыль / шт.", "Добавлено", ""].map(h => (
                 <th key={h} className="px-4 py-3 text-left text-[10px] font-semibold text-[#b5b5b5] uppercase tracking-wide whitespace-nowrap">
                   {h}
                 </th>
@@ -218,14 +221,27 @@ export default function StockTable({ items, onAdd, onUpdateQty, onRemove }: Prop
                     </div>
                   </td>
 
-                  {/* Цена */}
-                  <td className="px-4 py-3 text-[13px] font-mono text-[#1a1a1a] whitespace-nowrap">
+                  {/* Себестоимость */}
+                  <td className="px-4 py-3 text-[12px] font-mono text-[#6b6b6b] whitespace-nowrap">
+                    {item.costPrice ? item.costPrice.toLocaleString("ru") + " ₽" : "—"}
+                  </td>
+
+                  {/* Цена продажи */}
+                  <td className="px-4 py-3 text-[13px] font-mono font-semibold text-[#1a1a1a] whitespace-nowrap">
                     {item.price.toLocaleString("ru")} ₽
                   </td>
 
-                  {/* Стоимость */}
-                  <td className="px-4 py-3 text-[13px] font-semibold font-mono text-[#1a1a1a] whitespace-nowrap">
-                    {(item.qty * item.price).toLocaleString("ru")} ₽
+                  {/* Прибыль / шт. */}
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    {item.costPrice > 0 ? (() => {
+                      const profit = item.price - item.costPrice;
+                      const pct = Math.round((profit / item.costPrice) * 100);
+                      return (
+                        <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md ${profit >= 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"}`}>
+                          {profit >= 0 ? "+" : ""}{profit.toLocaleString("ru")} ₽ / {pct}%
+                        </span>
+                      );
+                    })() : <span className="text-[11px] text-[#c0c0c0]">—</span>}
                   </td>
 
                   {/* Дата */}
@@ -246,24 +262,40 @@ export default function StockTable({ items, onAdd, onUpdateQty, onRemove }: Prop
             })}
           </tbody>
           <tfoot>
-            <tr className="border-t-2 border-[#e8e8e8] bg-[#fafafa]">
-              <td className="px-4 py-3 text-[11px] font-bold text-[#9b9b9b] uppercase tracking-wide">Итого</td>
-              <td className="px-4 py-3">
-                {filtZeroQty > 0 && (
-                  <span className="text-[11px] bg-red-100 text-red-600 px-2 py-0.5 rounded font-semibold whitespace-nowrap">
-                    {filtZeroQty} нет в наличии
-                  </span>
-                )}
-              </td>
-              <td className="px-4 py-3 font-mono text-[14px] font-bold text-[#1a1a1a]">
-                {filtTotalQty} <span className="text-[11px] font-normal text-[#9b9b9b]">шт.</span>
-              </td>
-              <td className="px-4 py-3" />
-              <td className="px-4 py-3 font-mono text-[13px] font-bold text-[#6366f1]">
-                {filtTotalVal.toLocaleString("ru")} ₽
-              </td>
-              <td colSpan={2} className="px-4 py-3" />
-            </tr>
+            {(() => {
+              const filtTotalCost = filtered.reduce((s, i) => s + i.qty * (i.costPrice || 0), 0);
+              const filtTotalSale = filtered.reduce((s, i) => s + i.qty * i.price, 0);
+              const filtProfit = filtTotalSale - filtTotalCost;
+              return (
+                <tr className="border-t-2 border-[#e8e8e8] bg-[#fafafa]">
+                  <td className="px-4 py-3 text-[11px] font-bold text-[#9b9b9b] uppercase tracking-wide">Итого</td>
+                  <td className="px-4 py-3">
+                    {filtZeroQty > 0 && (
+                      <span className="text-[11px] bg-red-100 text-red-600 px-2 py-0.5 rounded font-semibold whitespace-nowrap">
+                        {filtZeroQty} нет в наличии
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 font-mono text-[14px] font-bold text-[#1a1a1a]">
+                    {filtTotalQty} <span className="text-[11px] font-normal text-[#9b9b9b]">шт.</span>
+                  </td>
+                  <td className="px-4 py-3 font-mono text-[12px] text-[#6b6b6b]">
+                    {filtTotalCost > 0 ? filtTotalCost.toLocaleString("ru") + " ₽" : "—"}
+                  </td>
+                  <td className="px-4 py-3 font-mono text-[13px] font-bold text-[#1a1a1a]">
+                    {filtTotalSale.toLocaleString("ru")} ₽
+                  </td>
+                  <td className="px-4 py-3">
+                    {filtTotalCost > 0 && (
+                      <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md ${filtProfit >= 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-600"}`}>
+                        {filtProfit >= 0 ? "+" : ""}{filtProfit.toLocaleString("ru")} ₽
+                      </span>
+                    )}
+                  </td>
+                  <td colSpan={2} className="px-4 py-3" />
+                </tr>
+              );
+            })()}
           </tfoot>
         </table>
       </div>

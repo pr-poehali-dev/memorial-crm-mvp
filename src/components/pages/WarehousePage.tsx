@@ -38,7 +38,8 @@ function dbToMovement(m: DbMovement): Movement {
 }
 function dbToStock(s: DbStockItem): StockItem {
   return { id: String(s.id), catalogId: s.catalog_id||"", name: s.name, category: s.category,
-           qty: s.qty, price: Number(s.price), addedAt: new Date(s.added_at).toLocaleDateString("ru-RU",{day:"numeric",month:"short"}),
+           qty: s.qty, price: Number(s.price), costPrice: Number(s.cost_price)||0,
+           addedAt: new Date(s.added_at).toLocaleDateString("ru-RU",{day:"numeric",month:"short"}),
            note: s.note };
 }
 
@@ -235,13 +236,16 @@ export default function WarehousePage() {
   const blankReserves = useMemo(() => calcBlankReserves(orders), [orders]);
   const getBlankReserved = (id: string) => blankReserves.find(r => r.blankId === id)?.totalReserved ?? 0;
 
-  const totalRawVal   = rawMat.reduce((s, r) => s + r.qty * r.price, 0);
-  const totalRawArea  = rawMat.reduce((s, r) => s + r.qty, 0);
-  const totalBlankQty = blanks.reduce((s, b) => s + b.qty, 0);
-  const totalBlankVal = blanks.reduce((s, b) => s + b.qty * (b.costPrice || 0), 0);
-  const totalStockQty = stock.reduce((s, i) => s + i.qty, 0);
-  const totalStockVal = stock.reduce((s, i) => s + i.qty * (i.price || 0), 0);
-  const totalWarehouseVal = totalRawVal + totalBlankVal + totalStockVal;
+  const totalRawVal      = rawMat.reduce((s, r) => s + r.qty * r.price, 0);
+  const totalRawArea     = rawMat.reduce((s, r) => s + r.qty, 0);
+  const totalBlankQty    = blanks.reduce((s, b) => s + b.qty, 0);
+  const totalBlankVal    = blanks.reduce((s, b) => s + b.qty * (b.costPrice || 0), 0);
+  const totalBlankSale   = blanks.reduce((s, b) => s + b.qty * (b.salePrice || 0), 0);
+  const totalStockQty    = stock.reduce((s, i) => s + i.qty, 0);
+  const totalStockCost   = stock.reduce((s, i) => s + i.qty * (i.costPrice || 0), 0);
+  const totalStockSale   = stock.reduce((s, i) => s + i.qty * (i.price || 0), 0);
+  const totalStockVal    = totalStockCost; // себестоимость В Наличии
+  const totalWarehouseVal = totalRawVal + totalBlankVal + totalStockCost; // только себестоимость
   const criticalRaw   = rawMat.filter(r => getLevelRaw(r, getReserved(r.id)) === "critical").length;
   const critBlanks    = blanks.filter(b => getLevelBlank(b) === "critical").length;
 
@@ -260,7 +264,10 @@ export default function WarehousePage() {
         totalRawArea={totalRawArea}
         totalBlankQty={totalBlankQty}
         totalBlankVal={totalBlankVal}
+        totalBlankSale={totalBlankSale}
         totalStockQty={totalStockQty}
+        totalStockCost={totalStockCost}
+        totalStockSale={totalStockSale}
         totalStockVal={totalStockVal}
         totalWarehouseVal={totalWarehouseVal}
         criticalRaw={criticalRaw}

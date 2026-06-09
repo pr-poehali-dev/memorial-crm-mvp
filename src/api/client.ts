@@ -298,6 +298,7 @@ export type DbStockItem = {
   category: string;
   qty: number;
   price: number;
+  cost_price?: number;
   note?: string;
   added_at: string;
 };

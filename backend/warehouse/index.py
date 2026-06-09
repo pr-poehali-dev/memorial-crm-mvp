@@ -291,11 +291,11 @@ def handler(event: dict, context) -> dict:
             if action == "add_stock":
                 cur.execute(
                     f"""INSERT INTO {SCHEMA}.stock_items
-                        (company_id, catalog_id, name, category, qty, price, note)
-                        VALUES (%s,%s,%s,%s,%s,%s,%s) RETURNING id""",
+                        (company_id, catalog_id, name, category, qty, price, cost_price, note)
+                        VALUES (%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id""",
                     (company_id, body.get("catalogId"), body["name"],
                      body.get("category","other"), body.get("qty",0),
-                     body.get("price",0), body.get("note"))
+                     body.get("price",0), body.get("costPrice",0), body.get("note"))
                 )
                 new_id = cur.fetchone()["id"]
                 conn.commit()
