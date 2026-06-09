@@ -12,21 +12,21 @@ const URGENT_ACTION = {
 const PROBLEMS = [
   { icon: "AlertTriangle", color: "#ef4444", bg: "#fef2f2", border: "#fecaca", label: "Заказы просрочены", value: "3", detail: "МП-0035, МП-0033, МП-0040" },
   { icon: "CreditCard",    color: "#f59e0b", bg: "#fffbeb", border: "#fde68a", label: "Клиенты не платят", value: "8", detail: "Долг: 123 500 ₽" },
-  { icon: "Package",       color: "#6366f1", bg: "#eef2ff", border: "#c7d2fe", label: "Заканчивается камень", value: "3", detail: "Мрамор белый, Гранит красный" },
+  { icon: "Package",       color: "#2563eb", bg: "#eff6ff", border: "#bfdbfe", label: "Заканчивается камень", value: "3", detail: "Мрамор белый, Гранит красный" },
   { icon: "AlertOctagon",  color: "#ec4899", bg: "#fdf2f8", border: "#f9a8d4", label: "Гравировка перегружена", value: "!", detail: "3 заказа, 2 просрочки" },
 ];
 
 const ACTIONS = [
   { icon: "Phone",     color: "#22c55e", bg: "#f0fdf4", border: "#bbf7d0", label: "Позвонить Козлову",     detail: "Долг 22 000 ₽, заказ просрочен",     question: "Кто должен оплатить?" },
   { icon: "Zap",       color: "#ef4444", bg: "#fef2f2", border: "#fecaca", label: "Ускорить МП-0035",      detail: "Просрочен на 13 дней (Гравировка)",   question: "Какие заказы просрочены?" },
-  { icon: "ShoppingCart", color: "#6366f1", bg: "#eef2ff", border: "#c7d2fe", label: "Закупить мрамор",   detail: "Остаток 0.4 м², срочно",              question: "Что закупить на складе?" },
+  { icon: "ShoppingCart", color: "#2563eb", bg: "#eff6ff", border: "#bfdbfe", label: "Закупить мрамор",   detail: "Остаток 0.4 м², срочно",              question: "Что закупить на складе?" },
   { icon: "UserCheck", color: "#ec4899", bg: "#fdf2f8", border: "#f9a8d4", label: "Добавить гравировщика", detail: "Узкое место — перегруз этапа",        question: "Где узкое место?" },
 ];
 
 const QUICK_BTNS = [
   { icon: "AlertTriangle", label: "Просрочки",  color: "#ef4444", question: "Какие заказы просрочены?" },
   { icon: "CreditCard",    label: "Долги",       color: "#f59e0b", question: "Кто должен оплатить?" },
-  { icon: "Package",       label: "Склад",       color: "#6366f1", question: "Что закупить на складе?" },
+  { icon: "Package",       label: "Склад",       color: "#2563eb", question: "Что закупить на складе?" },
 ];
 
 const AI_ANSWERS: Record<string, string> = {

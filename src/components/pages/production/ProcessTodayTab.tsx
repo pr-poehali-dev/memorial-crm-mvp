@@ -128,8 +128,8 @@ function ActiveCard({ shift: s }: { shift: Shift }) {
         <div className="flex items-center gap-4 pt-1">
           {produced > 0 && (
             <div className="flex items-center gap-1.5">
-              <Icon name="Boxes" size={12} className="text-[#6366f1]" />
-              <span className="text-[12px] font-semibold text-[#6366f1]">{produced} шт.</span>
+              <Icon name="Boxes" size={12} className="text-[#2563eb]" />
+              <span className="text-[12px] font-semibold text-[#2563eb]">{produced} шт.</span>
             </div>
           )}
           {orders.map(o => (
@@ -189,7 +189,7 @@ export default function TodayTab({ shifts }: { shifts: Shift[] }) {
         {[
           { label: "Работают сейчас",   value: String(totalActive),       icon: "Play",       color: "#16a34a", bg: "#f0fdf4" },
           { label: "Завершено за день", value: String(totalDone),         icon: "CheckCheck", color: "#6b6b6b", bg: "#f5f5f5" },
-          { label: "Произведено",       value: `${totalProduced} шт.`,    icon: "Boxes",      color: "#6366f1", bg: "#f5f3ff" },
+          { label: "Произведено",       value: `${totalProduced} шт.`,    icon: "Boxes",      color: "#2563eb", bg: "#eff6ff" },
           { label: "Сырьё потрачено",   value: `${totalRaw} м²`,          icon: "Layers",     color: "#f59e0b", bg: "#fffbeb" },
         ].map(s => (
           <div key={s.label} className="bg-white border border-[#ebebeb] rounded-xl px-4 py-3.5 flex items-center gap-3">

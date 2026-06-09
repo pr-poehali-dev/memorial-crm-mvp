@@ -18,7 +18,7 @@ export type LineItem = {
 };
 
 export const STATUS_META: Record<ItemStatus, { label: string; color: string; bg: string; border: string; icon: string }> = {
-  by_manager: { label: "Менеджер",      color: "#6366f1", bg: "#eef2ff", border: "#c7d2fe", icon: "Pencil"       },
+  by_manager: { label: "Менеджер",      color: "#2563eb", bg: "#eff6ff", border: "#bfdbfe", icon: "Pencil"       },
   needs_calc: { label: "Нужен расчёт", color: "#d97706", bg: "#fffbeb", border: "#fde68a", icon: "Calculator"   },
   calculated: { label: "Посчитано",    color: "#0891b2", bg: "#ecfeff", border: "#a5f3fc", icon: "CheckCircle2" },
   approved:   { label: "Утверждено",   color: "#16a34a", bg: "#f0fdf4", border: "#bbf7d0", icon: "BadgeCheck"   },

@@ -62,7 +62,7 @@ export default function ProductionList({ allItems, initialStage, onItemClick }: 
 
   const SortIcon = ({ k }: { k: SortKey }) => {
     if (sortKey !== k) return <Icon name="ChevronsUpDown" size={11} className="text-[#c0c0c0]" />;
-    return <Icon name={sortDir === "asc" ? "ChevronUp" : "ChevronDown"} size={11} className="text-[#6366f1]" />;
+    return <Icon name={sortDir === "asc" ? "ChevronUp" : "ChevronDown"} size={11} className="text-[#2563eb]" />;
   };
 
   return (
@@ -211,13 +211,13 @@ function Th({ label, sortKey, current, dir, onSort }: {
   return (
     <th
       className={`px-4 py-3 text-left text-[10px] font-semibold text-[#b5b5b5] uppercase tracking-wide whitespace-nowrap
-        ${sortKey ? "cursor-pointer hover:text-[#6366f1] select-none" : ""}`}
+        ${sortKey ? "cursor-pointer hover:text-[#2563eb] select-none" : ""}`}
       onClick={() => sortKey && onSort?.(sortKey)}
     >
       <span className="flex items-center gap-1">
         {label}
         {sortKey && current === sortKey && (
-          <Icon name={dir === "asc" ? "ChevronUp" : "ChevronDown"} size={11} className="text-[#6366f1]" />
+          <Icon name={dir === "asc" ? "ChevronUp" : "ChevronDown"} size={11} className="text-[#2563eb]" />
         )}
         {sortKey && current !== sortKey && (
           <Icon name="ChevronsUpDown" size={11} className="text-[#c0c0c0]" />

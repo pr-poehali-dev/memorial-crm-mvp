@@ -93,8 +93,8 @@ export function ActiveShiftCard({
             </span>
             {expectedRaw !== null && (
               <span className="text-[11px] text-[#4b6b4b] flex items-center gap-1">
-                <Icon name="Package" size={10} className="text-[#6366f1]" />
-                ожид. сырьё: <b className="text-[#6366f1]">{expectedRaw} м²</b>
+                <Icon name="Package" size={10} className="text-[#2563eb]" />
+                ожид. сырьё: <b className="text-[#2563eb]">{expectedRaw} м²</b>
               </span>
             )}
           </div>
@@ -139,7 +139,7 @@ function DoneCard({ s }: { s: Shift }) {
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <span className="text-[13px] font-bold text-[#1a1a1a]">{totalP} шт.</span>
-          <span className="text-[12px] font-semibold text-[#6366f1]">{totalR} м²</span>
+          <span className="text-[12px] font-semibold text-[#2563eb]">{totalR} м²</span>
         </div>
       </div>
 

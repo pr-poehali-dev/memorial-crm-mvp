@@ -2,7 +2,7 @@ import Icon from "@/components/ui/icon";
 
 const RECENT_ORDERS = [
   { id: "МП-0041", client: "Смирнова А.В.", status: "Производство", statusColor: "#f59e0b", statusBg: "#fffbeb", deadline: "28 апр.", paid: "partial" as const, amount: 38500, paidAmt: 15000 },
-  { id: "МП-0040", client: "Козлов И.Д.",   status: "Эскиз",        statusColor: "#6366f1", statusBg: "#eef2ff", deadline: "20 апр.", paid: "unpaid"  as const, amount: 22000, paidAmt: 0 },
+  { id: "МП-0040", client: "Козлов И.Д.",   status: "Эскиз",        statusColor: "#2563eb", statusBg: "#eff6ff", deadline: "20 апр.", paid: "unpaid"  as const, amount: 22000, paidAmt: 0 },
   { id: "МП-0039", client: "Петрова О.Н.",  status: "Готов",        statusColor: "#22c55e", statusBg: "#f0fdf4", deadline: "25 апр.", paid: "paid"    as const, amount: 54000, paidAmt: 54000 },
   { id: "МП-0038", client: "Фёдоров С.С.",  status: "Доставка",     statusColor: "#14b8a6", statusBg: "#f0fdfa", deadline: "26 апр.", paid: "paid"    as const, amount: 31000, paidAmt: 31000 },
   { id: "МП-0036", client: "Морозова Т.И.", status: "Производство", statusColor: "#f59e0b", statusBg: "#fffbeb", deadline: "30 апр.", paid: "partial" as const, amount: 46000, paidAmt: 20000 },

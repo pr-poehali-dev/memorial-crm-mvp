@@ -57,7 +57,7 @@ export default function TasksList({ tasks, stageFilter, filter, search, onOpen }
                     onClick={() => onOpen(t)}
                   >
                     <td className="px-4 py-3">
-                      <span className="text-[12px] font-bold text-[#6366f1] font-mono">{t.orderId}</span>
+                      <span className="text-[12px] font-bold text-[#2563eb] font-mono">{t.orderId}</span>
                     </td>
                     <td className="px-4 py-3">
                       <p className="text-[13px] font-semibold text-[#1a1a1a]">{t.client}</p>

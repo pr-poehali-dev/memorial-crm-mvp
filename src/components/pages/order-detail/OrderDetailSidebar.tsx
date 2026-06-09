@@ -59,7 +59,7 @@ export default function OrderDetailSidebar({
                   {s}
                 </span>
                 {active && routeTarget && (
-                  <span className="ml-auto text-[10px] font-medium text-[#6366f1] cursor-pointer hover:underline whitespace-nowrap">
+                  <span className="ml-auto text-[10px] font-medium text-[#2563eb] cursor-pointer hover:underline whitespace-nowrap">
                     → {routeTarget}
                   </span>
                 )}
@@ -116,7 +116,7 @@ export default function OrderDetailSidebar({
             <div className="h-1.5 bg-[#ebebeb] rounded-full overflow-hidden">
               <div
                 className="h-full rounded-full transition-all"
-                style={{ width: `${paidPct}%`, backgroundColor: paidPct >= 100 ? "#16a34a" : "#6366f1" }}
+                style={{ width: `${paidPct}%`, backgroundColor: paidPct >= 100 ? "#16a34a" : "#2563eb" }}
               />
             </div>
           </div>

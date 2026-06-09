@@ -58,7 +58,7 @@ export default function ClientsTable({
       {/* Метрики */}
       <div className="grid grid-cols-3 gap-4">
         <StatCard icon="Users"      color="#6b6b6b" label="Всего заказчиков"       value={String(clients.length)} />
-        <StatCard icon="UserCheck"  color="#6366f1" label="С активными заказами"   value={String(activeCount)} />
+        <StatCard icon="UserCheck"  color="#2563eb" label="С активными заказами"   value={String(activeCount)} />
         <StatCard
           icon="CreditCard" color="#ef4444"
           label="Общий долг"
@@ -118,7 +118,7 @@ export default function ClientsTable({
                   key={c.id}
                   onClick={() => onSelect(c)}
                   className={`cursor-pointer transition-colors hover:bg-[#fafafa]
-                    ${selected?.id === c.id ? "!bg-[#f5f3ff]" : ""}
+                    ${selected?.id === c.id ? "!bg-[#eff6ff]" : ""}
                     ${!isLast ? "border-b border-[#f5f5f5]" : ""}`}
                 >
                   {/* Клиент */}

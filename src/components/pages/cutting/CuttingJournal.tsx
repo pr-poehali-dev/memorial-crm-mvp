@@ -51,7 +51,7 @@ function MultiSelect({
       <button
         onClick={() => setOpen(v => !v)}
         className={`w-full flex items-center justify-between gap-2 bg-white border rounded-[10px] px-3 py-2 text-[12px] text-left transition-colors ${
-          open ? "border-[#6366f1]" : "border-[#e8e8e8]"
+          open ? "border-[#2563eb]" : "border-[#e8e8e8]"
         }`}
       >
         <span className={selected.size > 0 ? "text-[#1a1a1a] font-medium" : "text-[#9b9b9b]"}>
@@ -66,7 +66,7 @@ function MultiSelect({
           {activeOptions.map(o => (
             <span
               key={o.id}
-              className="flex items-center gap-1 bg-[#ede9fe] text-[#6366f1] text-[11px] font-medium px-2 py-0.5 rounded-full"
+              className="flex items-center gap-1 bg-[#dbeafe] text-[#2563eb] text-[11px] font-medium px-2 py-0.5 rounded-full"
             >
               {o.name}
               <button
@@ -91,12 +91,12 @@ function MultiSelect({
               onClick={() => toggle(o.id)}
               className={`w-full flex items-center gap-2 px-3 py-2 text-[12px] text-left transition-colors ${
                 selected.has(o.id)
-                  ? "bg-[#f5f3ff] text-[#6366f1] font-medium"
+                  ? "bg-[#eff6ff] text-[#2563eb] font-medium"
                   : "text-[#4b4b4b] hover:bg-[#fafafa]"
               }`}
             >
               <div className={`w-4 h-4 rounded flex items-center justify-center border shrink-0 ${
-                selected.has(o.id) ? "bg-[#6366f1] border-[#6366f1]" : "border-[#d0d0d0]"
+                selected.has(o.id) ? "bg-[#2563eb] border-[#2563eb]" : "border-[#d0d0d0]"
               }`}>
                 {selected.has(o.id) && <Icon name="Check" size={9} className="text-white" />}
               </div>
@@ -240,7 +240,7 @@ export default function CuttingJournal({ doneShifts, allTasks = [] }: Props) {
                 {[
                   { label: "Смен",    value: String(filtered.length) },
                   { label: "Изделий", value: `${totalP} шт.` },
-                  { label: "Сырьё",   value: `${totalR} м²`, color: "#6366f1" },
+                  { label: "Сырьё",   value: `${totalR} м²`, color: "#2563eb" },
                 ].map(r => (
                   <div key={r.label} className="flex justify-between text-[12px]">
                     <span className="text-[#6b6b6b]">{r.label}</span>
@@ -269,7 +269,7 @@ export default function CuttingJournal({ doneShifts, allTasks = [] }: Props) {
                   {Object.entries(byStone).map(([mat, m2]) => (
                     <div key={mat} className="flex justify-between text-[11px]">
                       <span className="text-[#4b4b4b] truncate mr-2">{mat}</span>
-                      <span className="font-semibold text-[#6366f1] shrink-0">{(m2 as number).toFixed(2)} м²</span>
+                      <span className="font-semibold text-[#2563eb] shrink-0">{(m2 as number).toFixed(2)} м²</span>
                     </div>
                   ))}
                 </>
@@ -309,7 +309,7 @@ export default function CuttingJournal({ doneShifts, allTasks = [] }: Props) {
                       <span className="text-[11px] text-[#9b9b9b]">
                         {dayShifts.length} смен ·{" "}
                         <b className="text-[#1a1a1a]">{dayP} шт.</b>{" · "}
-                        <b className="text-[#6366f1]">{dayR} м²</b>
+                        <b className="text-[#2563eb]">{dayR} м²</b>
                       </span>
                     </div>
 
@@ -341,7 +341,7 @@ export default function CuttingJournal({ doneShifts, allTasks = [] }: Props) {
                                   {s.taskId ? (
                                     <button
                                       onClick={() => openTask(s.taskId!)}
-                                      className="text-[11px] font-bold font-mono text-[#6366f1] hover:underline"
+                                      className="text-[11px] font-bold font-mono text-[#2563eb] hover:underline"
                                     >
                                       #{s.taskId}
                                     </button>
@@ -364,7 +364,7 @@ export default function CuttingJournal({ doneShifts, allTasks = [] }: Props) {
                                     s.taskId ? (
                                       <button
                                         onClick={() => openTask(s.taskId!)}
-                                        className="text-[11px] font-bold font-mono text-[#6366f1] hover:underline underline-offset-2"
+                                        className="text-[11px] font-bold font-mono text-[#2563eb] hover:underline underline-offset-2"
                                         title="Открыть задачу"
                                       >
                                         #{s.taskId}
@@ -383,7 +383,7 @@ export default function CuttingJournal({ doneShifts, allTasks = [] }: Props) {
                                   <span className="text-[11px] text-[#9b9b9b] ml-1">шт.</span>
                                 </td>
                                 <td className="px-4 py-2 pr-5">
-                                  <span className="text-[12px] font-semibold text-[#6366f1]">{Number(r.rawUsed).toFixed(2)}</span>
+                                  <span className="text-[12px] font-semibold text-[#2563eb]">{Number(r.rawUsed).toFixed(2)}</span>
                                   <span className="text-[11px] text-[#9b9b9b] ml-1">м²</span>
                                 </td>
                               </tr>

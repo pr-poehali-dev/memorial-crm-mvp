@@ -169,7 +169,7 @@ export const LEVEL_STYLE = {
 
 export const MOVE_TYPE: Record<MovementType, { label: string; color: string; icon: string; rowBg: string }> = {
   in:     { label: "Приход",        color: "#16a34a", icon: "ArrowDownToLine",   rowBg: "#f0fdf4" },
-  cut:    { label: "Нарезка",       color: "#6366f1", icon: "Scissors",          rowBg: "#f5f3ff" },
+  cut:    { label: "Нарезка",       color: "#2563eb", icon: "Scissors",          rowBg: "#eff6ff" },
   use:    { label: "Списание",      color: "#ef4444", icon: "ArrowUpFromLine",   rowBg: "#fef2f2" },
   adjust: { label: "Корректировка", color: "#f59e0b", icon: "SlidersHorizontal", rowBg: "#fffbeb" },
 };

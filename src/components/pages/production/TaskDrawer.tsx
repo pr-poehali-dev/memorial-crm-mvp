@@ -22,7 +22,7 @@ export default function TaskDrawer({ task, onClose, onNextStage }: {
         {/* Шапка */}
         <div className="shrink-0 px-6 py-5 border-b border-[#f0f0f0] flex items-start justify-between">
           <div>
-            <span className="text-[12px] font-bold text-[#6366f1] font-mono">{task.orderId}</span>
+            <span className="text-[12px] font-bold text-[#2563eb] font-mono">{task.orderId}</span>
             <h2 className="text-[18px] font-bold text-[#1a1a1a] mt-1">{task.client}</h2>
             {task.phone && <p className="text-[12px] text-[#9b9b9b] mt-0.5">{task.phone}</p>}
           </div>

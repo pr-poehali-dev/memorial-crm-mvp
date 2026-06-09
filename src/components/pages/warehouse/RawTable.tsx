@@ -17,7 +17,7 @@ function ReserveLink({ orderId }: { orderId: string }) {
     return (
       <button
         onClick={() => openCuttingTask(taskId)}
-        className="text-[12px] font-semibold text-[#6366f1] hover:underline underline-offset-2 transition-colors flex items-center gap-1"
+        className="text-[12px] font-semibold text-[#2563eb] hover:underline underline-offset-2 transition-colors flex items-center gap-1"
       >
         <Icon name="Scissors" size={10} />
         Задача #{taskId}
@@ -27,7 +27,7 @@ function ReserveLink({ orderId }: { orderId: string }) {
   return (
     <button
       onClick={() => openOrder(orderId)}
-      className="text-[12px] font-semibold text-[#6366f1] hover:underline underline-offset-2 transition-colors"
+      className="text-[12px] font-semibold text-[#2563eb] hover:underline underline-offset-2 transition-colors"
     >
       {orderId}
     </button>
@@ -249,7 +249,7 @@ export function RawTable({
             </td>
             <td className="px-4 py-3" />
             <td className="px-4 py-3" />
-            <td className="px-4 py-3 font-mono text-[13px] font-bold text-[#6366f1]">
+            <td className="px-4 py-3 font-mono text-[13px] font-bold text-[#2563eb]">
               {totalCostR.toLocaleString("ru")} ₽
             </td>
             <td colSpan={2} className="px-4 py-3" />

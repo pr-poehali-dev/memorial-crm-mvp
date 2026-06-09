@@ -22,8 +22,8 @@ export const ROLES: {
     icon: "Briefcase",
     access: ["Обзор", "Заказы", "Клиенты"],
     focus: "Создание заказов и коммуникация с клиентами",
-    color: "#6366f1",
-    bg: "#eef2ff",
+    color: "#2563eb",
+    bg: "#eff6ff",
     badge: "Продажи",
   },
   {

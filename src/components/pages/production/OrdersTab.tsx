@@ -227,7 +227,7 @@ export default function OrdersTab({ orders, onOpenOrder, onNextStage }: Props) {
                         {/* № заказа */}
                         <td className="px-4 py-3.5">
                           <button onClick={() => onOpenOrder(o.id)}
-                            className="text-[13px] font-bold text-[#6366f1] hover:underline underline-offset-2 font-mono">
+                            className="text-[13px] font-bold text-[#2563eb] hover:underline underline-offset-2 font-mono">
                             {o.id}
                           </button>
                         </td>

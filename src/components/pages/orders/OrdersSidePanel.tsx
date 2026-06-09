@@ -129,7 +129,7 @@ export default function OrdersSidePanel({ selected, onClose, onOpenOrder }: Prop
                 <div className="h-1.5 bg-[#ebebeb] rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all"
-                    style={{ width: `${paidPct}%`, backgroundColor: paidPct >= 100 ? "#16a34a" : "#6366f1" }}
+                    style={{ width: `${paidPct}%`, backgroundColor: paidPct >= 100 ? "#16a34a" : "#2563eb" }}
                   />
                 </div>
               </div>

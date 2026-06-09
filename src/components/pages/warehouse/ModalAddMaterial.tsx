@@ -66,7 +66,7 @@ export function ModalAddMaterial({ onClose, onAdd }: ModalAddMaterialProps) {
   };
 
   return (
-    <Modal title="Добавить материал" icon="Plus" iconColor="#6366f1" onClose={onClose}>
+    <Modal title="Добавить материал" icon="Plus" iconColor="#2563eb" onClose={onClose}>
       <div className="space-y-4">
 
         {/* Загрузка фото */}
@@ -77,7 +77,7 @@ export function ModalAddMaterial({ onClose, onAdd }: ModalAddMaterialProps) {
             onDragLeave={() => setDragging(false)}
             onDrop={onDrop}
             className={`relative flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-xl cursor-pointer transition-all
-              ${dragging ? "border-[#6366f1] bg-[#f5f3ff]" : "border-[#e0e0e0] hover:border-[#c0c0c0] bg-[#fafafa]"}
+              ${dragging ? "border-[#2563eb] bg-[#eff6ff]" : "border-[#e0e0e0] hover:border-[#c0c0c0] bg-[#fafafa]"}
               ${imageUrl ? "h-[96px]" : "h-[96px]"}`}
           >
             {imageUrl ? (
@@ -156,7 +156,7 @@ export function ModalAddMaterial({ onClose, onAdd }: ModalAddMaterialProps) {
           <button
             onClick={handleSubmit}
             disabled={!canSubmit}
-            className="flex-1 py-2.5 rounded-[10px] text-[13px] font-semibold bg-[#6366f1] text-white hover:bg-[#5052cc] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="flex-1 py-2.5 rounded-[10px] text-[13px] font-semibold bg-[#2563eb] text-white hover:bg-[#1d4ed8] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             Добавить материал
           </button>

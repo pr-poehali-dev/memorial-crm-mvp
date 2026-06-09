@@ -52,7 +52,7 @@ function YesterdayCard({ shift: s }: { shift: Shift }) {
               ))}
               <div className="pt-1 border-t border-[#f0f0f0] flex justify-between">
                 <span className="text-[12px] text-[#9b9b9b]">Итого</span>
-                <span className="text-[14px] font-bold text-[#6366f1]">{totalP} шт.</span>
+                <span className="text-[14px] font-bold text-[#2563eb]">{totalP} шт.</span>
               </div>
             </div>
           ) : (
@@ -122,7 +122,7 @@ export default function YesterdayTab({ shifts }: { shifts: Shift[] }) {
               <p className="text-[10px] text-[#9b9b9b]">смен</p>
             </div>
             <div className="bg-white border border-[#ebebeb] rounded-lg px-4 py-2.5 text-center">
-              <p className="text-[20px] font-bold text-[#6366f1]">{totalProduced}</p>
+              <p className="text-[20px] font-bold text-[#2563eb]">{totalProduced}</p>
               <p className="text-[10px] text-[#9b9b9b]">шт.</p>
             </div>
             <div className="bg-white border border-[#ebebeb] rounded-lg px-4 py-2.5 text-center">

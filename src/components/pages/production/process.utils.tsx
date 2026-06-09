@@ -53,7 +53,7 @@ export function DoneShiftCard({ shift: s }: { shift: Shift }) {
           <p className="text-[13px] font-semibold text-[#1a1a1a] truncate">{s.placeName ?? s.placeId}</p>
           <p className="text-[11px] text-[#9b9b9b]">{s.employeeName} · {s.startedAt}{s.finishedAt ? `–${s.finishedAt}` : ""}</p>
         </div>
-        {totalP > 0 && <span className="text-[14px] font-bold text-[#6366f1] shrink-0">{totalP} шт.</span>}
+        {totalP > 0 && <span className="text-[14px] font-bold text-[#2563eb] shrink-0">{totalP} шт.</span>}
       </div>
       {s.results.length > 0 && (
         <div className="space-y-1">

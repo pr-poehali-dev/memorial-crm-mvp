@@ -245,10 +245,10 @@ export default function CuttingPage({ openTaskId, onTaskOpened }: Props) {
 
             <div className="flex flex-col overflow-hidden">
               <div className="shrink-0 px-5 py-3 border-b border-[#f0f0f0] flex items-center gap-2">
-                <div className="w-5 h-5 rounded-md bg-[#ede9fe] flex items-center justify-center shrink-0">
-                  <Icon name="ClipboardList" size={11} className="text-[#6366f1]" />
+                <div className="w-5 h-5 rounded-md bg-[#dbeafe] flex items-center justify-center shrink-0">
+                  <Icon name="ClipboardList" size={11} className="text-[#2563eb]" />
                 </div>
-                <p className="text-[11px] font-bold uppercase tracking-widest text-[#6366f1]">Задачи</p>
+                <p className="text-[11px] font-bold uppercase tracking-widest text-[#2563eb]">Задачи</p>
                 {(() => {
                   const n = tasks.filter(t => {
                     if (t.status === "done" || t.status === "cancelled") return false;
@@ -259,7 +259,7 @@ export default function CuttingPage({ openTaskId, onTaskOpened }: Props) {
                     return true;
                   }).length;
                   return n > 0 ? (
-                    <span className="text-[10px] font-bold bg-[#6366f1] text-white px-1.5 py-px rounded-full">{n}</span>
+                    <span className="text-[10px] font-bold bg-[#2563eb] text-white px-1.5 py-px rounded-full">{n}</span>
                   ) : null;
                 })()}
               </div>

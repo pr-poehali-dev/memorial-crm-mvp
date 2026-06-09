@@ -169,8 +169,8 @@ export function AssignModal({
           </div>
 
           {openTasks.length > 0 && (
-            <div className="bg-[#f5f3ff] border border-[#d8d8ff] rounded-[10px] p-3 space-y-3">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-[#6366f1]">Задача на нарезку</p>
+            <div className="bg-[#eff6ff] border border-[#d8d8ff] rounded-[10px] p-3 space-y-3">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-[#2563eb]">Задача на нарезку</p>
               <div>
                 <label className={labelCls}>Выбрать задачу</label>
                 <select
@@ -213,7 +213,7 @@ export function AssignModal({
                     suffix="шт."
                   />
                   {!taskOverLimit && taskQtyNum > 0 && (
-                    <p className="text-[11px] text-[#6366f1]">
+                    <p className="text-[11px] text-[#2563eb]">
                       После назначения останется: {remaining - taskQtyNum} шт.
                     </p>
                   )}
@@ -307,20 +307,20 @@ export function FinishModal({
         <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
 
           {plan > 0 && (
-            <div className="bg-[#f5f3ff] border border-[#d8d8ff] rounded-xl p-4">
+            <div className="bg-[#eff6ff] border border-[#d8d8ff] rounded-xl p-4">
               <div className="flex items-center gap-2 mb-3">
-                <div className="w-5 h-5 rounded-md bg-[#6366f1] flex items-center justify-center shrink-0">
+                <div className="w-5 h-5 rounded-md bg-[#2563eb] flex items-center justify-center shrink-0">
                   <Icon name="ClipboardList" size={10} className="text-white" />
                 </div>
-                <p className="text-[11px] font-bold uppercase tracking-widest text-[#6366f1]">Задача смены</p>
+                <p className="text-[11px] font-bold uppercase tracking-widest text-[#2563eb]">Задача смены</p>
               </div>
               <div className="flex items-center justify-between gap-4 mb-3">
                 <p className="text-[14px] font-semibold text-[#1a1a1a]">План: {plan} шт.</p>
-                <p className="text-[24px] font-bold text-[#6366f1] leading-none">{totalProduced}/{plan}</p>
+                <p className="text-[24px] font-bold text-[#2563eb] leading-none">{totalProduced}/{plan}</p>
               </div>
               <div className="h-2 bg-[#e8e4ff] rounded-full overflow-hidden">
                 <div className="h-full rounded-full transition-all"
-                  style={{ width: `${pct}%`, backgroundColor: underPlan ? "#f59e0b" : "#6366f1" }} />
+                  style={{ width: `${pct}%`, backgroundColor: underPlan ? "#f59e0b" : "#2563eb" }} />
               </div>
               {underPlan && totalProduced > 0 && (
                 <div className="mt-3 flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">

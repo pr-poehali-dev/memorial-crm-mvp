@@ -176,7 +176,7 @@ export default function BlankAnalyticsPage() {
         <div className="grid grid-cols-3 gap-3">
           {[
             { label: "Произведено заготовок",  value: `${totalProduced} шт.`,       icon: "Layers",       color: "#f59e0b" },
-            { label: "Расход сырья",            value: `${totalRaw} м²`,             icon: "Package",      color: "#6366f1" },
+            { label: "Расход сырья",            value: `${totalRaw} м²`,             icon: "Package",      color: "#2563eb" },
             { label: "Средняя выработка/смену", value: `${avgPerShift} шт.`,         icon: "TrendingUp",   color: "#22c55e" },
             { label: "Расход на 1 шт.",         value: `${avgRawPerUnit} м²`,        icon: "Gauge",        color: "#3b82f6" },
             { label: "Лучшее место",            value: bestPlace?.name.split("—")[0].trim() ?? "—", icon: "Star",   color: "#16a34a" },

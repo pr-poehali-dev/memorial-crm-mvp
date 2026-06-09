@@ -51,7 +51,7 @@ function OrderCard({ o, onOpen, onNext }: {
     >
       {/* Шапка карточки */}
       <div className="flex items-start justify-between gap-2 mb-2">
-        <span className="text-[12px] font-bold text-[#6366f1] font-mono">{o.id}</span>
+        <span className="text-[12px] font-bold text-[#2563eb] font-mono">{o.id}</span>
         {isOverdue && (
           <span className="flex items-center gap-1 text-[10px] font-semibold text-red-600 bg-red-100 px-1.5 py-0.5 rounded-md shrink-0">
             <Icon name="AlertTriangle" size={9} />Просрочен

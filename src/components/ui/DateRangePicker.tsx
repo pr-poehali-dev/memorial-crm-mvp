@@ -137,7 +137,7 @@ export default function DateRangePicker({ from, to, onChange }: Props) {
                   : rangeDay
                   ? "text-[#1a1a1a]"
                   : isToday
-                  ? "font-bold text-[#6366f1]"
+                  ? "font-bold text-[#2563eb]"
                   : isSat || isSun
                   ? "text-[#ef4444]"
                   : "text-[#1a1a1a] hover:bg-[#f5f5f5] rounded-lg"
@@ -145,17 +145,17 @@ export default function DateRangePicker({ from, to, onChange }: Props) {
             >
               {/* Фон диапазона */}
               {(rangeDay || (from && !to && hover && day < (hover > from ? hover : from) && day > from)) && (
-                <span className="absolute inset-y-0.5 inset-x-0 bg-[#6366f1]/10 z-0" />
+                <span className="absolute inset-y-0.5 inset-x-0 bg-[#2563eb]/10 z-0" />
               )}
               {/* Края */}
               {isStart && (
-                <span className="absolute inset-y-0.5 inset-x-0 bg-[#6366f1] rounded-l-lg z-0" />
+                <span className="absolute inset-y-0.5 inset-x-0 bg-[#2563eb] rounded-l-lg z-0" />
               )}
               {isEnd && (
-                <span className="absolute inset-y-0.5 inset-x-0 bg-[#6366f1] rounded-r-lg z-0" />
+                <span className="absolute inset-y-0.5 inset-x-0 bg-[#2563eb] rounded-r-lg z-0" />
               )}
               {active && !isStart && !isEnd && (
-                <span className="absolute inset-y-0.5 inset-x-0 bg-[#6366f1] z-0" />
+                <span className="absolute inset-y-0.5 inset-x-0 bg-[#2563eb] z-0" />
               )}
               <span className="relative z-10">{new Date(day).getDate()}</span>
             </button>
@@ -173,7 +173,7 @@ export default function DateRangePicker({ from, to, onChange }: Props) {
               {new Date(to).toLocaleDateString("ru-RU", { day: "numeric", month: "short" })}
             </span>
           ) : from ? (
-            <span className="text-[#6366f1]">Выберите конец периода…</span>
+            <span className="text-[#2563eb]">Выберите конец периода…</span>
           ) : (
             <span>Нажмите на начальную дату</span>
           )}

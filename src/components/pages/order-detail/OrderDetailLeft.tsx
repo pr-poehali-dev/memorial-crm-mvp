@@ -124,7 +124,7 @@ export default function OrderDetailLeft({
                       className={`flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-[7px] border transition-colors whitespace-nowrap
                         ${item.hasCalc
                           ? "border-[#e8e8e8] text-[#6b6b6b] hover:border-[#c0c0c0] hover:text-[#1a1a1a]"
-                          : "border-[#6366f1] bg-[#f5f3ff] text-[#6366f1] hover:bg-[#ede9fe]"
+                          : "border-[#2563eb] bg-[#eff6ff] text-[#2563eb] hover:bg-[#dbeafe]"
                         }`}
                     >
                       <Icon name="Calculator" size={10} />

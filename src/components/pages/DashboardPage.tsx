@@ -162,7 +162,7 @@ export default function DashboardPage({ onNavigate }: Props) {
             {critRaw > 0 && <AlertRow icon="PackageX" color="#d97706" bg="#fffbeb"
               text={`${critRaw} вид${critRaw > 1 ? "а" : ""} сырья ниже минимума`}
               onClick={() => onNavigate("warehouse")} />}
-            {critBlanks > 0 && <AlertRow icon="Boxes" color="#7c3aed" bg="#f5f3ff"
+            {critBlanks > 0 && <AlertRow icon="Boxes" color="#7c3aed" bg="#eff6ff"
               text={`${critBlanks} вид${critBlanks > 1 ? "а" : ""} заготовок закончилось`}
               onClick={() => onNavigate("warehouse")} />}
           </div>
@@ -174,7 +174,7 @@ export default function DashboardPage({ onNavigate }: Props) {
             <Metric icon="Hammer"       color="#f59e0b" bg="#fffbeb"
               label="Заказов в работе" value={dash(ordersInWork)} sub="шт." live
               onClick={() => onNavigate("production")} />
-            <Metric icon="Scissors"     color="#6366f1" bg="#eef2ff"
+            <Metric icon="Scissors"     color="#2563eb" bg="#eff6ff"
               label="Заготовок в нарезке" value={dash(blanksInWork || activeShiftsCount)} sub={blanksInWork ? "шт." : "смен"} live
               onClick={() => onNavigate("cutting")} />
             <Metric icon="CheckCircle2" color="#16a34a" bg="#f0fdf4"
@@ -192,7 +192,7 @@ export default function DashboardPage({ onNavigate }: Props) {
             <Metric icon="Layers"      color="#0ea5e9" bg="#f0f9ff"
               label="Сырьё (себест.)" value={dash(money(rawCost))}
               onClick={() => onNavigate("warehouse")} />
-            <Metric icon="Package"     color="#8b5cf6" bg="#f5f3ff"
+            <Metric icon="Package"     color="#8b5cf6" bg="#eff6ff"
               label="Заготовки (себест.)" value={dash(money(blankCost))}
               badge={blankSale > 0 ? { text: `→ ${money(blankSale)}`, green: true } : undefined}
               onClick={() => onNavigate("warehouse")} />
@@ -219,10 +219,10 @@ export default function DashboardPage({ onNavigate }: Props) {
             <Metric icon="Hammer"    color="#f59e0b" bg="#fffbeb"
               label="Изготовление" value={dash(ordersInWork)} sub="в работе"
               onClick={() => onNavigate("production")} />
-            <Metric icon="Scissors"  color="#6366f1" bg="#eef2ff"
+            <Metric icon="Scissors"  color="#2563eb" bg="#eff6ff"
               label="Заготовки" value={dash(activeShiftsCount)} sub="смен"
               onClick={() => onNavigate("cutting")} />
-            <Metric icon="Package"   color="#8b5cf6" bg="#f5f3ff"
+            <Metric icon="Package"   color="#8b5cf6" bg="#eff6ff"
               label="Склад" value={dash(money(totalCost))}
               onClick={() => onNavigate("warehouse")} />
             <Metric icon="Users"     color="#0ea5e9" bg="#f0f9ff"

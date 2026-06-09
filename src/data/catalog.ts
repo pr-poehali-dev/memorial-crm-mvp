@@ -22,7 +22,7 @@ export type CatalogItem = {
 
 export const CATEGORY_META: Record<CatalogCategory, { label: string; icon: string; color: string; bg: string }> = {
   monument:  { label: "Памятники",            icon: "Monument",      color: "#1a1a1a", bg: "#f5f5f5" },
-  pedestal:  { label: "Тумбы",                icon: "Box",           color: "#6366f1", bg: "#eef2ff" },
+  pedestal:  { label: "Тумбы",                icon: "Box",           color: "#2563eb", bg: "#eff6ff" },
   flowerbed: { label: "Цветники",             icon: "Flower2",       color: "#16a34a", bg: "#f0fdf4" },
   fence:     { label: "Ограды",               icon: "LayoutList",    color: "#d97706", bg: "#fffbeb" },
   coffin:    { label: "Гробы",                icon: "Package",       color: "#64748b", bg: "#f8fafc" },
@@ -35,7 +35,7 @@ export const CATEGORY_META: Record<CatalogCategory, { label: string; icon: strin
 export const CALC_TYPE_META: Record<CalcType, { label: string; color: string; hint: string }> = {
   fixed:    { label: "Фикс. цена",    color: "#16a34a", hint: "Цена задана, расчёт не нужен" },
   manual:   { label: "Ручной расчёт", color: "#d97706", hint: "Сметчик вводит цену вручную" },
-  formula:  { label: "По формуле",    color: "#6366f1", hint: "Цена рассчитывается автоматически" },
+  formula:  { label: "По формуле",    color: "#2563eb", hint: "Цена рассчитывается автоматически" },
   template: { label: "По шаблону",    color: "#0891b2", hint: "Используется шаблон позиции" },
 };
 

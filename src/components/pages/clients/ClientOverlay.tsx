@@ -72,7 +72,7 @@ export default function ClientOverlay({ client, onClose, onUpdate }: {
                   <input
                     value={eName}
                     onChange={e => setEName(e.target.value)}
-                    className="w-full text-[15px] font-semibold text-[#1a1a1a] border-b border-[#6366f1] outline-none bg-transparent pb-0.5"
+                    className="w-full text-[15px] font-semibold text-[#1a1a1a] border-b border-[#2563eb] outline-none bg-transparent pb-0.5"
                     placeholder="ФИО заказчика"
                   />
                 ) : (
@@ -91,7 +91,7 @@ export default function ClientOverlay({ client, onClose, onUpdate }: {
               {!editing ? (
                 <button
                   onClick={() => setEditing(true)}
-                  className="w-7 h-7 flex items-center justify-center rounded-lg text-[#b5b5b5] hover:text-[#6366f1] hover:bg-[#f0f0f0] transition-colors"
+                  className="w-7 h-7 flex items-center justify-center rounded-lg text-[#b5b5b5] hover:text-[#2563eb] hover:bg-[#f0f0f0] transition-colors"
                   title="Редактировать"
                 >
                   <Icon name="Pencil" size={13} />
@@ -128,7 +128,7 @@ export default function ClientOverlay({ client, onClose, onUpdate }: {
                   <input
                     value={ePhone}
                     onChange={e => setEPhone(e.target.value)}
-                    className="flex-1 text-[12px] text-[#1a1a1a] border-b border-[#6366f1] outline-none bg-transparent"
+                    className="flex-1 text-[12px] text-[#1a1a1a] border-b border-[#2563eb] outline-none bg-transparent"
                     placeholder="Телефон"
                   />
                 </div>
@@ -137,7 +137,7 @@ export default function ClientOverlay({ client, onClose, onUpdate }: {
                   <input
                     value={eCity}
                     onChange={e => setECity(e.target.value)}
-                    className="flex-1 text-[12px] text-[#1a1a1a] border-b border-[#6366f1] outline-none bg-transparent"
+                    className="flex-1 text-[12px] text-[#1a1a1a] border-b border-[#2563eb] outline-none bg-transparent"
                     placeholder="Город"
                   />
                 </div>
@@ -192,7 +192,7 @@ export default function ClientOverlay({ client, onClose, onUpdate }: {
                 </div>
                 <div className="h-1.5 bg-[#f0f0f0] rounded-full overflow-hidden">
                   <div className="h-full rounded-full transition-all"
-                    style={{ width: `${paidPct}%`, backgroundColor: paidPct >= 100 ? "#16a34a" : "#6366f1" }} />
+                    style={{ width: `${paidPct}%`, backgroundColor: paidPct >= 100 ? "#16a34a" : "#2563eb" }} />
                 </div>
               </div>
             )}
@@ -275,7 +275,7 @@ function NoteBlock({ comment, newComment, onNewCommentChange, onAdd, onEdit, onD
           <div className="flex gap-1">
             <button
               onClick={() => { setEditText(comment); setEditMode(true); }}
-              className="w-6 h-6 flex items-center justify-center rounded text-[#c5c5c5] hover:text-[#6366f1] hover:bg-[#f0f0f0] transition-all"
+              className="w-6 h-6 flex items-center justify-center rounded text-[#c5c5c5] hover:text-[#2563eb] hover:bg-[#f0f0f0] transition-all"
               title="Редактировать заметку"
             >
               <Icon name="Pencil" size={11} />
@@ -298,7 +298,7 @@ function NoteBlock({ comment, newComment, onNewCommentChange, onAdd, onEdit, onD
             onChange={e => setEditText(e.target.value)}
             rows={3}
             autoFocus
-            className="w-full text-[12px] text-[#1a1a1a] bg-[#fafafa] border border-[#6366f1] rounded-lg px-3 py-2.5 outline-none resize-none placeholder:text-[#c5c5c5]"
+            className="w-full text-[12px] text-[#1a1a1a] bg-[#fafafa] border border-[#2563eb] rounded-lg px-3 py-2.5 outline-none resize-none placeholder:text-[#c5c5c5]"
           />
           <div className="flex gap-2">
             <button

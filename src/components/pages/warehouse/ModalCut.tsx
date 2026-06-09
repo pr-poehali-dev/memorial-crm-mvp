@@ -55,7 +55,7 @@ export function ModalCut({
   }, [cutBlankId]);
 
   return (
-    <Modal title="Нарезка заготовок" icon="Scissors" iconColor="#6366f1" onClose={onClose}>
+    <Modal title="Нарезка заготовок" icon="Scissors" iconColor="#2563eb" onClose={onClose}>
       <div className="space-y-3">
 
         <Field label="Сырьё для нарезки">
@@ -131,7 +131,7 @@ export function ModalCut({
         <button
           onClick={onConfirm}
           disabled={notEnough}
-          className="w-full bg-[#6366f1] text-white text-[13px] py-2.5 rounded-[8px] hover:bg-[#5052cc] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-[#2563eb] text-white text-[13px] py-2.5 rounded-[8px] hover:bg-[#1d4ed8] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Создать заготовки
         </button>

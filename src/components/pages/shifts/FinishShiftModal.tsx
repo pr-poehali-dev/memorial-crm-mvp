@@ -164,7 +164,7 @@ export default function FinishShiftModal({ shift, onConfirm, onClose }: Props) {
                           onClick={() => updateRow(i, { manualMode: !row.manualMode, rawManual: "" })}
                           className={`text-[10px] px-2 py-0.5 rounded-full border transition-all font-medium
                             ${row.manualMode
-                              ? "border-[#6366f1] text-[#6366f1] bg-[#eef2ff]"
+                              ? "border-[#2563eb] text-[#2563eb] bg-[#eff6ff]"
                               : "border-[#e0e0e0] text-[#9b9b9b] hover:border-[#b0b0b0]"}`}
                         >
                           {row.manualMode ? "вручную" : "авто"}
@@ -223,7 +223,7 @@ export default function FinishShiftModal({ shift, onConfirm, onClose }: Props) {
           {/* Добавить ещё */}
           <button
             onClick={addRow}
-            className="flex items-center gap-2 text-[13px] text-[#6366f1] font-medium hover:text-[#4f46e5] transition-colors"
+            className="flex items-center gap-2 text-[13px] text-[#2563eb] font-medium hover:text-[#1d4ed8] transition-colors"
           >
             <Icon name="Plus" size={14} />
             Добавить ещё результат

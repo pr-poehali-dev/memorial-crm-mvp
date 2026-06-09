@@ -42,12 +42,12 @@ const stats = [
 const alerts = [
   { icon: "AlertTriangle", color: "#ef4444", bg: "#fef2f2", border: "#fecaca", label: "Просроченные заказы", value: "2", desc: "МП-0035, МП-0033 — превышен срок изготовления" },
   { icon: "CreditCard", color: "#f59e0b", bg: "#fffbeb", border: "#fde68a", label: "Неоплаченные заказы", value: "8", desc: "На сумму 184 000 ₽ · ожидают аванса" },
-  { icon: "Package", color: "#6366f1", bg: "#eef2ff", border: "#c7d2fe", label: "Низкий остаток материалов", value: "3", desc: "Гранит красный, Мрамор белый, Гранит серый" },
+  { icon: "Package", color: "#2563eb", bg: "#eff6ff", border: "#bfdbfe", label: "Низкий остаток материалов", value: "3", desc: "Гранит красный, Мрамор белый, Гранит серый" },
 ];
 
 const recentOrders = [
   { id: "МП-0041", client: "Смирнова А.В.", stone: "Гранит чёрный", size: "100×50×8", status: "Производство", statusColor: "#f59e0b", price: "38 500 ₽", manager: "Олег К." },
-  { id: "МП-0040", client: "Козлов И.Д.", stone: "Мрамор белый", size: "80×40×6", status: "Эскиз", statusColor: "#6366f1", price: "22 000 ₽", manager: "Анна М." },
+  { id: "МП-0040", client: "Козлов И.Д.", stone: "Мрамор белый", size: "80×40×6", status: "Эскиз", statusColor: "#2563eb", price: "22 000 ₽", manager: "Анна М." },
   { id: "МП-0039", client: "Петрова О.Н.", stone: "Гранит серый", size: "120×60×10", status: "Готов", statusColor: "#22c55e", price: "54 000 ₽", manager: "Олег К." },
   { id: "МП-0038", client: "Фёдоров С.С.", stone: "Гранит красный", size: "90×45×7", status: "Доставка", statusColor: "#3b82f6", price: "31 000 ₽", manager: "Игорь В." },
   { id: "МП-0037", client: "Иванов П.К.", stone: "Гранит чёрный", size: "100×50×8", status: "Выдан", statusColor: "#9b9b9b", price: "41 000 ₽", manager: "Анна М." },

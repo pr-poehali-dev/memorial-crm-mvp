@@ -72,7 +72,7 @@ export function ModalMaterial({ material, movements, onClose }: ModalMaterialPro
   })();
 
   return (
-    <Modal title={`${material.name} — история`} icon="History" iconColor="#6366f1" onClose={onClose} wide>
+    <Modal title={`${material.name} — история`} icon="History" iconColor="#2563eb" onClose={onClose} wide>
       {/* Сводка */}
       <div className="grid grid-cols-3 gap-3 mb-5">
         {[

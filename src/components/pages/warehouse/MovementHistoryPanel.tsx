@@ -106,7 +106,7 @@ export default function MovementHistoryPanel({ movements, rawMat, blanks, onClos
         {[
           { label: "Всего операций", value: String(stats.total),                        icon: "Activity",        color: "#6b6b6b" },
           { label: "Приходов",       value: String(stats.inCount),                       icon: "ArrowDownToLine", color: "#16a34a" },
-          { label: "Нарезок",        value: String(stats.cutCount),                      icon: "Scissors",        color: "#6366f1" },
+          { label: "Нарезок",        value: String(stats.cutCount),                      icon: "Scissors",        color: "#2563eb" },
           { label: "Списаний",       value: String(stats.useCount),                      icon: "ArrowUpFromLine", color: "#ef4444" },
           { label: "Сумма закупок",  value: `${(stats.inSum / 1000).toFixed(1)} тыс. ₽`, icon: "Banknote",        color: "#0ea5e9" },
         ].map(s => (

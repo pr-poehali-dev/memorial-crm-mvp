@@ -68,7 +68,7 @@ export default function OrdersPage({ onOpenOrder, onNewOrder }: { onOpenOrder?: 
     { label: "Всего заказов", value: String(orders.length),                icon: "FileText",      color: "#6b6b6b" },
     { label: "В работе",      value: String(inworkCount),                  icon: "Hammer",        color: "#f59e0b" },
     { label: "Просрочено",    value: String(overdueCount),                 icon: "AlertTriangle", color: "#ef4444" },
-    { label: "Долг клиентов", value: totalDebt.toLocaleString("ru") + " ₽", icon: "CreditCard",    color: "#6366f1" },
+    { label: "Долг клиентов", value: totalDebt.toLocaleString("ru") + " ₽", icon: "CreditCard",    color: "#2563eb" },
   ];
 
   return (
@@ -193,7 +193,7 @@ export default function OrdersPage({ onOpenOrder, onNewOrder }: { onOpenOrder?: 
           <div className="px-7 pb-7 max-w-[1100px] w-full mx-auto">
             {loading ? (
               <div className="flex items-center justify-center py-16 text-[13px] text-[#9b9b9b] gap-2">
-                <div className="w-4 h-4 border-2 border-[#6366f1] border-t-transparent rounded-full animate-spin" />
+                <div className="w-4 h-4 border-2 border-[#2563eb] border-t-transparent rounded-full animate-spin" />
                 Загрузка заказов...
               </div>
             ) : (

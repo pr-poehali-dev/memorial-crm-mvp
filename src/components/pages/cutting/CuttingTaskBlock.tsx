@@ -50,7 +50,7 @@ export function TaskModal({
               </span>
               <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                 isDone    ? "bg-green-100 text-green-700" :
-                isActive  ? "bg-[#ede9fe] text-[#6366f1]" :
+                isActive  ? "bg-[#dbeafe] text-[#2563eb]" :
                             "bg-[#f4f4f4] text-[#9b9b9b]"
               }`}>
                 {isDone ? "Завершена" : isActive ? "В работе" : "Не начата"}
@@ -74,7 +74,7 @@ export function TaskModal({
             <div className="flex items-baseline gap-1.5 mb-2">
               <span className="text-[34px] font-bold text-[#1a1a1a] leading-none">{doneQty}</span>
               <span className="text-[14px] text-[#9b9b9b]">/ {totalQty} шт.</span>
-              <span className="ml-auto text-[13px] font-semibold" style={{ color: isDone ? "#16a34a" : "#6366f1" }}>{pct}%</span>
+              <span className="ml-auto text-[13px] font-semibold" style={{ color: isDone ? "#16a34a" : "#2563eb" }}>{pct}%</span>
             </div>
             <div className="h-2 bg-[#e8e8e8] rounded-full overflow-hidden flex">
               {doneQty > 0 && <div className="h-full bg-green-500 transition-all" style={{ width: `${(doneQty / totalQty) * 100}%` }} />}
@@ -137,7 +137,7 @@ export function TaskModal({
           {!isDone && onAssign && (
             <button
               onClick={() => { onClose(); onAssign(task.id); }}
-              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[10px] bg-[#6366f1] text-white text-[13px] font-semibold hover:bg-[#5052cc] transition-colors"
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-[10px] bg-[#2563eb] text-white text-[13px] font-semibold hover:bg-[#1d4ed8] transition-colors"
             >
               <Icon name="UserPlus" size={13} />
               Назначить смену
@@ -231,7 +231,7 @@ export default function CuttingTaskBlock({ tasks, allShifts, onReload, onAssignC
               tabIndex={0}
               onKeyDown={e => e.key === "Enter" && setModalTask(task)}
               className={`rounded-xl border p-4 transition-all text-left hover:shadow-sm w-full cursor-pointer ${
-                isActive ? "border-[#c7d2fe] bg-[#f5f3ff] hover:border-[#a5b4fc]" : "border-[#e8e8e8] bg-white hover:border-[#d0d0d0]"
+                isActive ? "border-[#bfdbfe] bg-[#eff6ff] hover:border-[#93c5fd]" : "border-[#e8e8e8] bg-white hover:border-[#d0d0d0]"
               }`}
             >
               {/* Шапка карточки */}
@@ -240,7 +240,7 @@ export default function CuttingTaskBlock({ tasks, allShifts, onReload, onAssignC
                   <div className="flex items-center gap-1.5 mb-0.5">
                     <span className="text-[10px] font-bold font-mono text-[#b0b0b0]">#{task.id}</span>
                     <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                      isActive ? "bg-[#ede9fe] text-[#6366f1]" : "bg-[#f4f4f4] text-[#9b9b9b]"
+                      isActive ? "bg-[#dbeafe] text-[#2563eb]" : "bg-[#f4f4f4] text-[#9b9b9b]"
                     }`}>
                       {isActive ? "В работе" : "Не начато"}
                     </span>
@@ -276,7 +276,7 @@ export default function CuttingTaskBlock({ tasks, allShifts, onReload, onAssignC
               {onAssignClick && (
                 <button
                   onClick={e => { e.stopPropagation(); onAssignClick(task.id); }}
-                  className="mt-2.5 w-full text-[11px] font-semibold py-1.5 rounded-lg border border-[#c7d2fe] text-[#6366f1] hover:bg-[#eef2ff] transition-colors"
+                  className="mt-2.5 w-full text-[11px] font-semibold py-1.5 rounded-lg border border-[#bfdbfe] text-[#2563eb] hover:bg-[#eff6ff] transition-colors"
                 >
                   + Назначить смену
                 </button>

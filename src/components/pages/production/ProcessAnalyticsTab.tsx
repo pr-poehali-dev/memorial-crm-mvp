@@ -100,7 +100,7 @@ export default function AnalyticsTab({ shifts }: { shifts: Shift[] }) {
             { label: "Всего смен",      value: String(filtered.length), icon: "CalendarDays", color: "#6b6b6b" },
             { label: "Активных",        value: String(active.length),   icon: "Play",         color: "#16a34a" },
             { label: "Завершено",       value: String(done.length),     icon: "CheckCheck",   color: "#9b9b9b" },
-            { label: "Произведено",     value: `${totalProduced} шт.`,  icon: "Boxes",        color: "#6366f1" },
+            { label: "Произведено",     value: `${totalProduced} шт.`,  icon: "Boxes",        color: "#2563eb" },
             { label: "Сырьё потрачено", value: `${totalRaw} м²`,        icon: "Layers",       color: "#f59e0b" },
           ].map(s => (
             <StatCard key={s.label} {...s} />
@@ -121,7 +121,7 @@ export default function AnalyticsTab({ shifts }: { shifts: Shift[] }) {
         <div>
           <h3 className="text-[11px] font-bold uppercase tracking-widest text-[#b5b5b5] mb-3">Распил / Заготовки</h3>
           <div className="grid grid-cols-3 gap-3">
-            <StatCard label="Смен по распилу"      value={String(cutting.length)}  icon="Scissors"   color="#6366f1" />
+            <StatCard label="Смен по распилу"      value={String(cutting.length)}  icon="Scissors"   color="#2563eb" />
             <StatCard label="Заготовок нарезано"   value={`${cuttingBlankQ} шт.`} icon="Boxes"      color="#8b5cf6" />
             <StatCard label="Сырья потрачено"      value={`${cuttingRaw} м²`}     icon="Layers"     color="#f59e0b" />
             <StatCard label="Ср. расход на загот." value={`${avgPerBlank} м²`}    icon="Calculator" color="#0ea5e9" />
@@ -170,7 +170,7 @@ export default function AnalyticsTab({ shifts }: { shifts: Shift[] }) {
                     </div>
                   </div>
                   <div className="text-right">
-                    {empP > 0 && <p className="text-[14px] font-bold text-[#6366f1]">{empP} шт.</p>}
+                    {empP > 0 && <p className="text-[14px] font-bold text-[#2563eb]">{empP} шт.</p>}
                     {empR > 0 && <p className="text-[12px] text-[#f59e0b]">{empR} м²</p>}
                   </div>
                 </div>

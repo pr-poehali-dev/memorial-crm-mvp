@@ -95,7 +95,7 @@ export default function EstimateSidebar({
       <div className="bg-white border border-[#ebebeb] rounded-xl p-5">
         <p className="text-[11px] font-semibold text-[#b5b5b5] uppercase tracking-wide mb-3">Ответственные</p>
         <div className="space-y-2.5">
-          <PersonRow role="Менеджер" name="Олег Краснов"    color="#6366f1" />
+          <PersonRow role="Менеджер" name="Олег Краснов"    color="#2563eb" />
           <PersonRow role="Сметчик"  name="Дмитрий Соколов" color="#f59e0b" />
         </div>
         <div className="mt-3 pt-3 border-t border-[#f5f5f5] space-y-1.5 text-[11px] text-[#9b9b9b]">

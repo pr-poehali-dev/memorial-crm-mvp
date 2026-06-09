@@ -5,7 +5,7 @@ import { ordersApi, DbOrderStats } from "@/api/client";
 
 type Period = "week" | "month" | "year";
 
-const COLORS = ["#6366f1", "#22c55e", "#f59e0b", "#ec4899", "#14b8a6", "#ef4444"];
+const COLORS = ["#2563eb", "#22c55e", "#f59e0b", "#ec4899", "#14b8a6", "#ef4444"];
 
 function BarChart({ labels, values, color, unit }: { labels: string[]; values: number[]; color: string; unit: string }) {
   const max = Math.max(...values, 1);
@@ -92,7 +92,7 @@ export default function AnalyticsPage() {
           {/* Top metrics */}
           <div className="grid grid-cols-5 gap-3">
             {[
-              { label: "Выручка",    value: `${(totalRevenue/1000).toFixed(0)} тыс. ₽`, delta: `${totalOrders} заказов`,  up: true,  icon: "TrendingUp",  color: "#6366f1" },
+              { label: "Выручка",    value: `${(totalRevenue/1000).toFixed(0)} тыс. ₽`, delta: `${totalOrders} заказов`,  up: true,  icon: "TrendingUp",  color: "#2563eb" },
               { label: "Заказов",    value: String(totalOrders),                          delta: `ср. чек ${Math.round(avgCheck/1000)}к ₽`, up: true, icon: "FileText", color: "#22c55e" },
               { label: "Средний чек",value: `${Math.round(avgCheck).toLocaleString("ru")} ₽`, delta: "по всем заказам", up: true, icon: "BarChart2", color: "#f59e0b" },
               { label: "Долги",      value: `${(totalDebt/1000).toFixed(0)} тыс. ₽`,    delta: `${unpaidCount} без оплаты`, up: false, icon: "CreditCard", color: "#ef4444" },
@@ -124,7 +124,7 @@ export default function AnalyticsPage() {
                 { icon: "AlertTriangle", color: "#ef4444", bg: "#fef2f2", border: "#fecaca", label: "Просроченных заказов", value: String(overdueCount) },
                 { icon: "CreditCard",    color: "#f59e0b", bg: "#fffbeb", border: "#fde68a", label: "Долг клиентов",         value: `${(totalDebt/1000).toFixed(0)} тыс. ₽` },
                 { icon: "Package",       color: "#ec4899", bg: "#fdf2f8", border: "#f9a8d4", label: "Дефицит материалов",    value: String(deficit.length) },
-                { icon: "Hammer",        color: "#6366f1", bg: "#eef2ff", border: "#c7d2fe", label: "В производстве",        value: String(inProd) },
+                { icon: "Hammer",        color: "#2563eb", bg: "#eff6ff", border: "#bfdbfe", label: "В производстве",        value: String(inProd) },
               ].map((p) => (
                 <div key={p.label} className="border rounded-xl p-4 cursor-pointer hover:shadow-sm transition-all"
                   style={{ backgroundColor: p.bg, borderColor: p.border }}>
@@ -151,7 +151,7 @@ export default function AnalyticsPage() {
                 <BarChart
                   labels={chart.map(r => r.label)}
                   values={chart.map(r => Number(r.revenue))}
-                  color="#6366f1"
+                  color="#2563eb"
                   unit="₽"
                 />
               ) : (

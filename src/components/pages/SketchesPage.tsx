@@ -90,7 +90,7 @@ function SketchCard({
             <div className="flex items-center gap-2 mb-1">
               <button
                 onClick={() => onOpenOrder(order.id)}
-                className="text-[12px] font-bold text-[#6366f1] hover:underline underline-offset-2 font-mono"
+                className="text-[12px] font-bold text-[#2563eb] hover:underline underline-offset-2 font-mono"
               >
                 {order.id}
               </button>

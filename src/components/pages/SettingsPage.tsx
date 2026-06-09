@@ -13,7 +13,7 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: "notifications", label: "Уведомления",        icon: "Bell" },
 ];
 
-const AVATAR_COLORS = ["#6366f1","#22c55e","#f59e0b","#ec4899","#14b8a6","#ef4444","#8b5cf6"];
+const AVATAR_COLORS = ["#2563eb","#22c55e","#f59e0b","#ec4899","#14b8a6","#ef4444","#8b5cf6"];
 
 export default function SettingsPage() {
   const [tab, setTab] = useState<Tab>("company");

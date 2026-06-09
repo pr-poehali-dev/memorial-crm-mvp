@@ -6,7 +6,7 @@ import { LineItem } from "./estimate.types";
 /* ── Категории расчётов ── */
 const CATEGORIES = [
   { id: "stela",    label: "Стелы",                   icon: "Monument",   color: "#1a1a1a", bg: "#f4f4f4", active: true },
-  { id: "slab",     label: "Надгробные плиты",         icon: "Square",     color: "#6366f1", bg: "#eef2ff", active: false },
+  { id: "slab",     label: "Надгробные плиты",         icon: "Square",     color: "#2563eb", bg: "#eff6ff", active: false },
   { id: "pedestal", label: "Тумбы",                   icon: "Box",        color: "#d97706", bg: "#fffbeb", active: false },
   { id: "socle",    label: "Цоколи",                  icon: "Layers",     color: "#0891b2", bg: "#ecfeff", active: false },
   { id: "tile",     label: "Плитка",                  icon: "Grid3x3",    color: "#16a34a", bg: "#f0fdf4", active: false },

@@ -98,7 +98,7 @@ export default function CatalogPage({ canEdit = true }: { canEdit?: boolean }) {
           <div className="grid grid-cols-4 gap-3">
             {[
               { icon: "Layers",     color: "#6b6b6b", label: "Позиций в каталоге", value: String(totalActive),  sub: `${items.length} всего` },
-              { icon: "FileText",   color: "#6366f1", label: "Использований",       value: String(totalOrders),  sub: "в заказах" },
+              { icon: "FileText",   color: "#2563eb", label: "Использований",       value: String(totalOrders),  sub: "в заказах" },
               { icon: "TrendingUp", color: "#16a34a", label: "Средняя маржа",       value: `${avgMargin}%`,      sub: "по каталогу" },
               { icon: "Calculator", color: "#d97706", label: "Ручной расчёт",       value: String(needsCalcCnt), sub: "позиций" },
             ].map(s => (

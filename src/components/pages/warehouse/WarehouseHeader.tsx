@@ -81,7 +81,7 @@ export default function WarehouseHeader({
           <button onClick={() => onModal("in")} className="flex items-center gap-2 bg-[#1a1a1a] text-white text-[13px] px-4 py-2 rounded-[8px] hover:bg-[#333] transition-colors">
             <Icon name="ArrowDownToLine" size={14} />Приход
           </button>
-          <button onClick={() => onModal("cut")} className="flex items-center gap-2 bg-[#6366f1] text-white text-[13px] px-4 py-2 rounded-[8px] hover:bg-[#5052cc] transition-colors">
+          <button onClick={() => onModal("cut")} className="flex items-center gap-2 bg-[#2563eb] text-white text-[13px] px-4 py-2 rounded-[8px] hover:bg-[#1d4ed8] transition-colors">
             <Icon name="Scissors" size={14} />Нарезка
           </button>
           <button onClick={() => onModal("use")} className="flex items-center gap-2 bg-white border border-[#ebebeb] text-[#4b4b4b] text-[13px] px-4 py-2 rounded-[8px] hover:border-[#c5c5c5] transition-colors">

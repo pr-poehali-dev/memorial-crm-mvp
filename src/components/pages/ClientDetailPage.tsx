@@ -11,7 +11,7 @@ const CLIENT_ORDERS: Record<string, {
     { id: "МП-0015", stone: "Мрамор белый",  size: "80×40×6",  status: "Выдан",        statusColor: "#9b9b9b", amount: 25000, paid: 25000, date: "05.08.2025" },
   ],
   "CL-002": [
-    { id: "МП-0040", stone: "Мрамор белый",  size: "80×40×6",  status: "Эскиз",        statusColor: "#6366f1", amount: 22000, paid: 0,     date: "10.04.2026" },
+    { id: "МП-0040", stone: "Мрамор белый",  size: "80×40×6",  status: "Эскиз",        statusColor: "#2563eb", amount: 22000, paid: 0,     date: "10.04.2026" },
   ],
 };
 

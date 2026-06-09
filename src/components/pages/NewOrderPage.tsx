@@ -133,7 +133,7 @@ export default function NewOrderPage({ onBack }: { onBack: () => void }) {
         inscription: inscription || "",
         design:      "",
         status:      "Эскиз",
-        statusColor: "#6366f1",
+        statusColor: "#2563eb",
         amount:      total,
         paid:        0,
         orderDate:   new Date().toISOString().slice(0, 10),
@@ -183,7 +183,7 @@ export default function NewOrderPage({ onBack }: { onBack: () => void }) {
                   onBlur={() => setEditingId(false)}
                   onKeyDown={e => e.key === "Enter" && setEditingId(false)}
                   autoFocus
-                  className="font-mono text-[13px] font-bold text-[#1a1a1a] border-b border-[#6366f1] outline-none bg-transparent w-[100px]"
+                  className="font-mono text-[13px] font-bold text-[#1a1a1a] border-b border-[#2563eb] outline-none bg-transparent w-[100px]"
                 />
               ) : (
                 <button
@@ -194,7 +194,7 @@ export default function NewOrderPage({ onBack }: { onBack: () => void }) {
                   <span className="font-mono text-[13px] font-bold text-[#1a1a1a]">
                     {loadingId ? "..." : orderId}
                   </span>
-                  <Icon name="Pencil" size={11} className="text-[#c5c5c5] group-hover:text-[#6366f1] transition-colors" />
+                  <Icon name="Pencil" size={11} className="text-[#c5c5c5] group-hover:text-[#2563eb] transition-colors" />
                 </button>
               )}
             </div>

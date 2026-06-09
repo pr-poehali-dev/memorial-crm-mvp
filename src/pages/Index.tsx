@@ -71,8 +71,8 @@ const NAV_GROUPS: NavGroup[] = [
   },
   {
     group: "Инструменты",
-    color: "#6366f1",
-    hoverBg: "#eef2ff",
+    color: "#2563eb",
+    hoverBg: "#eff6ff",
     activeBg: "#e0e7ff",
     items: [
       { id: "analytics", label: "Аналитика",  icon: "BarChart2"  },

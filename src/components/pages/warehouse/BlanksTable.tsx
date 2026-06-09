@@ -13,7 +13,7 @@ function OrderLink({ orderId }: { orderId: string }) {
   return (
     <button
       onClick={() => openOrder(orderId)}
-      className="text-[12px] font-semibold text-[#6366f1] hover:underline underline-offset-2 transition-colors"
+      className="text-[12px] font-semibold text-[#2563eb] hover:underline underline-offset-2 transition-colors"
     >
       {orderId}
     </button>

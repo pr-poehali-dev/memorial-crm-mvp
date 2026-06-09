@@ -20,7 +20,7 @@ function KanbanCard({ task, onOpen }: { task: Task; onOpen: (t: Task) => void })
       <div className="px-4 py-3.5">
         {/* Заказ + срочность */}
         <div className="flex items-start justify-between gap-2 mb-2">
-          <span className="text-[12px] font-bold text-[#6366f1] font-mono">{task.orderId}</span>
+          <span className="text-[12px] font-bold text-[#2563eb] font-mono">{task.orderId}</span>
           <div className="flex items-center gap-1 shrink-0">
             {isOverdue && (
               <span className="text-[10px] font-bold bg-red-100 text-red-600 px-1.5 py-0.5 rounded">просрочен</span>
