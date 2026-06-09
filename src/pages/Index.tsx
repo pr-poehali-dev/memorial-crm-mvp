@@ -180,12 +180,18 @@ export default function Index() {
       <aside className={`flex flex-col bg-[#f4f4f5] transition-all duration-200 shrink-0 ${collapsed ? "w-[60px]" : "w-[210px]"}`}>
 
         {/* Логотип */}
-        <div className={`flex items-center h-[56px] shrink-0 ${collapsed ? "justify-center" : "px-4 gap-3"}`}>
-          <div className="w-8 h-8 rounded-xl bg-[#1a1a1a] flex items-center justify-center shrink-0 shadow-sm">
-            <span className="text-white text-[14px] font-bold select-none leading-none">П</span>
-          </div>
+        <div className={`flex items-center shrink-0 ${collapsed ? "justify-center h-[64px]" : "px-4 py-3 gap-3"}`}>
+          <img
+            src="https://cdn.poehali.dev/projects/4e0e07db-0b5c-4868-8b3d-3bd655c50b19/bucket/67a0bb82-2164-4b93-a557-fc93d3175179.jpg"
+            alt="Память"
+            className="shrink-0 object-contain rounded-lg"
+            style={{ width: collapsed ? 36 : 40, height: collapsed ? 36 : 40 }}
+          />
           {!collapsed && (
-            <p className="text-[14px] font-bold text-[#1a1a1a] truncate">pio-admin</p>
+            <div className="min-w-0">
+              <p className="text-[15px] font-bold text-[#1a1a1a] leading-tight tracking-tight">ПАМЯТЬ</p>
+              <p className="text-[9px] text-[#9b9b9b] leading-tight tracking-wide uppercase font-medium">система производства и продаж</p>
+            </div>
           )}
         </div>
 
