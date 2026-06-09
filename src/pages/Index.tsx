@@ -113,7 +113,8 @@ export default function Index() {
   const [role, setRole]         = useState<Role | null>("owner");
   const [active, setActive]     = useState<Section>("dashboard");
   const [collapsed, setCollapsed]   = useState(false);
-  const [openOrder, setOpenOrder]   = useState<string | null>(null);
+  const [openOrder, setOpenOrder]           = useState<string | null>(null);
+  const [openCuttingTaskId, setOpenCuttingTaskId] = useState<string | null>(null);
   const [showRolePicker, setShowRolePicker] = useState(false);
   const [creatingOrder, setCreatingOrder]   = useState(false);
   const [aiOpen, setAiOpen]               = useState(false);
@@ -136,6 +137,12 @@ export default function Index() {
       setOpenOrder(orderId);
       setCreatingOrder(false);
     },
+    openCuttingTask: (taskId: string) => {
+      setActive("cutting");
+      setOpenOrder(null);
+      setCreatingOrder(false);
+      setOpenCuttingTaskId(taskId);
+    },
   }), []);
 
   if (screen === "landing") return <LandingPage onStart={() => setScreen("login")} />;
@@ -153,7 +160,7 @@ export default function Index() {
       case "orders":     return <OrdersPage onOpenOrder={(id) => setOpenOrder(id)} onNewOrder={() => setCreatingOrder(true)} />;
       case "sketches":   return <SketchesPage />;
       case "production": return <ProductionPage />;
-      case "cutting":    return <CuttingPage />;
+      case "cutting":    return <CuttingPage openTaskId={openCuttingTaskId} onTaskOpened={() => setOpenCuttingTaskId(null)} />;
       case "warehouse":  return <WarehousePage />;
       case "clients":    return <ClientsPage />;
       case "analytics":  return <AnalyticsPage />;

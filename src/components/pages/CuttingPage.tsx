@@ -2,18 +2,22 @@ import { useState, useEffect, useCallback } from "react";
 import Icon from "@/components/ui/icon";
 import {
   Shift, ShiftResult, WorkType, Place, Employee, BlankType, CuttingTask,
-  today, yesterday, emptyResultFromBt,
+  today, emptyResultFromBt,
   shiftTotalProduced, shiftTotalRaw,
 } from "./cutting/cutting.types";
 import { cuttingApi, DbShift, DbPlace, DbEmployee, DbBlankType, DbCuttingTask } from "@/api/client";
 import { useTasks } from "@/store/tasksStore";
-import CuttingShiftCards from "./cutting/CuttingShiftCards";
 import { ActiveColumn, DoneColumn } from "./cutting/CuttingShiftCards";
 import CuttingJournal from "./cutting/CuttingJournal";
 import CuttingTaskBlock from "./cutting/CuttingTaskBlock";
 import { AssignModal, FinishModal } from "./cutting/CuttingModals";
 
-type Tab = "today" | "yesterday" | "journal";
+type Tab = "today" | "journal";
+
+type Props = {
+  openTaskId?: string | null;
+  onTaskOpened?: () => void;
+};
 
 function dbToShift(s: DbShift): Shift {
   return {
@@ -67,7 +71,7 @@ function dbToTask(t: DbCuttingTask): CuttingTask {
   };
 }
 
-export default function CuttingPage() {
+export default function CuttingPage({ openTaskId, onTaskOpened }: Props) {
   const [tab,        setTab]       = useState<Tab>("today");
 
   /* Задачи из глобального TasksContext (туда пишет и Склад при создании) */
@@ -184,23 +188,15 @@ export default function CuttingPage() {
   };
 
   /* ── Производные ── */
-  const activeShifts  = shifts.filter(s => s.status === "active");
-  const todayDone     = shifts.filter(s => s.status === "done" && s.date === today);
-  const yesterdayDone = shifts.filter(s => s.status === "done" && s.date === yesterday);
-  const allDone       = shifts.filter(s => s.status === "done");
-
-  const totalTodayP = todayDone.reduce((a, s) => a + shiftTotalProduced(s), 0);
-  const totalTodayR = todayDone.reduce((a, s) => a + shiftTotalRaw(s), 0);
+  const activeShifts = shifts.filter(s => s.status === "active");
+  const todayDone    = shifts.filter(s => s.status === "done" && s.date === today);
+  const allDone      = shifts.filter(s => s.status === "done");
 
   const finishShift = finishShiftId ? shifts.find(s => s.id === finishShiftId) ?? null : null;
 
-  const ydP = yesterdayDone.reduce((a, s) => a + shiftTotalProduced(s), 0);
-  const ydR = yesterdayDone.reduce((a, s) => a + shiftTotalRaw(s), 0);
-
   const TABS: { key: Tab; label: string }[] = [
-    { key: "today",     label: "Сегодня" },
-    { key: "yesterday", label: "Вчера" },
-    { key: "journal",   label: "Журнал смен" },
+    { key: "today",   label: "Сегодня" },
+    { key: "journal", label: "Журнал смен" },
   ];
 
   return (
@@ -217,21 +213,6 @@ export default function CuttingPage() {
             <Icon name="Plus" size={15} />
             Назначить смену
           </button>
-        </div>
-
-        <div className="flex items-center gap-4 mb-4">
-          <div className="flex items-center gap-2 bg-[#f4f4f4] rounded-lg px-3 py-1.5">
-            <span className="w-2 h-2 rounded-full bg-[#22c55e] shrink-0" />
-            <span className="text-[13px] text-[#4b4b4b]">Активных: <b className="text-[#1a1a1a]">{activeShifts.length}</b></span>
-          </div>
-          <div className="flex items-center gap-2 bg-[#f4f4f4] rounded-lg px-3 py-1.5">
-            <Icon name="Layers" size={12} className="text-[#9b9b9b]" />
-            <span className="text-[13px] text-[#4b4b4b]">Заготовок сегодня: <b className="text-[#1a1a1a]">{totalTodayP} шт.</b></span>
-          </div>
-          <div className="flex items-center gap-2 bg-[#f4f4f4] rounded-lg px-3 py-1.5">
-            <Icon name="Package" size={12} className="text-[#9b9b9b]" />
-            <span className="text-[13px] text-[#4b4b4b]">Сырьё: <b className="text-[#1a1a1a]">{totalTodayR.toFixed(1)} м²</b></span>
-          </div>
         </div>
 
         <div className="flex gap-0">
@@ -286,10 +267,12 @@ export default function CuttingPage() {
                 <CuttingTaskBlock
                   tasks={tasks}
                   onReload={reloadTasks}
+                  openTaskId={openTaskId}
                   onAssignClick={(taskId) => {
                     setFTaskId(taskId);
                     setFTaskQty("");
                     setAssignModal(true);
+                    onTaskOpened?.();
                   }}
                 />
               </div>
@@ -352,40 +335,6 @@ export default function CuttingPage() {
               </div>
             </div>
 
-          </div>
-        )}
-
-        {/* Вчера */}
-        {tab === "yesterday" && (
-          <div className="flex-1 overflow-y-auto px-7 py-5 space-y-4">
-            <div className="grid grid-cols-3 gap-3">
-              {[
-                { label: "Смен",         value: String(yesterdayDone.length), sub: null },
-                { label: "Изделий",      value: `${ydP}`,                     sub: "шт." },
-                { label: "Расход сырья", value: `${ydR.toFixed(1)}`,          sub: "м²" },
-              ].map(s => (
-                <div key={s.label} className="bg-[#f4f4f4] rounded-xl px-4 py-3 flex flex-col gap-0.5">
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-[24px] font-semibold text-[#1a1a1a] leading-none">{s.value}</span>
-                    {s.sub && <span className="text-[13px] text-[#9b9b9b]">{s.sub}</span>}
-                  </div>
-                  <span className="text-[11px] text-[#9b9b9b]">{s.label}</span>
-                </div>
-              ))}
-            </div>
-            {yesterdayDone.length === 0 ? (
-              <EmptyState text="Нет смен за вчера" />
-            ) : (
-              <div className="space-y-2">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-[#c0c0c0]">Смены за {yesterday}</p>
-                <CuttingShiftCards
-                  activeShifts={[]}
-                  todayDone={yesterdayDone}
-                  onFinishClick={() => {}}
-                  alwaysExpanded
-                />
-              </div>
-            )}
           </div>
         )}
 

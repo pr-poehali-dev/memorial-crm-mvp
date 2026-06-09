@@ -8,8 +8,22 @@ import {
   MaterialReserve,
 } from "./warehouse.types";
 
-function OrderLink({ orderId }: { orderId: string }) {
-  const { openOrder } = useNav();
+/* Ссылка — если формат "Задача #123" → открыть задачу; иначе → открыть заказ */
+function ReserveLink({ orderId }: { orderId: string }) {
+  const { openOrder, openCuttingTask } = useNav();
+  const taskMatch = orderId.match(/Задача\s*#(\d+)/i);
+  if (taskMatch) {
+    const taskId = taskMatch[1];
+    return (
+      <button
+        onClick={() => openCuttingTask(taskId)}
+        className="text-[12px] font-semibold text-[#6366f1] hover:underline underline-offset-2 transition-colors flex items-center gap-1"
+      >
+        <Icon name="Scissors" size={10} />
+        Задача #{taskId}
+      </button>
+    );
+  }
   return (
     <button
       onClick={() => openOrder(orderId)}
@@ -183,7 +197,7 @@ export function RawTable({
                       <div className="flex items-center gap-2 mb-3">
                         <Icon name="BookOpen" size={12} className="text-amber-600" />
                         <span className="text-[11px] font-semibold text-amber-800 uppercase tracking-wide">
-                          Зарезервировано под заказы
+                          Зарезервировано
                         </span>
                         <span className="text-[10px] bg-amber-200 text-amber-700 px-1.5 py-0.5 rounded-full font-bold ml-1">
                           {reserve.orders.length}
@@ -196,7 +210,7 @@ export function RawTable({
                             className="flex items-center justify-between bg-white border border-amber-200 rounded-lg px-3 py-2 gap-3"
                           >
                             <div className="flex items-center gap-2 min-w-0">
-                              <OrderLink orderId={o.orderId} />
+                              <ReserveLink orderId={o.orderId} />
                               {o.clientName && (
                                 <span className="text-[12px] text-[#4b4b4b] truncate">{o.clientName}</span>
                               )}
