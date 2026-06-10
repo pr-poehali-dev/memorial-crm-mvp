@@ -186,7 +186,7 @@ def handler(event: dict, context) -> dict:
     if event.get("httpMethod") != "POST":
         return {"statusCode": 405, "headers": CORS, "body": json.dumps({"error": "method not allowed"})}
 
-    api_key = os.environ.get("ALICE_AI_API_KEY", "")
+    api_key = os.environ.get("BOT_AI", "") or os.environ.get("ALICE_AI_API_KEY", "")
     if not api_key:
         return {"statusCode": 503, "headers": CORS, "body": json.dumps({"error": "AI ключ не настроен"})}
 
