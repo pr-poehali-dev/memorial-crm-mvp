@@ -334,6 +334,16 @@ def handler(event: dict, context) -> dict:
                 new_qty = int(row["qty"]) if row else 0
                 return {"statusCode": 200, "headers": CORS, "body": json.dumps({"ok": True, "qty": new_qty})}
 
+            if action == "update_stock_cost":
+                item_id    = body.get("id")
+                cost_price = float(body.get("costPrice", 0))
+                cur.execute(
+                    f"UPDATE {SCHEMA}.stock_items SET cost_price=%s WHERE id=%s AND company_id=%s",
+                    (cost_price, item_id, company_id)
+                )
+                conn.commit()
+                return {"statusCode": 200, "headers": CORS, "body": json.dumps({"ok": True})}
+
             if action == "remove_stock":
                 item_id = body.get("id")
                 cur.execute(

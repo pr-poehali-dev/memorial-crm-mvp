@@ -290,6 +290,10 @@ export default function WarehousePage() {
           warehouseApi.updateStockQty(parseInt(id), delta)
             .then(() => reload()).catch(console.error);
         }}
+        onStockUpdateCost={(id, costPrice) => {
+          warehouseApi.updateStockCost(parseInt(id), costPrice)
+            .then(() => reload()).catch(console.error);
+        }}
         onStockRemove={id => {
           warehouseApi.removeStock(parseInt(id))
             .then(() => reload()).catch(console.error);

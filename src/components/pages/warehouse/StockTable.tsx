@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Icon from "@/components/ui/icon";
 import { StockItem, inputCls } from "./warehouse.types";
 import { CATEGORY_META } from "@/data/catalog";
@@ -19,10 +19,60 @@ type Props = {
   items: StockItem[];
   onAdd: (item: StockItem) => void;
   onUpdateQty: (id: string, delta: number) => void;
+  onUpdateCost: (id: string, costPrice: number) => void;
   onRemove: (id: string) => void;
 };
 
-export default function StockTable({ items, onAdd, onUpdateQty, onRemove }: Props) {
+/* Inline-редактор себестоимости */
+function CostCell({ item, onSave }: { item: StockItem; onSave: (v: number) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [val, setVal] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const open = () => {
+    setVal(item.costPrice ? String(item.costPrice) : "");
+    setEditing(true);
+    setTimeout(() => inputRef.current?.select(), 0);
+  };
+
+  const save = () => {
+    const n = parseFloat(val);
+    if (!isNaN(n) && n >= 0) onSave(n);
+    setEditing(false);
+  };
+
+  if (editing) {
+    return (
+      <div className="flex items-center gap-1">
+        <input
+          ref={inputRef}
+          type="number"
+          min={0}
+          value={val}
+          onChange={e => setVal(e.target.value)}
+          onKeyDown={e => { if (e.key === "Enter") save(); if (e.key === "Escape") setEditing(false); }}
+          onBlur={save}
+          className="w-[90px] border border-brand rounded-[6px] px-2 py-1 text-[12px] font-mono outline-none"
+          autoFocus
+        />
+        <span className="text-[11px] text-[#9b9b9b]">₽</span>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      onClick={open}
+      title="Изменить себестоимость"
+      className="group flex items-center gap-1.5 text-[12px] font-mono text-[#6b6b6b] hover:text-[#1a1a1a] transition-colors"
+    >
+      <span>{item.costPrice ? item.costPrice.toLocaleString("ru") + " ₽" : <span className="text-[#c0c0c0]">—</span>}</span>
+      <Icon name="Pencil" size={10} className="opacity-0 group-hover:opacity-50 transition-opacity" />
+    </button>
+  );
+}
+
+export default function StockTable({ items, onAdd, onUpdateQty, onUpdateCost, onRemove }: Props) {
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState<string>("all");
   const [showAdd, setShowAdd] = useState(false);
@@ -221,9 +271,9 @@ export default function StockTable({ items, onAdd, onUpdateQty, onRemove }: Prop
                     </div>
                   </td>
 
-                  {/* Себестоимость */}
-                  <td className="px-4 py-3 text-[12px] font-mono text-[#6b6b6b] whitespace-nowrap">
-                    {item.costPrice ? item.costPrice.toLocaleString("ru") + " ₽" : "—"}
+                  {/* Себестоимость — inline edit */}
+                  <td className="px-4 py-3 whitespace-nowrap">
+                    <CostCell item={item} onSave={v => onUpdateCost(item.id, v)} />
                   </td>
 
                   {/* Цена продажи */}

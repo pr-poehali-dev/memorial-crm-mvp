@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Icon from "@/components/ui/icon";
 import LoadingScreen from "@/components/ui/LoadingScreen";
+import DateRangePicker from "@/components/ui/DateRangePicker";
 import { ordersApi, DbOrderStats } from "@/api/client";
 
-type Period = "week" | "month" | "year";
+type Period = "week" | "month" | "year" | "custom";
 
 const COLORS = ["#2563eb", "#22c55e", "#f59e0b", "#ec4899", "#14b8a6", "#ef4444"];
 
@@ -36,17 +37,38 @@ function BarChart({ labels, values, color, unit }: { labels: string[]; values: n
 }
 
 export default function AnalyticsPage() {
-  const [period, setPeriod] = useState<Period>("month");
-  const [stats,  setStats]  = useState<DbOrderStats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [period,    setPeriod]    = useState<Period>("month");
+  const [stats,     setStats]     = useState<DbOrderStats | null>(null);
+  const [loading,   setLoading]   = useState(true);
+  const [showPicker, setShowPicker] = useState(false);
+  const [customFrom, setCustomFrom] = useState("");
+  const [customTo,   setCustomTo]   = useState("");
+  const pickerRef = useRef<HTMLDivElement>(null);
+
+  /* Закрывать попап при клике снаружи */
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
+        setShowPicker(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   useEffect(() => {
+    if (period === "custom" && (!customFrom || !customTo)) return;
     setLoading(true);
-    ordersApi.stats(period)
+    ordersApi.stats(period, customFrom || undefined, customTo || undefined)
       .then(setStats)
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [period]);
+  }, [period, customFrom, customTo]);
+
+  /* Метка периода для отображения */
+  const periodLabel = period === "custom" && customFrom && customTo
+    ? `${customFrom.split("-").reverse().join(".")} — ${customTo.split("-").reverse().join(".")}`
+    : null;
 
   const d = stats;
   const totals = d?.totals;
@@ -74,14 +96,65 @@ export default function AnalyticsPage() {
           <h1 className="text-[21px] font-semibold text-[#1a1a1a] tracking-tight">Аналитика</h1>
           <p className="text-[13px] text-[#9b9b9b] mt-0.5">Данные по производству памятников</p>
         </div>
-        <div className="flex gap-1 bg-white border border-[#ebebeb] rounded-[8px] p-1">
-          {(["week", "month", "year"] as Period[]).map((p) => (
-            <button key={p} onClick={() => setPeriod(p)}
-              className={`px-3.5 py-1.5 rounded-[6px] text-[12px] font-medium transition-all
-                ${period === p ? "bg-[#1a1a1a] text-white shadow-sm" : "text-[#6b6b6b] hover:text-[#1a1a1a]"}`}>
-              {p === "week" ? "Неделя" : p === "month" ? "Месяц" : "Год"}
+        <div className="flex items-center gap-2">
+          {/* Кнопки быстрого периода */}
+          <div className="flex gap-1 bg-white border border-[#ebebeb] rounded-[8px] p-1">
+            {(["week", "month", "year"] as const).map((p) => (
+              <button key={p} onClick={() => { setPeriod(p); setShowPicker(false); }}
+                className={`px-3.5 py-1.5 rounded-[6px] text-[12px] font-medium transition-all
+                  ${period === p ? "bg-[#1a1a1a] text-white shadow-sm" : "text-[#6b6b6b] hover:text-[#1a1a1a]"}`}>
+                {p === "week" ? "Неделя" : p === "month" ? "Месяц" : "Год"}
+              </button>
+            ))}
+          </div>
+
+          {/* Кнопка «Период» с попапом */}
+          <div ref={pickerRef} className="relative">
+            <button
+              onClick={() => setShowPicker(v => !v)}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-[8px] text-[12px] font-medium border transition-all ${
+                period === "custom"
+                  ? "bg-brand text-white border-brand"
+                  : showPicker
+                  ? "border-brand text-brand bg-brand-subtle"
+                  : "bg-white border-[#ebebeb] text-[#6b6b6b] hover:text-[#1a1a1a]"
+              }`}
+            >
+              <Icon name="CalendarRange" size={13} />
+              {period === "custom" && periodLabel ? periodLabel : "Период"}
+              {period === "custom" && (
+                <button
+                  onClick={e => { e.stopPropagation(); setPeriod("month"); setCustomFrom(""); setCustomTo(""); }}
+                  className="ml-1 opacity-70 hover:opacity-100"
+                >
+                  <Icon name="X" size={11} />
+                </button>
+              )}
             </button>
-          ))}
+
+            {showPicker && (
+              <div className="absolute right-0 top-full mt-2 z-50 bg-white border border-[#e8e8e8] rounded-2xl shadow-2xl p-4 w-[280px]">
+                <p className="text-[11px] font-bold text-[#9b9b9b] uppercase tracking-wide mb-3">Выберите период</p>
+                <DateRangePicker
+                  from={customFrom}
+                  to={customTo}
+                  onChange={(f, t) => {
+                    setCustomFrom(f);
+                    setCustomTo(t);
+                    if (f && t) {
+                      setPeriod("custom");
+                      setShowPicker(false);
+                    }
+                  }}
+                />
+                {(!customFrom || !customTo) && (
+                  <p className="text-[11px] text-[#b5b5b5] mt-3 text-center">
+                    Выберите начало и конец периода
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
@@ -145,7 +218,7 @@ export default function AnalyticsPage() {
             <div className="bg-white border border-[#ebebeb] rounded-xl p-5">
               <div className="flex items-center justify-between mb-4">
                 <p className="text-[13px] font-semibold text-[#1a1a1a]">Выручка</p>
-                <span className="text-[11px] text-[#9b9b9b]">{period === "week" ? "по дням" : period === "month" ? "по месяцам" : "по годам"}</span>
+                <span className="text-[11px] text-[#9b9b9b]">{period === "week" ? "по дням" : period === "month" ? "по месяцам" : period === "year" ? "по годам" : "по дням"}</span>
               </div>
               {chart.length > 0 ? (
                 <BarChart

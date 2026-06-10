@@ -109,7 +109,11 @@ export const authApi = {
 export const ordersApi = {
   list:       () => request<DbOrder[]>("orders", "GET"),
   get:        (id: string) => request<DbOrder>("orders", "GET", { id }),
-  stats:      (period: "week" | "month" | "year") => request<DbOrderStats>("orders", "GET", { section: "stats", period }),
+  stats: (period: "week" | "month" | "year" | "custom", dateFrom?: string, dateTo?: string) => {
+    const p: Record<string, string> = { section: "stats", period };
+    if (period === "custom" && dateFrom && dateTo) { p.date_from = dateFrom; p.date_to = dateTo; }
+    return request<DbOrderStats>("orders", "GET", p);
+  },
   production: () => request<DbProductionOrder[]>("orders", "GET", { section: "production" }),
   create:     (data: Partial<DbOrder>) => request<{ id: string }>("orders", "POST", {}, data),
   update:     (id: string, data: Partial<DbOrder>) => request<{ ok: boolean }>("orders", "PUT", { id }, data),
@@ -154,8 +158,9 @@ export const warehouseApi = {
   useAny: (data: { itemType: "raw" | "blank" | "stock"; itemId: number; qty: number; note?: string; orderRef?: string }) =>
     request<{ ok: boolean }>("warehouse", "POST", { action: "use_any" }, data),
   addStock:       (data: Record<string, unknown>) => request<{ id: number }>("warehouse", "POST", { action: "add_stock" }, data),
-  updateStockQty: (id: number, delta: number) => request<{ ok: boolean; qty: number }>("warehouse", "POST", { action: "update_stock_qty" }, { id, delta }),
-  removeStock:    (id: number) => request<{ ok: boolean }>("warehouse", "POST", { action: "remove_stock" }, { id }),
+  updateStockQty:  (id: number, delta: number) => request<{ ok: boolean; qty: number }>("warehouse", "POST", { action: "update_stock_qty" }, { id, delta }),
+  updateStockCost: (id: number, costPrice: number) => request<{ ok: boolean }>("warehouse", "POST", { action: "update_stock_cost" }, { id, costPrice }),
+  removeStock:     (id: number) => request<{ ok: boolean }>("warehouse", "POST", { action: "remove_stock" }, { id }),
 };
 
 // ── Cutting ───────────────────────────────────────────────────────

@@ -20,6 +20,7 @@ type Props = {
   getBlankReserved: (id: string) => number;
   onStockAdd: (item: StockItem) => void;
   onStockUpdateQty: (id: string, delta: number) => void;
+  onStockUpdateCost: (id: string, costPrice: number) => void;
   onStockRemove: (id: string) => void;
 };
 
@@ -204,7 +205,7 @@ export default function WarehouseContent({
   rawMat, blanks, stock,
   reserves, blankReserves,
   getReserved, getBlankReserved,
-  onStockAdd, onStockUpdateQty, onStockRemove,
+  onStockAdd, onStockUpdateQty, onStockUpdateCost, onStockRemove,
 }: Props) {
   return (
     <>
@@ -237,6 +238,7 @@ export default function WarehouseContent({
           items={stock}
           onAdd={onStockAdd}
           onUpdateQty={onStockUpdateQty}
+          onUpdateCost={onStockUpdateCost}
           onRemove={onStockRemove}
         />
       )}

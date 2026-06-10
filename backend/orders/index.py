@@ -50,20 +50,31 @@ def handler(event: dict, context) -> dict:
 
             # --- Аналитика ---
             if section == "stats":
-                period = params.get("period", "month")  # week | month | year
+                period    = params.get("period", "month")  # week | month | year | custom
+                date_from = params.get("date_from", "")
+                date_to   = params.get("date_to",   "")
 
-                if period == "week":
-                    interval = "7 days"
-                    trunc    = "day"
+                # Кастомный диапазон
+                if period == "custom" and date_from and date_to:
+                    trunc     = "day"
+                    label_fmt = "DD.MM"
+                    chart_where = f"order_date BETWEEN '{date_from}' AND '{date_to}'"
+                    totals_where = chart_where
+                elif period == "week":
+                    trunc     = "day"
                     label_fmt = "dy"
+                    chart_where  = "order_date >= CURRENT_DATE - INTERVAL '7 days'"
+                    totals_where = chart_where
                 elif period == "year":
-                    interval = "7 years"
-                    trunc    = "year"
+                    trunc     = "year"
                     label_fmt = "YYYY"
+                    chart_where  = "order_date >= CURRENT_DATE - INTERVAL '7 years'"
+                    totals_where = chart_where
                 else:  # month
-                    interval = "7 months"
-                    trunc    = "month"
+                    trunc     = "month"
                     label_fmt = "Mon"
+                    chart_where  = "order_date >= CURRENT_DATE - INTERVAL '7 months'"
+                    totals_where = chart_where
 
                 # Выручка и заказы по периодам
                 cur.execute(f"""
@@ -72,13 +83,13 @@ def handler(event: dict, context) -> dict:
                         SUM(amount) as revenue,
                         COUNT(*) as orders_count
                     FROM {SCHEMA}.orders
-                    WHERE company_id=%s AND order_date >= CURRENT_DATE - INTERVAL '{interval}'
+                    WHERE company_id=%s AND {chart_where}
                     GROUP BY date_trunc('{trunc}', order_date)
                     ORDER BY date_trunc('{trunc}', order_date)
                 """, (company_id,))
                 chart_rows = cur.fetchall()
 
-                # Итоговые метрики
+                # Итоговые метрики (за выбранный период)
                 cur.execute(f"""
                     SELECT
                         COUNT(*) as total_orders,
@@ -89,24 +100,24 @@ def handler(event: dict, context) -> dict:
                         COUNT(*) FILTER (WHERE paid < amount AND paid > 0) as partial_count,
                         COUNT(*) FILTER (WHERE paid = 0 AND amount > 0) as unpaid_count
                     FROM {SCHEMA}.orders
-                    WHERE company_id=%s
+                    WHERE company_id=%s AND {totals_where}
                 """, (company_id,))
                 totals = dict(cur.fetchone())
 
-                # Топ клиенты
+                # Топ клиенты (за период)
                 cur.execute(f"""
                     SELECT client_name as name, SUM(amount) as total, COUNT(*) as orders
                     FROM {SCHEMA}.orders
-                    WHERE company_id=%s
+                    WHERE company_id=%s AND {totals_where}
                     GROUP BY client_name ORDER BY total DESC LIMIT 5
                 """, (company_id,))
                 top_clients = [dict(r) for r in cur.fetchall()]
 
-                # Топ материалы
+                # Топ материалы (за период)
                 cur.execute(f"""
                     SELECT stone as name, COUNT(*) as count
                     FROM {SCHEMA}.orders
-                    WHERE company_id=%s AND stone IS NOT NULL AND stone != ''
+                    WHERE company_id=%s AND stone IS NOT NULL AND stone != '' AND {totals_where}
                     GROUP BY stone ORDER BY count DESC LIMIT 6
                 """, (company_id,))
                 stone_rows = cur.fetchall()
