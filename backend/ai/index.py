@@ -10,8 +10,8 @@ except ImportError:
 
 SCHEMA       = "t_p9542363_memorial_crm_mvp"
 FOLDER_ID    = "b1g6in0q7dqbjupvnt58"
-MODEL         = f"gpt://{FOLDER_ID}/deepseek-v4-flash/latest"
-RESPONSES_URL = "https://ai.api.cloud.yandex.net/v1/responses"
+MODEL     = f"gpt://{FOLDER_ID}/deepseek-v4-flash/latest"
+CHAT_URL  = "https://ai.api.cloud.yandex.net/v1/chat/completions"
 
 CORS = {
     "Access-Control-Allow-Origin":  "*",
@@ -127,47 +127,30 @@ def get_crm_context(company_id: int) -> str:
 # ── AI API ────────────────────────────────────────────────────────
 
 def call_ai(api_key: str, messages: list, system: str) -> str:
-    """Yandex Cloud Responses API (точно как curl-пример)"""
-    # Собираем input: если история есть — передаём как массив turn-ов
-    # Если только одно сообщение — просто строка
-    if len(messages) == 1:
-        input_val = messages[0]["content"]
-    else:
-        # Responses API принимает массив {role, content}
-        input_val = [{"role": m["role"], "content": m["content"]} for m in messages]
-
+    """Chat Completions API — стандартный OpenAI-совместимый формат"""
     payload = {
-        "model":            MODEL,
-        "instructions":     system,
-        "input":            input_val,
-        "temperature":      0.3,
-        "max_output_tokens": 800,
+        "model":       MODEL,
+        "messages":    [{"role": "system", "content": system}] + messages,
+        "temperature": 0.3,
+        "max_tokens":  800,
     }
 
     data = json.dumps(payload).encode()
     req  = urllib.request.Request(
-        RESPONSES_URL,
+        CHAT_URL,
         data=data,
         headers={
             "Content-Type":   "application/json",
             "Authorization":  f"Api-Key {api_key}",
             "OpenAI-Project": FOLDER_ID,
+            "x-folder-id":    FOLDER_ID,
         },
         method="POST",
     )
     try:
         with urllib.request.urlopen(req, timeout=30) as resp:
             result = json.loads(resp.read().decode())
-            # Responses API возвращает output_text
-            output = result.get("output_text")
-            if output:
-                return output
-            # Fallback: смотрим в output[].content[].text
-            for item in result.get("output", []):
-                for part in item.get("content", []):
-                    if part.get("type") == "output_text":
-                        return part.get("text", "")
-            return "Нет ответа"
+            return result["choices"][0]["message"]["content"]
     except urllib.error.HTTPError as e:
         body = e.read().decode()
         print(f"[AI HTTPError] status={e.code} body={body}")
