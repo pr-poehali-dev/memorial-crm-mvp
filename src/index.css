@@ -4,6 +4,46 @@
 
 @layer base {
   :root {
+    /* ═══════════════════════════════════════════════════
+       БРЕНД — меняй здесь, применится во всём проекте
+       ═══════════════════════════════════════════════════ */
+    --brand: #2563eb; /* основной цвет */
+    --brand-hover: #1d4ed8; /* hover / нажатие */
+    --brand-light: #dbeafe; /* светлый фон */
+    --brand-border: #bfdbfe; /* граница */
+    --brand-muted: #93c5fd; /* приглушённый */
+    --brand-subtle: #eff6ff; /* очень светлый фон */
+
+    /* ── Семантика ── */
+    --c-success: #16a34a;
+    --c-success-light: #dcfce7;
+    --c-success-border: #bbf7d0;
+    --c-danger: #ef4444;
+    --c-danger-light: #fee2e2;
+    --c-warning: #d97706;
+    --c-warning-light: #fef3c7;
+
+    /* ── Текст ── */
+    --c-text: #1a1a1a;
+    --c-text-muted: #9b9b9b;
+    --c-text-faint: #b5b5b5;
+    --c-text-soft: #6b6b6b;
+
+    /* ── Фон и границы ── */
+    --c-border: #e8e8e8;
+    --c-border-soft: #f0f0f0;
+    --c-bg: #ffffff;
+    --c-bg-soft: #f4f4f4;
+    --c-bg-page: #fafafa;
+    --c-bg-input: #f8f8f8;
+
+    /* ── Радиусы ── */
+    --r-sm: 6px;
+    --r-md: 10px;
+    --r-lg: 14px;
+    --r-xl: 18px;
+
+    /* shadcn (не трогать) */
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
 

@@ -20,6 +20,42 @@ export default {
 		},
 		extend: {
 			colors: {
+				/* ── Бренд-алиасы — пиши bg-brand, text-brand и т.д. ── */
+				brand: {
+					DEFAULT: 'var(--brand)',
+					hover:   'var(--brand-hover)',
+					light:   'var(--brand-light)',
+					border:  'var(--brand-border)',
+					muted:   'var(--brand-muted)',
+					subtle:  'var(--brand-subtle)',
+				},
+				/* ── Семантика ── */
+				success: {
+					DEFAULT: 'var(--c-success)',
+					light:   'var(--c-success-light)',
+					border:  'var(--c-success-border)',
+				},
+				danger: {
+					DEFAULT: 'var(--c-danger)',
+					light:   'var(--c-danger-light)',
+				},
+				warning: {
+					DEFAULT: 'var(--c-warning)',
+					light:   'var(--c-warning-light)',
+				},
+				/* ── UI-нейтралы ── */
+				ui: {
+					text:        'var(--c-text)',
+					muted:       'var(--c-text-muted)',
+					faint:       'var(--c-text-faint)',
+					soft:        'var(--c-text-soft)',
+					border:      'var(--c-border)',
+					'border-soft': 'var(--c-border-soft)',
+					bg:          'var(--c-bg)',
+					'bg-soft':   'var(--c-bg-soft)',
+					'bg-page':   'var(--c-bg-page)',
+					'bg-input':  'var(--c-bg-input)',
+				},
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
 				ring: 'hsl(var(--ring))',
