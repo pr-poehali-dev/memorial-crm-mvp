@@ -1,3 +1,26 @@
+/**
+ * API-клиент. Типы данных — в ./types.ts
+ */
+export type {
+  UserInfo,
+  DbOrder, DbOrderItem, DbComment, DbOrderStats, DbProductionOrder,
+  DbClient,
+  DbMaterial, DbBlank, DbMovement, DbStockItem, DbMaterialReserve,
+  DbCuttingTask, DbShift, DbShiftResult, DbPlace, DbEmployee, DbBlankType,
+  DbStage, DbEstimateTemplate,
+  DbCatalogItem,
+} from "./types";
+
+import type {
+  UserInfo,
+  DbOrder, DbOrderStats, DbProductionOrder,
+  DbClient,
+  DbMaterial, DbBlank, DbMovement, DbStockItem, DbMaterialReserve,
+  DbCuttingTask, DbShift, DbPlace, DbEmployee, DbBlankType,
+  DbStage, DbEstimateTemplate,
+  DbCatalogItem,
+} from "./types";
+
 const URLS = {
   auth:      "https://functions.poehali.dev/0e06719c-34f7-4c26-8b70-560def4ad283",
   orders:    "https://functions.poehali.dev/9a0900f9-bce7-4297-8845-9ae158944320",
@@ -27,7 +50,6 @@ async function request<T>(
   const url = new URL(URLS[fn]);
   Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
 
-  /* Только GET-запросы кэшируем */
   if (method === "GET") {
     const key = getCacheKey(fn, params);
     const hit = REQ_CACHE.get(key);
@@ -46,7 +68,6 @@ async function request<T>(
   const text = await res.text();
   let data: unknown;
   try {
-    // Бэкенд возвращает JSON как строку (двойная сериализация) — распаковываем
     data = JSON.parse(text);
     if (typeof data === "string") data = JSON.parse(data);
   } catch {
@@ -65,7 +86,7 @@ async function request<T>(
   return data as T;
 }
 
-/* Сбросить весь кэш (вызывать после POST/PUT/DELETE) */
+/* Сбросить кэш (вызывать после POST/PUT/DELETE) */
 export function clearRequestCache(fn?: keyof typeof URLS) {
   if (fn) {
     for (const key of REQ_CACHE.keys()) {
@@ -76,7 +97,7 @@ export function clearRequestCache(fn?: keyof typeof URLS) {
   }
 }
 
-// ── Auth ──
+// ── Auth ──────────────────────────────────────────────────────────
 export const authApi = {
   login: (login: string, password: string) =>
     request<{ token: string; user: UserInfo }>("auth", "POST", { section: "login" }, { login, password }),
@@ -84,17 +105,17 @@ export const authApi = {
     request<{ user: UserInfo }>("auth", "GET", { section: "me" }),
 };
 
-// ── Orders ──
+// ── Orders ────────────────────────────────────────────────────────
 export const ordersApi = {
-  list:  () => request<DbOrder[]>("orders", "GET"),
-  get:   (id: string) => request<DbOrder>("orders", "GET", { id }),
+  list:       () => request<DbOrder[]>("orders", "GET"),
+  get:        (id: string) => request<DbOrder>("orders", "GET", { id }),
   stats:      (period: "week" | "month" | "year") => request<DbOrderStats>("orders", "GET", { section: "stats", period }),
   production: () => request<DbProductionOrder[]>("orders", "GET", { section: "production" }),
-  create: (data: Partial<DbOrder>) => request<{ id: string }>("orders", "POST", {}, data),
-  update: (id: string, data: Partial<DbOrder>) => request<{ ok: boolean }>("orders", "PUT", { id }, data),
+  create:     (data: Partial<DbOrder>) => request<{ id: string }>("orders", "POST", {}, data),
+  update:     (id: string, data: Partial<DbOrder>) => request<{ ok: boolean }>("orders", "PUT", { id }, data),
 };
 
-// ── Clients ──
+// ── Clients ───────────────────────────────────────────────────────
 export const clientsApi = {
   list:   () => request<DbClient[]>("clients", "GET"),
   get:    (id: string) => request<DbClient>("clients", "GET", { id }),
@@ -102,7 +123,7 @@ export const clientsApi = {
   update: (id: string, data: Partial<DbClient>) => request<{ ok: boolean }>("clients", "PUT", { id }, data),
 };
 
-// ── Settings (employees, stages, estimate_templates) ──
+// ── Settings ──────────────────────────────────────────────────────
 export const settingsApi = {
   employees:         () => request<DbEmployee[]>("clients", "GET", { section: "employees" }),
   stages:            () => request<DbStage[]>("clients", "GET", { section: "stages" }),
@@ -115,17 +136,7 @@ export const settingsApi = {
   updateTemplate:    (id: number, data: Record<string, unknown>) => request<{ ok: boolean }>("clients", "PUT", { section: "estimate_templates", id: String(id) }, data),
 };
 
-// ── Warehouse ──
-export type DbMaterialReserve = {
-  id: number;
-  material_id: number;
-  task_id?: number;
-  qty: number;
-  note?: string;
-  material_name?: string;
-  task_status?: string;
-};
-
+// ── Warehouse ─────────────────────────────────────────────────────
 export const warehouseApi = {
   materials: () => request<DbMaterial[]>("warehouse", "GET", { section: "materials" }),
   blanks:    () => request<DbBlank[]>("warehouse", "GET", { section: "blanks" }),
@@ -136,298 +147,34 @@ export const warehouseApi = {
     request<{ id: number }>("warehouse", "POST", { action: "add_material" }, data),
   addBlank: (data: Record<string, unknown>) =>
     request<{ id: number }>("warehouse", "POST", { action: "add_blank" }, data),
-  movement: (action: "in"|"cut"|"use"|"adjust", data: Record<string, unknown>) =>
+  movement: (action: "in" | "cut" | "use" | "adjust", data: Record<string, unknown>) =>
     request<{ ok: boolean }>("warehouse", "POST", { action }, data),
   useBlank: (data: Record<string, unknown>) =>
     request<{ ok: boolean }>("warehouse", "POST", { action: "use_blank" }, data),
-  useAny: (data: { itemType: "raw"|"blank"|"stock"; itemId: number; qty: number; note?: string; orderRef?: string }) =>
+  useAny: (data: { itemType: "raw" | "blank" | "stock"; itemId: number; qty: number; note?: string; orderRef?: string }) =>
     request<{ ok: boolean }>("warehouse", "POST", { action: "use_any" }, data),
-  addStock: (data: Record<string, unknown>) =>
-    request<{ id: number }>("warehouse", "POST", { action: "add_stock" }, data),
-  updateStockQty: (id: number, delta: number) =>
-    request<{ ok: boolean; qty: number }>("warehouse", "POST", { action: "update_stock_qty" }, { id, delta }),
-  removeStock: (id: number) =>
-    request<{ ok: boolean }>("warehouse", "POST", { action: "remove_stock" }, { id }),
+  addStock:       (data: Record<string, unknown>) => request<{ id: number }>("warehouse", "POST", { action: "add_stock" }, data),
+  updateStockQty: (id: number, delta: number) => request<{ ok: boolean; qty: number }>("warehouse", "POST", { action: "update_stock_qty" }, { id, delta }),
+  removeStock:    (id: number) => request<{ ok: boolean }>("warehouse", "POST", { action: "remove_stock" }, { id }),
 };
 
-// ── Cutting ──
+// ── Cutting ───────────────────────────────────────────────────────
 export const cuttingApi = {
   tasks:      () => request<DbCuttingTask[]>("cutting", "GET", { section: "tasks" }),
   shifts:     (date?: string) => request<DbShift[]>("cutting", "GET", date ? { section: "shifts", date } : { section: "shifts" }),
   places:     () => request<DbPlace[]>("cutting", "GET", { section: "places" }),
   employees:  () => request<DbEmployee[]>("cutting", "GET", { section: "employees" }),
   blankTypes: () => request<DbBlankType[]>("cutting", "GET", { section: "blank_types" }),
-  createTask: (data: Record<string, unknown>) =>
-    request<{ id: number }>("cutting", "POST", { action: "create_task" }, data),
-  assignShift: (data: Record<string, unknown>) =>
-    request<{ id: number }>("cutting", "POST", { action: "assign_shift" }, data),
-  finishShift: (data: Record<string, unknown>) =>
-    request<{ ok: boolean }>("cutting", "POST", { action: "finish_shift" }, data),
-  updateTask:  (data: Record<string, unknown>) =>
-    request<{ ok: boolean }>("cutting", "POST", { action: "update_task" }, data),
-  cancelTask:  (taskId: number) =>
-    request<{ ok: boolean }>("cutting", "POST", { action: "cancel_task" }, { taskId }),
+  createTask:  (data: Record<string, unknown>) => request<{ id: number }>("cutting", "POST", { action: "create_task" }, data),
+  assignShift: (data: Record<string, unknown>) => request<{ id: number }>("cutting", "POST", { action: "assign_shift" }, data),
+  finishShift: (data: Record<string, unknown>) => request<{ ok: boolean }>("cutting", "POST", { action: "finish_shift" }, data),
+  updateTask:  (data: Record<string, unknown>) => request<{ ok: boolean }>("cutting", "POST", { action: "update_task" }, data),
+  cancelTask:  (taskId: number) => request<{ ok: boolean }>("cutting", "POST", { action: "cancel_task" }, { taskId }),
 };
 
-// ── Catalog ──
+// ── Catalog ───────────────────────────────────────────────────────
 export const catalogApi = {
-  list: () => request<DbCatalogItem[]>("auth", "GET", { section: "catalog" }),
-  create: (data: Record<string, unknown>) =>
-    request<{ id: string }>("auth", "POST", { section: "catalog" }, data),
-  update: (id: string, data: Record<string, unknown>) =>
-    request<{ ok: boolean }>("auth", "PUT", { section: "catalog", id }, data),
-};
-
-// ── Типы ──
-export type UserInfo = {
-  id: number;
-  login: string;
-  displayName: string;
-  role: string;
-  companyId: number;
-  companyName?: string;
-};
-
-export type DbOrder = {
-  id: string;
-  company_id: number;
-  client_id?: number;
-  client_name: string;
-  phone?: string;
-  stone?: string;
-  size?: string;
-  inscription?: string;
-  design?: string;
-  status: string;
-  status_color: string;
-  amount: number;
-  paid: number;
-  order_date: string;
-  deadline?: string;
-  manager?: string;
-  comment?: string;
-  current_stage: number;
-  deadline_state?: string;
-  pay_status?: string;
-  items?: DbOrderItem[];
-  comments?: DbComment[];
-};
-
-export type DbOrderItem = {
-  id: number;
-  order_id: string;
-  name: string;
-  qty: number;
-  unit: string;
-  price: number;
-  approved?: boolean | null;
-  has_calc: boolean;
-  sort_order: number;
-};
-
-export type DbComment = {
-  id: number;
-  author: string;
-  text: string;
-  created_at: string;
-};
-
-export type DbClient = {
-  id: number;
-  company_id: number;
-  name: string;
-  phone?: string;
-  city?: string;
-  address?: string;
-  active: boolean;
-  comment?: string;
-  manager?: string;
-  since_label?: string;
-  orders_count?: number;
-  total_amount?: number;
-  total_paid?: number;
-  last_order_date?: string;
-  orders?: DbOrder[];
-  comments?: DbComment[];
-};
-
-export type DbMaterial = {
-  id: number;
-  name: string;
-  unit: string;
-  qty: number;
-  min_qty: number;
-  price: number;
-  image_url?: string;
-};
-
-export type DbBlank = {
-  id: number;
-  material_id: number;
-  material_name?: string;
-  name: string;
-  size?: string;
-  qty: number;
-  min_qty: number;
-  cost_price?: number;
-  sale_price?: number;
-  blank_type_id?: number;
-};
-
-export type DbMovement = {
-  id: number;
-  move_date: string;
-  move_type: string;
-  material_id?: number;
-  material_name?: string;
-  blank_id?: number;
-  blank_name?: string;
-  qty: number;
-  price_per_unit?: number;
-  total_sum?: number;
-  note: string;
-  receipt_id?: string;
-  order_ref?: string;
-  remain_after?: number;
-};
-
-export type DbStockItem = {
-  id: number;
-  catalog_id?: string;
-  name: string;
-  category: string;
-  qty: number;
-  price: number;
-  cost_price?: number;
-  note?: string;
-  added_at: string;
-};
-
-export type DbCuttingTask = {
-  id: number;
-  blank_type_id?: number;
-  blank_name?: string;
-  blank_size?: string;
-  material_name?: string;
-  total_qty: number;
-  done_qty: number;
-  in_progress_qty: number;
-  status: string;
-  deadline?: string;
-  created_at: string;
-};
-
-export type DbShift = {
-  id: number;
-  place_id: number;
-  place_name?: string;
-  machine?: string;
-  employee_id: number;
-  employee_name?: string;
-  work_type: string;
-  shift_date: string;
-  status: string;
-  started_at?: string;
-  finished_at?: string;
-  task_id?: number;
-  task_qty_assigned?: number;
-  results: DbShiftResult[];
-};
-
-export type DbShiftResult = {
-  id: number;
-  blank_type_id?: number;
-  blank_name?: string;
-  material?: string;
-  produced: number;
-  raw_used: number;
-  order_ref?: string;
-};
-
-export type DbPlace = {
-  id: number;
-  name: string;
-  machine: string;
-  work_types: string[];
-};
-
-export type DbEmployee = {
-  id: number;
-  name: string;
-  role?: string;
-};
-
-export type DbBlankType = {
-  id: number;
-  name: string;
-  size: string;
-  material: string;
-  raw_per_unit: number;
-};
-
-export type DbProductionOrder = {
-  id: string;
-  client_name: string;
-  phone?: string;
-  stone?: string;
-  size?: string;
-  status: string;
-  current_stage: number;
-  deadline?: string;
-  manager?: string;
-  amount: number;
-  paid: number;
-  comment?: string;
-  deadline_state: "overdue" | "soon" | "ok";
-  payment_label: string;
-};
-
-export type DbOrderStats = {
-  chart: { label: string; revenue: number; orders_count: number }[];
-  totals: {
-    total_orders: number;
-    total_revenue: number;
-    total_debt: number;
-    avg_check: number;
-    overdue_count: number;
-    partial_count: number;
-    unpaid_count: number;
-  };
-  topClients: { name: string; total: number; orders: number }[];
-  stones: { name: string; count: number; pct: number }[];
-  deficit: { name: string; free: number; min: number; unit: string }[];
-  inProduction: number;
-};
-
-export type DbStage = {
-  id: number;
-  label: string;
-  color: string;
-  days: number;
-  sort_order: number;
-  active: boolean;
-};
-
-export type DbEstimateTemplate = {
-  id: number;
-  name: string;
-  price: number;
-  unit: string;
-  active: boolean;
-  sort_order: number;
-};
-
-export type DbCatalogItem = {
-  id: string;
-  name: string;
-  category: string;
-  unit: string;
-  price: number;
-  cost: number;
-  calc_type: string;
-  active: boolean;
-  comment?: string;
-  used_in_orders: number;
-  created_by?: string;
-  stock_qty?: number;
+  list:   () => request<DbCatalogItem[]>("auth", "GET", { section: "catalog" }),
+  create: (data: Record<string, unknown>) => request<{ id: string }>("auth", "POST", { section: "catalog" }, data),
+  update: (id: string, data: Record<string, unknown>) => request<{ ok: boolean }>("auth", "PUT", { section: "catalog", id }, data),
 };

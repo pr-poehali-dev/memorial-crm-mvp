@@ -4,30 +4,9 @@ import { FilterKey, Order } from "./orders/orders.types";
 import OrdersTable from "./orders/OrdersTable";
 import OrdersSidePanel from "./orders/OrdersSidePanel";
 import OrdersControlBoard from "./orders/OrdersControlBoard";
-import { ordersApi, DbOrder } from "@/api/client";
+import { ordersApi } from "@/api/client";
+import { dbToOrder } from "@/lib/converters";
 import { useApiData } from "@/api/useApiData";
-
-function dbToOrder(o: DbOrder): Order {
-  return {
-    id:            o.id,
-    client:        o.client_name,
-    phone:         o.phone || "",
-    stone:         o.stone || "",
-    size:          o.size || "",
-    inscription:   o.inscription || "",
-    design:        o.design || "",
-    status:        o.status,
-    statusColor:   o.status_color,
-    amount:        Number(o.amount),
-    paid:          Number(o.paid),
-    date:          o.order_date ? new Date(o.order_date).toLocaleDateString("ru-RU") : "",
-    deadline:      o.deadline   ? new Date(o.deadline).toLocaleDateString("ru-RU") : "",
-    manager:       o.manager || "",
-    comment:       o.comment || "",
-    deadlineState: (o.deadline_state as Order["deadlineState"]) || "ok",
-    payStatus:     (o.pay_status  as Order["payStatus"])  || "unpaid",
-  };
-}
 
 const FILTERS: { key: FilterKey; label: string }[] = [
   { key: "all",     label: "Все" },

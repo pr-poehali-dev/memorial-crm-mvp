@@ -5,7 +5,8 @@ import {
   today, emptyResultFromBt,
   shiftTotalProduced, shiftTotalRaw,
 } from "./cutting/cutting.types";
-import { cuttingApi, DbShift, DbPlace, DbEmployee, DbBlankType, DbCuttingTask } from "@/api/client";
+import { cuttingApi } from "@/api/client";
+import { dbToShift, dbToPlace, dbToEmployee, dbToBlankType, dbToTask } from "@/lib/converters";
 import { useTasks } from "@/store/tasksStore";
 import { ActiveColumn, DoneColumn } from "./cutting/CuttingShiftCards";
 import CuttingJournal from "./cutting/CuttingJournal";
@@ -18,58 +19,6 @@ type Props = {
   openTaskId?: string | null;
   onTaskOpened?: () => void;
 };
-
-function dbToShift(s: DbShift): Shift {
-  return {
-    id: String(s.id),
-    placeId: String(s.place_id),
-    placeName: s.place_name,
-    employeeId: String(s.employee_id),
-    employeeName: s.employee_name,
-    workType: s.work_type as WorkType,
-    date: s.shift_date?.substring(0, 10) || today,
-    status: s.status as "active" | "done",
-    startedAt: s.started_at?.substring(0, 5) || "08:00",
-    finishedAt: s.finished_at?.substring(0, 5),
-    taskId: s.task_id ? String(s.task_id) : undefined,
-    taskQtyAssigned: s.task_qty_assigned || undefined,
-    results: (s.results || []).map(r => ({
-      blankTypeId: String(r.blankTypeId ?? r.blank_type_id ?? ""),
-      blankName: r.blankName ?? r.blank_name,
-      material: r.material,
-      produced: Number(r.produced ?? 0),
-      rawAuto: true,
-      rawUsed: Number(r.rawUsed ?? r.raw_used ?? 0),
-      orderId: (r.orderRef ?? r.order_ref) || undefined,
-    })),
-  };
-}
-
-function dbToPlace(p: DbPlace): Place {
-  return { id: String(p.id), name: p.name, machine: p.machine, workTypes: p.work_types as WorkType[] };
-}
-function dbToEmployee(e: DbEmployee): Employee {
-  return { id: String(e.id), name: e.name };
-}
-function dbToBlankType(b: DbBlankType): BlankType {
-  return { id: String(b.id), name: b.name, size: b.size, material: b.material, rawPerUnit: Number(b.raw_per_unit) };
-}
-function dbToTask(t: DbCuttingTask): CuttingTask {
-  return {
-    id: String(t.id),
-    blankTypeId: t.blank_type_id ? String(t.blank_type_id) : "",
-    blankName: t.blank_name,
-    blankSize: t.blank_size,
-    materialName: t.material_name || "",
-    totalQty: t.total_qty,
-    doneQty: t.done_qty,
-    inProgressQty: t.in_progress_qty,
-    status: t.status as CuttingTask["status"],
-    createdAt: new Date(t.created_at).toLocaleDateString("ru-RU"),
-    updatedAt: t.updated_at ? t.updated_at.substring(0, 10) : undefined,
-    deadline: t.deadline ? new Date(t.deadline).toLocaleDateString("ru-RU") : undefined,
-  };
-}
 
 export default function CuttingPage({ openTaskId, onTaskOpened }: Props) {
   const [tab,        setTab]       = useState<Tab>("today");

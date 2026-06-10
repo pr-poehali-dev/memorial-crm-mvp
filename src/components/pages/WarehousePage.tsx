@@ -5,43 +5,14 @@ import {
   getLevelRaw, getLevelBlank,
   MaterialReserve, calcBlankReserves,
 } from "./warehouse/warehouse.types";
-import { warehouseApi, cuttingApi, ordersApi, DbMaterial, DbBlank, DbMovement, DbStockItem } from "@/api/client";
+import { warehouseApi, cuttingApi, ordersApi } from "@/api/client";
+import { dbToRaw, dbToBlank, dbToMovement, dbToStock } from "@/lib/converters";
 import type { Order } from "./orders/orders.types";
 import { useTasks } from "@/store/tasksStore";
 import { toast } from "sonner";
 import WarehouseHeader from "./warehouse/WarehouseHeader";
 import WarehouseContent from "./warehouse/WarehouseContent";
 import WarehouseModalsGroup from "./warehouse/WarehouseModalsGroup";
-
-function dbToRaw(m: DbMaterial): RawMaterial {
-  return { id: String(m.id), name: m.name, unit: m.unit, qty: Number(m.qty),
-           min: Number(m.min_qty), price: Number(m.price), imageUrl: m.image_url };
-}
-function dbToBlank(b: DbBlank): Blank {
-  return { id: String(b.id), name: b.name, size: b.size||"", materialId: String(b.material_id),
-           qty: Number(b.qty), min: Number(b.min_qty),
-           costPrice: Number(b.cost_price) || 0,
-           salePrice: Number(b.sale_price) || 0,
-           blankTypeId: b.blank_type_id || undefined,
-           rawPerUnit: b.raw_per_unit ? Number(b.raw_per_unit) : undefined,
-           materialPrice: b.material_price ? Number(b.material_price) : undefined };
-}
-function dbToMovement(m: DbMovement): Movement {
-  return { id: String(m.id), date: new Date(m.move_date).toLocaleDateString("ru-RU", {day:"numeric",month:"short"}),
-           isoDate: String(m.move_date).substring(0, 10),
-           type: m.move_type as Movement["type"], materialId: m.material_id ? String(m.material_id) : undefined,
-           blankId: m.blank_id ? String(m.blank_id) : undefined, qty: Number(m.qty),
-           pricePerUnit: m.price_per_unit ? Number(m.price_per_unit) : undefined,
-           totalSum: m.total_sum ? Number(m.total_sum) : undefined,
-           note: m.note, receiptId: m.receipt_id||undefined, order: m.order_ref||undefined,
-           remainAfter: m.remain_after ? Number(m.remain_after) : undefined };
-}
-function dbToStock(s: DbStockItem): StockItem {
-  return { id: String(s.id), catalogId: s.catalog_id||"", name: s.name, category: s.category,
-           qty: s.qty, price: Number(s.price), costPrice: Number(s.cost_price)||0,
-           addedAt: new Date(s.added_at).toLocaleDateString("ru-RU",{day:"numeric",month:"short"}),
-           note: s.note };
-}
 
 export default function WarehousePage() {
   const { addTask } = useTasks();

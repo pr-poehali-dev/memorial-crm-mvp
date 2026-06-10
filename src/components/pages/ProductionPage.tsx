@@ -1,41 +1,15 @@
 import { useState, useEffect, useCallback } from "react";
 import LoadingScreen from "@/components/ui/LoadingScreen";
 import Icon from "@/components/ui/icon";
-import { ordersApi, cuttingApi, DbProductionOrder, DbShift } from "@/api/client";
-import { Shift, WorkType, today } from "./cutting/cutting.types";
+import { ordersApi, cuttingApi, DbProductionOrder } from "@/api/client";
+import { dbToShift } from "@/lib/converters";
+import { Shift, today } from "./cutting/cutting.types";
 import OrdersTab  from "./production/OrdersTab";
 import TasksTab   from "./production/TasksTab";
 import ProcessTab from "./production/ProcessTab";
 import { useNav } from "@/store/navStore";
 
 type MainTab = "orders" | "tasks" | "process";
-
-/* ─── Конвертер смен ─── */
-function dbToShift(s: DbShift): Shift {
-  return {
-    id:              String(s.id),
-    placeId:         String(s.place_id),
-    placeName:       s.place_name,
-    employeeId:      String(s.employee_id),
-    employeeName:    s.employee_name,
-    workType:        s.work_type as WorkType,
-    date:            s.shift_date?.substring(0, 10) || today,
-    status:          s.status as "active" | "done",
-    startedAt:       s.started_at?.substring(0, 5) || "08:00",
-    finishedAt:      s.finished_at?.substring(0, 5),
-    taskId:          s.task_id ? String(s.task_id) : undefined,
-    taskQtyAssigned: s.task_qty_assigned || undefined,
-    results: (s.results || []).map(r => ({
-      blankTypeId: String(r.blank_type_id ?? ""),
-      blankName:   r.blank_name,
-      material:    r.material,
-      produced:    r.produced,
-      rawAuto:     true,
-      rawUsed:     Number(r.raw_used),
-      orderId:     r.order_ref || undefined,
-    })),
-  };
-}
 
 const NEXT_STATUS: Record<string, string> = {
   "Эскиз":        "Производство",
