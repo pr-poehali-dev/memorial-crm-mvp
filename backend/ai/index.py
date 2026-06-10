@@ -155,7 +155,11 @@ def call_ai(api_key: str, messages: list, system: str) -> str:
             return result["choices"][0]["message"]["content"]
     except urllib.error.HTTPError as e:
         body = e.read().decode()
+        print(f"[AI HTTPError] status={e.code} body={body}")
         raise RuntimeError(f"AI error {e.code}: {body}")
+    except Exception as e:
+        print(f"[AI Exception] {type(e).__name__}: {e}")
+        raise
 
 # ── Handler ───────────────────────────────────────────────────────
 
@@ -189,9 +193,15 @@ def handler(event: dict, context) -> dict:
 
     system = SYSTEM_PROMPT + ("\n\n" + crm_ctx if crm_ctx else "")
 
+    print(f"[AI] key_len={len(api_key)} msgs={len(messages)} company={company_id}")
     try:
         reply = call_ai(api_key, messages[-10:], system)
+        print(f"[AI] reply_len={len(reply)}")
     except RuntimeError as e:
+        print(f"[AI] RuntimeError: {e}")
         return {"statusCode": 502, "headers": CORS, "body": json.dumps({"error": str(e)})}
+    except Exception as e:
+        print(f"[AI] Unexpected: {type(e).__name__}: {e}")
+        return {"statusCode": 502, "headers": CORS, "body": json.dumps({"error": f"{type(e).__name__}: {e}"})}
 
     return {"statusCode": 200, "headers": CORS, "body": json.dumps({"reply": reply})}
