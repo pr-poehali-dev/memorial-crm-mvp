@@ -103,6 +103,24 @@ export const authApi = {
     request<{ token: string; user: UserInfo }>("auth", "POST", { section: "login" }, { login, password }),
   me: () =>
     request<{ user: UserInfo }>("auth", "GET", { section: "me" }),
+  // Вход по slug компании
+  getCompanyBySlug: (slug: string) =>
+    request<{ id: number; name: string }>("auth", "GET", { section: "slug_entry", slug }),
+  getCompanyRoles: (slug: string) =>
+    request<{ id: number; name: string; role: string }[]>("auth", "GET", { section: "slug_roles", slug }),
+  enterRole: (memberId: number) =>
+    request<{ token: string; user: UserInfo }>("auth", "POST", { section: "enter_role" }, { memberId }),
+  // Admin
+  adminCompanies: () =>
+    request<{ id: number; name: string; slug: string; active: boolean; created_at: string; members_count: number }[]>("auth", "GET", { section: "admin_companies" }),
+  adminCreateCompany: (name: string) =>
+    request<{ id: number; slug: string }>("auth", "POST", { section: "admin_companies" }, { name }),
+  adminMembers: (companyId: number) =>
+    request<{ id: number; name: string; role: string; active: boolean }[]>("auth", "GET", { section: "admin_members", company_id: String(companyId) }),
+  adminAddMember: (companyId: number, name: string, role: string) =>
+    request<{ id: number }>("auth", "POST", { section: "admin_members" }, { companyId, name, role }),
+  adminUpdateMember: (memberId: number, data: { name?: string; role?: string; active?: boolean }) =>
+    request<{ ok: boolean }>("auth", "PUT", { section: "admin_members", id: String(memberId) }, data),
 };
 
 // ── Orders ────────────────────────────────────────────────────────
