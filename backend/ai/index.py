@@ -1,7 +1,5 @@
-"""AI-помощник на базе Alice AI (YandexGPT Foundation Models)"""
-import json, os, hashlib
-import urllib.request
-import urllib.error
+"""AI-помощник: DeepSeek v4 Flash через Yandex Cloud OpenAI-совместимый API"""
+import json, os, hashlib, urllib.request, urllib.error
 
 try:
     import psycopg2
@@ -10,20 +8,25 @@ try:
 except ImportError:
     HAS_DB = False
 
-SCHEMA = "t_p9542363_memorial_crm_mvp"
+SCHEMA       = "t_p9542363_memorial_crm_mvp"
+FOLDER_ID    = "b1g6in0q7dqbjupvnt58"
+MODEL        = f"gpt://{FOLDER_ID}/deepseek-v4-flash/latest"
+API_BASE     = "https://ai.api.cloud.yandex.net/v1"
+
 CORS = {
-    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Origin":  "*",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, X-Session-Token",
 }
 
-MODEL_URI  = "gpt://b1gjur90o0dnmfed3k1i/yandexgpt-lite/latest"
-AI_API_URL = "https://llm.api.cloud.yandex.net/foundationModels/v1/completion"
+SYSTEM_PROMPT = (
+    "Ты — AI-помощник производственной CRM для изготовления памятников. "
+    "Отвечай кратко, по делу, на русском языке. "
+    "Используй данные CRM из контекста — не придумывай цифры. "
+    "Если данных нет — честно скажи об этом."
+)
 
-SYSTEM_PROMPT = """Ты — AI-помощник производственной CRM для изготовления памятников.
-Твоя задача: отвечать на вопросы о заказах, клиентах, складе, производстве и аналитике.
-Отвечай кратко, по существу, на русском языке. Используй данные которые тебе передают в контексте.
-Если данных нет — говори об этом честно. Не придумывай цифры."""
+# ── БД ────────────────────────────────────────────────────────────
 
 def get_db():
     if not HAS_DB:
@@ -34,59 +37,52 @@ def sha256(s: str) -> str:
     return hashlib.sha256(s.encode()).hexdigest()
 
 def get_company_id(token: str):
-    """Получаем company_id из токена (поддерживаем оба формата)"""
     if not token:
         return None
     secret = os.environ.get("SESSION_SECRET", "memorial-crm-secret")
     conn = get_db()
-    cur = conn.cursor(cursor_factory=RealDictCursor)
+    cur  = conn.cursor(cursor_factory=RealDictCursor)
 
-    # Новый формат (company_members)
-    cur.execute(f"SELECT id, company_id, role, name FROM {SCHEMA}.company_members WHERE active=TRUE")
-    members = cur.fetchall()
-    for m in members:
-        expected = sha256(f"member:{m['id']}:{m['company_id']}:{m['role']}:{secret}")
-        if expected == token:
+    cur.execute(f"SELECT id, company_id, role FROM {SCHEMA}.company_members WHERE active=TRUE")
+    for m in cur.fetchall():
+        if sha256(f"member:{m['id']}:{m['company_id']}:{m['role']}:{secret}") == token:
             conn.close()
             return m["company_id"]
 
-    # Старый формат (users)
     cur.execute(f"SELECT id, login, company_id FROM {SCHEMA}.users WHERE active=TRUE")
-    users = cur.fetchall()
-    conn.close()
-    for u in users:
+    for u in cur.fetchall():
         if sha256(f"{u['id']}:{u['login']}:{secret}") == token:
+            conn.close()
             return u["company_id"]
+
+    conn.close()
     return None
 
 def get_crm_context(company_id: int) -> str:
-    """Собираем актуальные данные CRM для контекста"""
     conn = get_db()
-    cur = conn.cursor(cursor_factory=RealDictCursor)
+    cur  = conn.cursor(cursor_factory=RealDictCursor)
 
-    # Заказы
     cur.execute(f"""
-        SELECT id, client_name, stone, size, status, amount, paid,
-               deadline, deadline_state
-        FROM {SCHEMA}.orders
-        WHERE company_id=%s
-        ORDER BY order_date DESC LIMIT 20
+        SELECT id, client_name, stone, size, status, amount, paid, deadline, deadline_state
+        FROM {SCHEMA}.orders WHERE company_id=%s ORDER BY order_date DESC LIMIT 20
     """, (company_id,))
     orders = cur.fetchall()
 
-    # Склад (критичные позиции)
     cur.execute(f"""
-        SELECT name, qty, min_qty, unit
-        FROM {SCHEMA}.materials
-        WHERE company_id=%s AND active=TRUE
-        ORDER BY (qty - min_qty) ASC LIMIT 10
+        SELECT name, qty, min_qty, unit FROM {SCHEMA}.materials
+        WHERE company_id=%s AND active=TRUE ORDER BY (qty-min_qty) ASC LIMIT 10
     """, (company_id,))
     materials = cur.fetchall()
 
-    # Задачи нарезки
     cur.execute(f"""
-        SELECT ct.id, bt.name as blank_name, ct.total_qty, ct.done_qty,
-               ct.in_progress_qty, ct.status, ct.deadline
+        SELECT client_name, SUM(amount-paid) as debt
+        FROM {SCHEMA}.orders WHERE company_id=%s AND paid < amount
+        GROUP BY client_name ORDER BY debt DESC LIMIT 5
+    """, (company_id,))
+    debtors = cur.fetchall()
+
+    cur.execute(f"""
+        SELECT ct.id, bt.name as blank_name, ct.total_qty, ct.done_qty, ct.status
         FROM {SCHEMA}.cutting_tasks ct
         LEFT JOIN {SCHEMA}.blank_types bt ON bt.id=ct.blank_type_id
         WHERE ct.company_id=%s AND ct.status NOT IN ('done','cancelled')
@@ -94,130 +90,111 @@ def get_crm_context(company_id: int) -> str:
     """, (company_id,))
     tasks = cur.fetchall()
 
-    # Клиенты с долгами
-    cur.execute(f"""
-        SELECT client_name, SUM(amount-paid) as debt
-        FROM {SCHEMA}.orders
-        WHERE company_id=%s AND paid < amount
-        GROUP BY client_name
-        ORDER BY debt DESC LIMIT 5
-    """, (company_id,))
-    debtors = cur.fetchall()
-
     conn.close()
 
-    # Формируем текстовый контекст
-    lines = ["=== ТЕКУЩИЕ ДАННЫЕ CRM ===\n"]
+    lines = ["=== ДАННЫЕ CRM ==="]
 
     if orders:
-        lines.append(f"ЗАКАЗЫ ({len(orders)} последних):")
         overdue = [o for o in orders if o.get("deadline_state") == "overdue"]
         in_work = [o for o in orders if o["status"] not in ("Выдан", "Готов")]
-        lines.append(f"  В работе: {len(in_work)}, просрочено: {len(overdue)}")
-        for o in overdue[:3]:
-            lines.append(f"  ⚠ {o['id']} — {o['client_name']}, {o['status']}, дедлайн просрочен")
-        lines.append("")
+        lines.append(f"\nЗАКАЗЫ: в работе {len(in_work)}, просрочено {len(overdue)}")
+        for o in overdue[:5]:
+            lines.append(f"  ⚠ {o['id']} — {o['client_name']}, статус: {o['status']}, просрочен")
+        for o in [x for x in orders if x.get("deadline_state") != "overdue"][:3]:
+            lines.append(f"  • {o['id']} — {o['client_name']}, {o['status']}, {o['amount']} ₽")
 
     if debtors:
-        total_debt = sum(float(d['debt']) for d in debtors)
-        lines.append(f"ДОЛГИ КЛИЕНТОВ (топ-5, всего ~{total_debt:,.0f} ₽):")
+        total = sum(float(d["debt"]) for d in debtors)
+        lines.append(f"\nДОЛГИ: {total:,.0f} ₽ суммарно")
         for d in debtors:
             lines.append(f"  {d['client_name']}: {float(d['debt']):,.0f} ₽")
-        lines.append("")
 
     if materials:
-        critical = [m for m in materials if float(m['qty']) < float(m['min_qty'])]
-        lines.append(f"СКЛАД (материалов: {len(materials)}, критичных: {len(critical)}):")
+        critical = [m for m in materials if float(m["qty"]) < float(m["min_qty"])]
+        lines.append(f"\nСКЛАД: критичных позиций {len(critical)}")
         for m in critical[:5]:
-            lines.append(f"  🚨 {m['name']}: {m['qty']} {m['unit']} (мин. {m['min_qty']})")
-        ok = [m for m in materials if float(m['qty']) >= float(m['min_qty'])][:3]
-        for m in ok:
+            lines.append(f"  🚨 {m['name']}: {m['qty']} {m['unit']} (мин {m['min_qty']})")
+        for m in [x for x in materials if float(x["qty"]) >= float(x["min_qty"])][:3]:
             lines.append(f"  ✓ {m['name']}: {m['qty']} {m['unit']}")
-        lines.append("")
 
     if tasks:
-        lines.append(f"ЗАДАЧИ НАРЕЗКИ ({len(tasks)} активных):")
+        lines.append(f"\nЗАДАЧИ НАРЕЗКИ: {len(tasks)} активных")
         for t in tasks[:5]:
-            done = t['done_qty'] or 0
-            total = t['total_qty'] or 0
-            lines.append(f"  {t['blank_name'] or 'Заготовка'}: {done}/{total} шт. ({t['status']})")
-        lines.append("")
+            lines.append(f"  {t['blank_name'] or 'Заготовка'}: {t['done_qty'] or 0}/{t['total_qty']} шт.")
 
     return "\n".join(lines)
 
-def call_alice(api_key: str, messages: list, context: str) -> str:
-    """Вызов Alice AI через Yandex Foundation Models API"""
-    system_with_context = SYSTEM_PROMPT + "\n\n" + context
+# ── AI API ────────────────────────────────────────────────────────
 
+def call_ai(api_key: str, messages: list, system: str) -> str:
+    """OpenAI Responses API (Yandex Cloud)"""
     payload = {
-        "modelUri": MODEL_URI,
-        "completionOptions": {
-            "stream": False,
-            "temperature": 0.3,
-            "maxTokens": 800,
-        },
-        "messages": [
-            {"role": "system", "text": system_with_context},
-        ] + messages,
+        "model":            MODEL,
+        "instructions":     system,
+        "input":            messages[-1]["content"] if messages else "",
+        "temperature":      0.3,
+        "max_output_tokens": 800,
     }
 
-    data = json.dumps(payload).encode("utf-8")
-    req = urllib.request.Request(
-        AI_API_URL,
+    # Если есть история — передаём через input как массив
+    if len(messages) > 1:
+        payload["input"] = messages  # массив {"role":..., "content":...}
+
+    data = json.dumps(payload).encode()
+    req  = urllib.request.Request(
+        f"{API_BASE}/responses",
         data=data,
         headers={
-            "Content-Type": "application/json",
-            "Authorization": f"Api-Key {api_key}",
+            "Content-Type":   "application/json",
+            "Authorization":  f"Api-Key {api_key}",
+            "OpenAI-Project": FOLDER_ID,
         },
         method="POST",
     )
-
     try:
-        with urllib.request.urlopen(req, timeout=25) as resp:
+        with urllib.request.urlopen(req, timeout=30) as resp:
             result = json.loads(resp.read().decode())
-            return result["result"]["alternatives"][0]["message"]["text"]
+            # Responses API → output_text
+            return result.get("output_text") or result.get("choices", [{}])[0].get("message", {}).get("content", "Нет ответа")
     except urllib.error.HTTPError as e:
         body = e.read().decode()
-        raise RuntimeError(f"AI API error {e.code}: {body}")
+        raise RuntimeError(f"AI error {e.code}: {body}")
+
+# ── Handler ───────────────────────────────────────────────────────
 
 def handler(event: dict, context) -> dict:
-    """AI-помощник. POST /?action=chat — отправить сообщение"""
+    """POST /?action=chat  body: {messages:[{role,content}]}"""
     if event.get("httpMethod") == "OPTIONS":
         return {"statusCode": 200, "headers": CORS, "body": ""}
 
-    token  = event.get("headers", {}).get("X-Session-Token", "")
-    method = event.get("httpMethod", "POST")
-    params = event.get("queryStringParameters") or {}
-    action = params.get("action", "chat")
-
-    if method != "POST":
+    if event.get("httpMethod") != "POST":
         return {"statusCode": 405, "headers": CORS, "body": json.dumps({"error": "method not allowed"})}
 
     api_key = os.environ.get("ALICE_AI_API_KEY", "")
     if not api_key:
-        return {"statusCode": 503, "headers": CORS, "body": json.dumps({"error": "AI не настроен"})}
+        return {"statusCode": 503, "headers": CORS, "body": json.dumps({"error": "AI ключ не настроен"})}
 
-    body = json.loads(event.get("body") or "{}")
+    token   = event.get("headers", {}).get("X-Session-Token", "")
+    body    = json.loads(event.get("body") or "{}")
+    messages = body.get("messages", [])
 
-    if action == "chat":
-        # messages: [{"role": "user"|"assistant", "text": "..."}]
-        messages = body.get("messages", [])
-        if not messages:
-            return {"statusCode": 400, "headers": CORS, "body": json.dumps({"error": "messages required"})}
+    if not messages:
+        return {"statusCode": 400, "headers": CORS, "body": json.dumps({"error": "messages required"})}
 
-        # Получаем CRM-контекст если есть токен
-        crm_context = ""
+    # Собираем CRM-контекст
+    crm_ctx = ""
+    try:
         company_id = get_company_id(token)
         if company_id:
-            try:
-                crm_context = get_crm_context(company_id)
-            except Exception:
-                crm_context = ""
+            crm_ctx = get_crm_context(company_id)
+    except Exception as e:
+        crm_ctx = f"(данные CRM недоступны: {e})"
 
-        # Ограничиваем историю последними 10 сообщениями
-        recent = messages[-10:]
+    system = SYSTEM_PROMPT + ("\n\n" + crm_ctx if crm_ctx else "")
 
-        reply = call_alice(api_key, recent, crm_context)
-        return {"statusCode": 200, "headers": CORS, "body": json.dumps({"reply": reply})}
+    try:
+        reply = call_ai(api_key, messages[-10:], system)
+    except RuntimeError as e:
+        return {"statusCode": 502, "headers": CORS, "body": json.dumps({"error": str(e)})}
 
-    return {"statusCode": 400, "headers": CORS, "body": json.dumps({"error": "unknown action"})}
+    return {"statusCode": 200, "headers": CORS, "body": json.dumps({"reply": reply})}

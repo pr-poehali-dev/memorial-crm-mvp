@@ -1,123 +1,141 @@
 import { useState, useRef, useEffect } from "react";
 import Icon from "@/components/ui/icon";
+import { aiApi, AiMessage } from "@/api/client";
 
 type Message = { role: "user" | "ai"; text: string; time: string };
 
-const URGENT_ACTION = {
-  icon: "Zap",
-  text: "МП-0035 просрочен на 13 дней — срочно перевести на второго гравировщика",
-  detail: "Лебедев К.А. ждёт. Этап Гравировка стоит.",
-};
-
-const PROBLEMS = [
-  { icon: "AlertTriangle", color: "#ef4444", bg: "#fef2f2", border: "#fecaca", label: "Заказы просрочены", value: "3", detail: "МП-0035, МП-0033, МП-0040" },
-  { icon: "CreditCard",    color: "#f59e0b", bg: "#fffbeb", border: "#fde68a", label: "Клиенты не платят", value: "8", detail: "Долг: 123 500 ₽" },
-  { icon: "Package",       color: "#2563eb", bg: "#eff6ff", border: "#bfdbfe", label: "Заканчивается камень", value: "3", detail: "Мрамор белый, Гранит красный" },
-  { icon: "AlertOctagon",  color: "#ec4899", bg: "#fdf2f8", border: "#f9a8d4", label: "Гравировка перегружена", value: "!", detail: "3 заказа, 2 просрочки" },
-];
-
-const ACTIONS = [
-  { icon: "Phone",     color: "#22c55e", bg: "#f0fdf4", border: "#bbf7d0", label: "Позвонить Козлову",     detail: "Долг 22 000 ₽, заказ просрочен",     question: "Кто должен оплатить?" },
-  { icon: "Zap",       color: "#ef4444", bg: "#fef2f2", border: "#fecaca", label: "Ускорить МП-0035",      detail: "Просрочен на 13 дней (Гравировка)",   question: "Какие заказы просрочены?" },
-  { icon: "ShoppingCart", color: "#2563eb", bg: "#eff6ff", border: "#bfdbfe", label: "Закупить мрамор",   detail: "Остаток 0.4 м², срочно",              question: "Что закупить на складе?" },
-  { icon: "UserCheck", color: "#ec4899", bg: "#fdf2f8", border: "#f9a8d4", label: "Добавить гравировщика", detail: "Узкое место — перегруз этапа",        question: "Где узкое место?" },
-];
-
 const QUICK_BTNS = [
-  { icon: "AlertTriangle", label: "Просрочки",  color: "#ef4444", question: "Какие заказы просрочены?" },
-  { icon: "CreditCard",    label: "Долги",       color: "#f59e0b", question: "Кто должен оплатить?" },
-  { icon: "Package",       label: "Склад",       color: "#2563eb", question: "Что закупить на складе?" },
+  { icon: "AlertTriangle", label: "Просрочки",   color: "#ef4444", question: "Какие заказы просрочены?" },
+  { icon: "CreditCard",    label: "Долги",        color: "#f59e0b", question: "Есть ли долги клиентов? Сколько?" },
+  { icon: "Package",       label: "Склад",        color: "#2563eb", question: "Что заканчивается на складе?" },
+  { icon: "Scissors",      label: "Заготовки",    color: "#22c55e", question: "Какие задачи сейчас стоят на нарезку?" },
 ];
-
-const AI_ANSWERS: Record<string, string> = {
-  "Какие заказы просрочены?":
-    "Просрочены 3 заказа:\n• МП-0035 — Лебедев К.А., Гравировка, +13 дней\n• МП-0033 — Семёнов Д.О., Полировка, +1 день\n• МП-0040 — Козлов И.Д., Эскиз, дедлайн 20 апреля",
-  "Кто должен оплатить?":
-    "8 клиентов с долгом — 123 500 ₽:\n• Козлов И.Д. — 22 000 ₽ (не оплачен)\n• Смирнова А.В. — 23 500 ₽ (частично)\n• Морозова Т.И. — 23 000 ₽ (частично)\n• Лебедев К.А. — 35 000 ₽ (не оплачен)\n• ещё 4 клиента...",
-  "Где узкое место?":
-    "Узкое место — Гравировка:\n• 3 заказа одновременно\n• 2 из них просрочены\n• Среднее время: 7 дней вместо нормы 4\n\nСовет: добавить второго исполнителя или перенести заказы.",
-  "Что закупить на складе?":
-    "Критичные позиции:\n• Мрамор белый — 0.4 м² (мин. 4 м²) 🚨\n• Гранит красный — 0.1 м² (мин. 5 м²) 🚨\n• Полировальная паста — 3.5 кг (мин. 5 кг)\n\nПримерная сумма закупки: ~180 000 ₽",
-};
-
-function getAiReply(q: string): string {
-  const exact = AI_ANSWERS[q];
-  if (exact) return exact;
-  const l = q.toLowerCase();
-  if (l.includes("просроч")) return AI_ANSWERS["Какие заказы просрочены?"];
-  if (l.includes("долг") || l.includes("оплат")) return AI_ANSWERS["Кто должен оплатить?"];
-  if (l.includes("узк") || l.includes("производств") || l.includes("гравир")) return AI_ANSWERS["Где узкое место?"];
-  if (l.includes("склад") || l.includes("закупи") || l.includes("материал")) return AI_ANSWERS["Что закупить на складе?"];
-  return "На основе данных CRM:\n\n9 заказов в работе, 3 просрочены. Долг клиентов — 123 500 ₽. Узкое место — Гравировка.\n\nРекомендую начать с просроченных заказов.";
-}
 
 function now() {
   return new Date().toLocaleTimeString("ru", { hour: "2-digit", minute: "2-digit" });
 }
 
-/* ─── Иконка AI с градиентом ─── */
 function AiIcon({ size = 32, glow = false }: { size?: number; glow?: boolean }) {
   return (
     <div
       className="rounded-full flex items-center justify-center shrink-0 relative"
       style={{
         width: size, height: size,
-        background: "linear-gradient(135deg, #1a1a1a 0%, #3a3a5c 50%, #1a1a1a 100%)",
-        boxShadow: glow ? "0 0 16px 4px rgba(99,102,241,0.35), 0 2px 8px rgba(0,0,0,0.25)" : "0 2px 8px rgba(0,0,0,0.18)",
+        background: "linear-gradient(135deg, #1a1a1a 0%, #2a2a4a 50%, #1a1a1a 100%)",
+        boxShadow: glow
+          ? "0 0 18px 4px rgba(37,99,235,0.3), 0 2px 8px rgba(0,0,0,0.25)"
+          : "0 2px 8px rgba(0,0,0,0.18)",
       }}
     >
       <span style={{ fontSize: size * 0.44, lineHeight: 1 }} className="select-none">✦</span>
       {glow && (
         <span className="absolute inset-0 rounded-full animate-pulse"
-          style={{ background: "radial-gradient(circle, rgba(99,102,241,0.2) 0%, transparent 70%)" }} />
+          style={{ background: "radial-gradient(circle, rgba(37,99,235,0.18) 0%, transparent 70%)" }} />
       )}
     </div>
   );
 }
 
+/* Рендерим текст с простым markdown: **bold**, • списки, \n */
+function AiText({ text }: { text: string }) {
+  const lines = text.split("\n");
+  return (
+    <div className="space-y-0.5">
+      {lines.map((line, i) => {
+        if (!line.trim()) return <div key={i} className="h-1.5" />;
+        // Заменяем **text** на bold
+        const parts = line.split(/(\*\*[^*]+\*\*)/g).map((p, j) =>
+          p.startsWith("**") && p.endsWith("**")
+            ? <strong key={j} className="font-semibold text-[#1a1a1a]">{p.slice(2, -2)}</strong>
+            : p
+        );
+        const isBullet = line.trim().startsWith("•") || line.trim().startsWith("-") || line.trim().startsWith("*");
+        return (
+          <p key={i} className={`text-[13px] leading-relaxed ${isBullet ? "pl-1" : ""}`}>
+            {parts}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function AiAssistant({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [tab, setTab]       = useState<"overview" | "chat">("overview");
-  const [input, setInput]   = useState("");
+  const [input,    setInput]    = useState("");
   const [messages, setMessages] = useState<Message[]>([
-    { role: "ai", text: "Привет! Смотрю данные вашей CRM.\n\n3 заказа просрочены, долгов на 123 500 ₽, Гравировка перегружена. Скажите что нужно — отвечу сразу.", time: now() },
+    { role: "ai", text: "Привет! Я анализирую данные вашей CRM в реальном времени.\n\nСпросите меня о заказах, долгах, складе или производстве — отвечу на основе актуальных данных.", time: now() },
   ]);
-  const [typing, setTyping] = useState(false);
+  const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const inputRef  = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    if (tab === "chat") bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, tab]);
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, loading]);
 
-  const sendMessage = (text: string) => {
-    if (!text.trim()) return;
-    setMessages(m => [...m, { role: "user", text: text.trim(), time: now() }]);
+  useEffect(() => {
+    if (open) setTimeout(() => inputRef.current?.focus(), 200);
+  }, [open]);
+
+  /* Конвертируем историю чата в формат API */
+  const toApiMessages = (msgs: Message[]): AiMessage[] =>
+    msgs
+      .filter(m => m.role !== "ai" || msgs.indexOf(m) > 0) // пропускаем первое приветствие
+      .map(m => ({
+        role:    m.role === "user" ? "user" : "assistant",
+        content: m.text,
+      }));
+
+  const sendMessage = async (text: string) => {
+    const q = text.trim();
+    if (!q || loading) return;
+
+    const userMsg: Message = { role: "user", text: q, time: now() };
+    setMessages(prev => [...prev, userMsg]);
     setInput("");
-    setTab("chat");
-    setTyping(true);
-    setTimeout(() => {
-      setTyping(false);
-      setMessages(m => [...m, { role: "ai", text: getAiReply(text.trim()), time: now() }]);
-    }, 800 + Math.random() * 500);
+    setLoading(true);
+
+    try {
+      const history = toApiMessages([...messages, userMsg]);
+      const { reply } = await aiApi.chat(history);
+      setMessages(prev => [...prev, { role: "ai", text: reply, time: now() }]);
+    } catch (e) {
+      setMessages(prev => [...prev, {
+        role: "ai",
+        text: "Не удалось получить ответ. Проверьте подключение и попробуйте снова.",
+        time: now(),
+      }]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage(input);
+    }
   };
 
   return (
     <>
       {open && <div className="fixed inset-0 z-40" onClick={onClose} />}
 
-      {/* Panel */}
-      <div className={`fixed right-0 top-0 h-full w-[360px] bg-white border-l border-[#ebebeb] z-50 flex flex-col shadow-2xl transition-transform duration-300 ease-out
+      <div className={`fixed right-0 top-0 h-full w-[380px] bg-white border-l border-[#ebebeb] z-50 flex flex-col shadow-2xl transition-transform duration-300 ease-out
         ${open ? "translate-x-0" : "translate-x-full"}`}>
 
         {/* Header */}
         <div className="px-5 py-4 border-b border-[#f0f0f0] shrink-0"
-          style={{ background: "linear-gradient(135deg, #fafafa 0%, #f0f0f8 100%)" }}>
+          style={{ background: "linear-gradient(135deg, #fafafa 0%, #f0f3ff 100%)" }}>
           <div className="flex items-center gap-3">
             <AiIcon size={36} glow />
             <div className="flex-1 min-w-0">
               <p className="text-[14px] font-bold text-[#1a1a1a]">AI-помощник</p>
               <div className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
-                <p className="text-[11px] text-[#9b9b9b]">следит за CRM в реальном времени</p>
+                <span className={`w-1.5 h-1.5 rounded-full ${loading ? "bg-amber-400 animate-pulse" : "bg-green-400"}`} />
+                <p className="text-[11px] text-[#9b9b9b]">
+                  {loading ? "думает..." : "DeepSeek · анализирует CRM"}
+                </p>
               </div>
             </div>
             <button onClick={onClose}
@@ -127,154 +145,98 @@ export default function AiAssistant({ open, onClose }: { open: boolean; onClose:
           </div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex border-b border-[#f0f0f0] px-5 shrink-0 bg-white">
-          {[{ id: "overview", label: "Обзор" }, { id: "chat", label: "Чат" }].map(t => (
-            <button key={t.id} onClick={() => setTab(t.id as "overview" | "chat")}
-              className={`py-3 px-1 mr-5 text-[12px] font-semibold border-b-2 transition-all
-                ${tab === t.id ? "border-[#1a1a1a] text-[#1a1a1a]" : "border-transparent text-[#9b9b9b] hover:text-[#6b6b6b]"}`}>
-              {t.label}
-              {t.id === "chat" && messages.filter(m => m.role === "ai").length > 1 && (
-                <span className="ml-1.5 text-[10px] bg-[#1a1a1a] text-white rounded-full px-1.5 py-px">
-                  {messages.filter(m => m.role === "ai").length - 1}
-                </span>
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+
+          {messages.map((m, i) => (
+            <div key={i} className={`flex gap-2.5 ${m.role === "user" ? "flex-row-reverse" : ""}`}>
+
+              {/* Аватар */}
+              {m.role === "ai" ? (
+                <AiIcon size={26} />
+              ) : (
+                <div className="w-[26px] h-[26px] rounded-full bg-brand flex items-center justify-center shrink-0">
+                  <Icon name="User" size={12} className="text-white" />
+                </div>
               )}
-            </button>
+
+              {/* Пузырь */}
+              <div className={`max-w-[82%] rounded-2xl px-3.5 py-2.5 ${
+                m.role === "user"
+                  ? "bg-brand text-white rounded-tr-sm"
+                  : "bg-[#f5f5f7] text-[#2a2a2a] rounded-tl-sm"
+              }`}>
+                {m.role === "ai"
+                  ? <AiText text={m.text} />
+                  : <p className="text-[13px] leading-relaxed">{m.text}</p>
+                }
+                <p className={`text-[10px] mt-1 ${m.role === "user" ? "text-blue-200 text-right" : "text-[#b0b0b0]"}`}>
+                  {m.time}
+                </p>
+              </div>
+            </div>
           ))}
+
+          {/* Typing indicator */}
+          {loading && (
+            <div className="flex gap-2.5">
+              <AiIcon size={26} />
+              <div className="bg-[#f5f5f7] rounded-2xl rounded-tl-sm px-4 py-3">
+                <div className="flex gap-1 items-center h-4">
+                  {[0, 1, 2].map(i => (
+                    <span key={i} className="w-1.5 h-1.5 rounded-full bg-[#b0b0b0] animate-bounce"
+                      style={{ animationDelay: `${i * 0.15}s` }} />
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div ref={bottomRef} />
         </div>
 
-        {/* ─── Overview ─── */}
-        {tab === "overview" && (
-          <div className="flex-1 overflow-y-auto">
-            <div className="p-4 space-y-4">
-
-              {/* Главное действие */}
-              <div className="rounded-xl border border-red-200 bg-red-50 p-4">
-                <p className="text-[10px] font-bold text-red-400 uppercase tracking-[0.1em] mb-2">Главное сейчас</p>
-                <div className="flex items-start gap-3">
-                  <div className="w-7 h-7 rounded-lg bg-red-100 flex items-center justify-center shrink-0 mt-0.5">
-                    <Icon name="Zap" size={13} className="text-red-500" />
-                  </div>
-                  <div>
-                    <p className="text-[13px] font-semibold text-[#1a1a1a] leading-snug">{URGENT_ACTION.text}</p>
-                    <p className="text-[11px] text-[#9b9b9b] mt-0.5">{URGENT_ACTION.detail}</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Что требует внимания */}
-              <div>
-                <p className="text-[10px] font-bold text-[#b5b5b5] uppercase tracking-[0.1em] mb-2.5">Что требует внимания</p>
-                <div className="grid grid-cols-2 gap-2">
-                  {PROBLEMS.map(p => (
-                    <div key={p.label}
-                      className="flex flex-col gap-1.5 p-3 rounded-xl border cursor-pointer hover:shadow-sm hover:scale-[1.01] transition-all"
-                      style={{ backgroundColor: p.bg, borderColor: p.border }}>
-                      <div className="flex items-center justify-between">
-                        <Icon name={p.icon as never} size={13} style={{ color: p.color }} />
-                        <span className="text-[18px] font-bold leading-none" style={{ color: p.color }}>{p.value}</span>
-                      </div>
-                      <p className="text-[11px] font-semibold leading-snug" style={{ color: p.color }}>{p.label}</p>
-                      <p className="text-[10px] text-[#9b9b9b] leading-snug">{p.detail}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Что делать сейчас */}
-              <div>
-                <p className="text-[10px] font-bold text-[#b5b5b5] uppercase tracking-[0.1em] mb-2.5">Что делать сейчас</p>
-                <div className="space-y-2">
-                  {ACTIONS.map((a, i) => (
-                    <button key={i} onClick={() => sendMessage(a.question)}
-                      className="w-full flex items-center gap-3 p-3 rounded-xl border text-left hover:shadow-sm hover:scale-[1.005] active:scale-[0.995] transition-all"
-                      style={{ backgroundColor: a.bg, borderColor: a.border }}>
-                      <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-                        style={{ backgroundColor: a.color + "22" }}>
-                        <Icon name={a.icon as never} size={13} style={{ color: a.color }} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[12px] font-semibold text-[#1a1a1a] leading-snug">{a.label}</p>
-                        <p className="text-[10px] text-[#9b9b9b] mt-0.5">{a.detail}</p>
-                      </div>
-                      <Icon name="ChevronRight" size={13} className="text-[#c5c5c5] shrink-0" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Быстрые кнопки */}
-              <div>
-                <p className="text-[10px] font-bold text-[#b5b5b5] uppercase tracking-[0.1em] mb-2.5">Быстрый ответ</p>
-                <div className="grid grid-cols-3 gap-2">
-                  {QUICK_BTNS.map(b => (
-                    <button key={b.label} onClick={() => sendMessage(b.question)}
-                      className="flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl bg-white border border-[#ebebeb] hover:border-[#c8c8c8] hover:shadow-sm hover:scale-[1.03] active:scale-[0.97] transition-all">
-                      <Icon name={b.icon as never} size={16} style={{ color: b.color }} />
-                      <span className="text-[11px] font-medium text-[#4a4a4a]">{b.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-            </div>
-          </div>
-        )}
-
-        {/* ─── Chat ─── */}
-        {tab === "chat" && (
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {messages.map((m, i) => (
-              <div key={i} className={`flex gap-3 ${m.role === "user" ? "flex-row-reverse" : ""}`}>
-                {m.role === "ai" && <AiIcon size={28} />}
-                <div className={`max-w-[260px] flex flex-col gap-1 ${m.role === "user" ? "items-end" : "items-start"}`}>
-                  <div className={`px-3.5 py-2.5 rounded-2xl text-[12px] leading-relaxed whitespace-pre-line
-                    ${m.role === "user"
-                      ? "bg-[#1a1a1a] text-white rounded-tr-sm"
-                      : "bg-[#f5f5f5] text-[#1a1a1a] rounded-tl-sm"}`}>
-                    {m.text}
-                  </div>
-                  <span className="text-[10px] text-[#c5c5c5] px-1">{m.time}</span>
-                </div>
-              </div>
+        {/* Quick buttons */}
+        <div className="px-4 pb-2 shrink-0">
+          <div className="flex gap-1.5 flex-wrap">
+            {QUICK_BTNS.map(b => (
+              <button
+                key={b.label}
+                onClick={() => sendMessage(b.question)}
+                disabled={loading}
+                className="flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1.5 rounded-full border border-[#e8e8e8] bg-white hover:border-[#c0c0c0] transition-colors disabled:opacity-40"
+              >
+                <Icon name={b.icon as never} size={11} style={{ color: b.color }} />
+                {b.label}
+              </button>
             ))}
-            {typing && (
-              <div className="flex gap-3">
-                <AiIcon size={28} />
-                <div className="bg-[#f5f5f5] px-4 py-3 rounded-2xl rounded-tl-sm flex gap-1.5 items-center">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#b5b5b5] animate-bounce" style={{ animationDelay: "0ms" }} />
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#b5b5b5] animate-bounce" style={{ animationDelay: "150ms" }} />
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#b5b5b5] animate-bounce" style={{ animationDelay: "300ms" }} />
-                </div>
-              </div>
-            )}
-            <div ref={bottomRef} />
           </div>
-        )}
+        </div>
 
         {/* Input */}
-        <div className="p-4 border-t border-[#f0f0f0] shrink-0 bg-white">
-          {tab === "overview" && (
-            <p className="text-[11px] text-[#c5c5c5] text-center mb-2.5">или задайте свой вопрос</p>
-          )}
-          <div className="relative flex items-center">
-            <input
+        <div className="px-4 pb-4 pt-1 shrink-0 border-t border-[#f0f0f0]">
+          <div className="flex gap-2 items-end bg-[#f5f5f7] rounded-2xl px-3.5 py-2.5">
+            <textarea
+              ref={inputRef}
               value={input}
               onChange={e => setInput(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && sendMessage(input)}
-              placeholder="Спросите про заказы, долги или склад..."
-              className="w-full bg-[#f5f5f5] border border-transparent focus:border-[#d0d0d0] focus:bg-white rounded-[12px] pl-4 pr-11 py-3 text-[13px] placeholder:text-[#c5c5c5] outline-none transition-all"
+              onKeyDown={handleKeyDown}
+              placeholder="Спросите что-нибудь о CRM..."
+              rows={1}
+              disabled={loading}
+              className="flex-1 bg-transparent text-[13px] text-[#1a1a1a] placeholder:text-[#b0b0b0] outline-none resize-none leading-relaxed disabled:opacity-50"
+              style={{ maxHeight: 120, overflowY: "auto" }}
             />
-            <button onClick={() => sendMessage(input)}
-              disabled={!input.trim()}
-              className="absolute right-1.5 w-8 h-8 rounded-[8px] flex items-center justify-center transition-all disabled:opacity-25 hover:scale-105 active:scale-95"
-              style={{ background: "linear-gradient(135deg, #1a1a1a, #3a3a5c)" }}>
-              <Icon name="ArrowUp" size={13} className="text-white" />
+            <button
+              onClick={() => sendMessage(input)}
+              disabled={!input.trim() || loading}
+              className="w-7 h-7 rounded-full flex items-center justify-center bg-brand text-white hover:bg-brand-hover disabled:opacity-30 disabled:cursor-not-allowed transition-all shrink-0"
+            >
+              <Icon name="ArrowUp" size={13} />
             </button>
           </div>
+          <p className="text-[10px] text-[#c0c0c0] text-center mt-1.5">Enter — отправить · Shift+Enter — перенос</p>
         </div>
       </div>
-
     </>
   );
 }

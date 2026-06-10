@@ -27,6 +27,7 @@ const URLS = {
   clients:   "https://functions.poehali.dev/5c7d2169-a671-4e0a-91a1-c3d2ad0c7d35",
   warehouse: "https://functions.poehali.dev/394b9d79-d492-44cc-8a4b-d92916ad4d0b",
   cutting:   "https://functions.poehali.dev/a191e962-1806-4049-bba4-51aa5384f467",
+  ai:        "https://functions.poehali.dev/cf3b9d47-2531-4e96-b460-66d4df2bbe4a",
 };
 
 function getToken(): string {
@@ -200,4 +201,12 @@ export const catalogApi = {
   list:   () => request<DbCatalogItem[]>("auth", "GET", { section: "catalog" }),
   create: (data: Record<string, unknown>) => request<{ id: string }>("auth", "POST", { section: "catalog" }, data),
   update: (id: string, data: Record<string, unknown>) => request<{ ok: boolean }>("auth", "PUT", { section: "catalog", id }, data),
+};
+
+// ── AI ────────────────────────────────────────────────────────────
+export type AiMessage = { role: "user" | "assistant"; content: string };
+
+export const aiApi = {
+  chat: (messages: AiMessage[]) =>
+    request<{ reply: string }>("ai", "POST", { action: "chat" }, { messages }),
 };
