@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import { TasksContext, TaskUpdater } from "./store/tasksStore";
 import { CuttingTask } from "./components/pages/cutting/cutting.types";
+import { AuthProvider } from "./store/authStore";
 
 const queryClient = new QueryClient();
 
@@ -27,16 +28,18 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <TasksContext.Provider value={{ tasks, setTasks, addTask, updateTask }}>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TasksContext.Provider>
+        <AuthProvider>
+          <TasksContext.Provider value={{ tasks, setTasks, addTask, updateTask }}>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TasksContext.Provider>
+        </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );

@@ -22,6 +22,7 @@ import AdminPage from "@/components/AdminPage";
 import CompanyEntryPage from "@/components/CompanyEntryPage";
 import EmployeesPage from "@/components/pages/EmployeesPage";
 import { authApi } from "@/api/client";
+import { useAuth } from "@/store/authStore";
 
 type Section = "dashboard" | "overview" | "orders" | "production" | "cutting" | "warehouse" | "clients" | "analytics" | "estimate" | "catalog" | "settings" | "blank-analytics" | "sketches" | "employees";
 
@@ -115,6 +116,8 @@ export default function Index() {
   const slugParam  = urlParams.get("company");
   const isAdmin    = urlParams.get("admin") !== null;
 
+  const { checkAuth, login: authLogin } = useAuth();
+
   const [screen,   setScreen]   = useState<AppScreen>("entry");
   const [role,     setRole]     = useState<Role>("owner");
   const [active,   setActive]   = useState<Section>("dashboard");
@@ -135,17 +138,21 @@ export default function Index() {
         setActive(ROLE_DEFAULT[user.role as Role] ?? "dashboard");
         setCompanyName(user.companyName ?? "");
         setScreen("app");
+        /* Синхронизируем с AuthContext чтобы useAuth().user работал везде */
+        checkAuth();
       })
       .catch(() => localStorage.removeItem("crm_token"));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleLogin = (token: string) => {
+  const handleLogin = (_token: string) => {
     authApi.me()
       .then(({ user }) => {
         setRole(user.role as Role);
         setActive(ROLE_DEFAULT[user.role as Role] ?? "dashboard");
         setCompanyName(user.companyName ?? "");
         setScreen("app");
+        checkAuth();
       })
       .catch(() => localStorage.removeItem("crm_token"));
   };

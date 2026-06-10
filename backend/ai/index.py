@@ -11,7 +11,7 @@ except ImportError:
 SCHEMA       = "t_p9542363_memorial_crm_mvp"
 FOLDER_ID    = "b1g6in0q7dqbjupvnt58"
 MODEL        = f"gpt://{FOLDER_ID}/deepseek-v4-flash/latest"
-API_BASE     = "https://ai.api.cloud.yandex.net/v1"
+CHAT_URL     = "https://ai.api.cloud.yandex.net/v1/chat/completions"
 
 CORS = {
     "Access-Control-Allow-Origin":  "*",
@@ -127,35 +127,32 @@ def get_crm_context(company_id: int) -> str:
 # ── AI API ────────────────────────────────────────────────────────
 
 def call_ai(api_key: str, messages: list, system: str) -> str:
-    """OpenAI Responses API (Yandex Cloud)"""
-    payload = {
-        "model":            MODEL,
-        "instructions":     system,
-        "input":            messages[-1]["content"] if messages else "",
-        "temperature":      0.3,
-        "max_output_tokens": 800,
-    }
+    """Chat Completions API (Yandex Cloud / OpenAI-совместимый)"""
+    chat_messages = [{"role": "system", "content": system}] + messages
 
-    # Если есть история — передаём через input как массив
-    if len(messages) > 1:
-        payload["input"] = messages  # массив {"role":..., "content":...}
+    payload = {
+        "model":       MODEL,
+        "messages":    chat_messages,
+        "temperature": 0.3,
+        "max_tokens":  800,
+    }
 
     data = json.dumps(payload).encode()
     req  = urllib.request.Request(
-        f"{API_BASE}/responses",
+        CHAT_URL,
         data=data,
         headers={
             "Content-Type":   "application/json",
             "Authorization":  f"Api-Key {api_key}",
             "OpenAI-Project": FOLDER_ID,
+            "x-folder-id":    FOLDER_ID,
         },
         method="POST",
     )
     try:
         with urllib.request.urlopen(req, timeout=30) as resp:
             result = json.loads(resp.read().decode())
-            # Responses API → output_text
-            return result.get("output_text") or result.get("choices", [{}])[0].get("message", {}).get("content", "Нет ответа")
+            return result["choices"][0]["message"]["content"]
     except urllib.error.HTTPError as e:
         body = e.read().decode()
         raise RuntimeError(f"AI error {e.code}: {body}")
